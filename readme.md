@@ -1,17 +1,23 @@
 ## LaTeX Table Editor ##
 
+**Version 0.1**
+
 This is the GitHub page of an upcoming Open Source WYSIWYG table editor that exports to multiples languages including LaTeX, Plain TeX and Markdown.
 
-### Preview
+### Use
 
-You can see a preview [here](http://www.latex-tables.com/preview).
+You can use it [here](http://www.latex-tables.com/).
+
+### Dependencies
+
+You need Bootstrap 3 and JQuery. See the online example.
 
 ### Formats supported
 
  - LaTeX
  - Plain TeX
  - Markdown
- - HTML (coming soon)
+ - HTML
  - CSV (coming soon)
  - Text (coming soon)
  - ConTeXt (coming soon)
@@ -20,7 +26,7 @@ You can see a preview [here](http://www.latex-tables.com/preview).
 
 ### Status
 
-The **LaTeX Table Editor** is still a preview and not an official release. No API is stable for now.
+The **LaTeX Table Editor** is in beta. No API is stable for now.
 
 ### Report an issue
 

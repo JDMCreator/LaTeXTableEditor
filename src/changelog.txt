@@ -1,0 +1,66 @@
+Legend
+=======
+[+] Added
+[/] Changed
+[-] Removed
+[#] Fixed
+Dates use a YYYY/MM/DD format.
+
+Version 0.1 BETA
+===========
+
+CORE
+
+[+] New section in right panel : Table properties
+[+] New core function for table matrix that is easier to maintain and understand
+[+] New package option for 'hhline' (even if it's disabled)
+[/] New style for right panel
+[/] New style for rotated cell buttons
+[/] "Label" input moved to "Table properties"
+[#] The right 'format' subpage shows on load
+[#] Fixed issue with the 'LaTeX Complex Table Editor' title
+[-] Removed 'Margins' section for cells. This feature is hard to implement and won't be part of the first official release
+
+LATEX EXPORT MODULE
+
+[#] Better support for partial horizontal double borders with 'hhline' package
+[#] Partial horizontal double borders no longer cut vertical rules
+[#] Vertical rules for 'multirow' cells are now corrects
+	This fix was made possible by the new core function for table matrix
+
+PLAIN TEX EXPORT MODULE
+
+[#] Partial horizontal double borders didn't work. Replaced by a normal border until I implement the solution.
+[#] Multiple bugs with the \rotatecell{} macro. Thanks to Pr. Petr Olsak
+
+LATEX IMPORT MODULE
+
+[+] Basic support of {tabu}, {tabu} to <dim> and {tabu} spread <dim> environments
+[+] New module function to parse preambules.
+[+] Support of *{}{} and *#{} in preambules
+[+] Support of an optional argument for X columns (in tabu environments)
+[+] Support of \firsthline and \lasthline from 'array.sty' package
+[+] Basic support of \tabucline from 'tabu'. Degrade to a basic line. No style is understood.
+[#] Support of comments in preambules
+[#] Better supports of @, >, < and ! functions in preambules
+[#] \hline were not understood (stupid mistake, I wrote 'hrule' instead of 'hline')
+[#] Optional argument for | from tabu is now understood
+
+Preview 3 (2017/07/20)
+===========
+[+] New module : import from LaTeX (tabular, tabular*, tabulary and tabularx)
+[+] Export to HTML (support for MathJAX)
+[+] Creating a new table now shows the number of rows/columns
+[/] "label" and "caption" is no longer mandatory for JSON
+[#] Minor undocumented bugs fixes
+
+Preview 2 (2017/07/09)
+===========
+[+] Add equations in cells (with $...$ format)
+[+] Import tables from webpages, Microsoft Word, Microsoft Office, OpenDocument and others...
+[#] FIXED : Import JSON with a cell with a diagonal
+[#] FIXED : Export JSON with a cell with a diagonal
+[#] FIXED : Cells with a diagonal auto-updates like other cells
+[#] FIXED : Width of cells with a diagonal
+[#] FIXED : \textasciitilde for tilde symbol instead of \~
+[#] FIXED : Title box is okay for medium-sized screen, but not small screens

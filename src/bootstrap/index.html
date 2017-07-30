@@ -1,0 +1,279 @@
+<!doctype>
+<html>
+<head>
+<title>LaTeX Complex Table Editor</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+<style>
+.row .col-md-3:nth-child(even){
+font-weight:bold;
+text-align:left;
+}
+.row .col-md-3:nth-child(odd){
+text-align:right;
+max-height:100px;
+overflow-y:hidden;
+}
+.a {
+    text-transform: uppercase;
+    font-size: 75%;
+    vertical-align: 0.45ex;
+    margin-left: -0.36em;
+    margin-right: -0.125em;
+}
+.e {
+    margin-left: -0.2em;
+    margin-right: -0.1em;
+    display: inline-block;
+    font-size: 87%;
+    line-height: 0;
+    text-transform: uppercase;
+    vertical-align: -0.45ex;
+}
+h1{
+margin:40px;
+text-align:center;
+}
+h1 span{
+padding-bottom:20px;
+height:120px;
+position:relative;
+top:26px;
+}
+textarea{
+width:100%;
+margin:5px;
+font-family:monospace;
+white-space: nowrap;
+height:300px;
+}
+</style>
+</head>
+<body>
+<section>
+<div class="container">
+<h1><img src="logo.png" alt="Logo" height=120> <span>LaTeX Complex Tables Editor</span></h1>
+
+<center>
+<p>Creating tables in L<span class="a">a</span>T<span class="e">e</span>X is a hard task. Creating complex tables is an even harder one. This project consists in a free, open source, web-based, WYSIWYG (What you see is what you get) table editor for L<span class="a">a</span>T<span class="e">e</span>X. It will aim to support most features used in tables and management of packages (including incompatibilities and the possibility to blacklist some of them). A standalone open source JavaScript library will be released in the process to manipulate complex tables.</p>
+
+<p>I'm a well experimented web developer and a proud user of L<span class="a">a</span>T<span class="e">e</span>X. This project is already started. However, the support from the community will allow me to work full time on this and release it sooner. The money will be used to pay for icons, a server, my rent and food while development is on the way.</p>
+
+<p>Some packages from which features will be supported : <a href="http://ctan.org/pkg/array">array</a>, <a href="http://ctan.org/pkg/arydshln">arydshln</a>, <a href="http://ctan.org/pkg/booktabs">booktabs</a>, <a href="http://ctan.org/pkg/colortbl">colortbl</a>, <a href="http://ctan.org/pkg/ctable">ctable</a>, <a href="http://ctan.org/pkg/diagbox">diagbox</a>, <a href="http://ctan.org/pkg/dcolumn">dcolumn</a>, <a href="http://ctan.org/pkg/hhline">hhline</a>, <a href="http://ctan.org/pkg/longtable">longtable</a>, <a href="http://ctan.org/pkg/lscape">lscape</a>, <a href="http://ctan.org/pkg/makecell">makecell</a>, <a href="http://ctan.org/pkg/multirow">multirow</a>, <a href="http://ctan.org/pkg/rotating">rotating</a>, <a href="http://ctan.org/pkg/slashbox">slashbox</a>, <a href="http://ctan.org/pkg/supertabular">supertabular</a>, <a href="http://ctan.org/pkg/tabularx">tabularx</a>, <a href="http://ctan.org/pkg/xcolor">xcolor</a> and more.</p>
+<p>Thank you for your contribution and your support !</p></center>
+
+<h1><img src="logo.png" alt="Logo" height=120> <span>Features</span></h1>
+
+<div class="row">
+  <div class="col-md-3"><img src="merge.png" alt="Merge and split cells" width=150></div>
+  <div class="col-md-3">Merge and split cells</div>
+  <div class="col-md-3"><img src="text.png" alt="Style text"  width=80></div>
+  <div class="col-md-3">Text alignment and basic text styling</div>
+</div>
+<div class="row">
+  <div class="col-md-3"><img src="slashbox.png" alt="Slashboxes"   width=100></div>
+  <div class="col-md-3">Slashboxes and cells with two diagonals separators
+</div>
+  <div class="col-md-3"><img src="period.png" alt="Style text"  width=130></div>
+  <div class="col-md-3">Align cells with a character like a period or a comma
+</div>
+</div>
+<div class="row">
+  <div class="col-md-3"><img src="rotated.png" alt="Merge and split cells"  width=130></div>
+  <div class="col-md-3">Rotated cells</div>
+  <div class="col-md-3"><img src="background.png" alt="Style text"  width=80></div>
+  <div class="col-md-3">Set background color for odd-even rows or for each cell
+</div>
+</div>
+<div class="row">
+  <div class="col-md-3"><img src="border-types.png" alt="Merge and split cells"  width=80></div>
+  <div class="col-md-3">Multiple border types <p style="font-weight:normal;">(normal, double, booktabs and dashed)</p>
+</div>
+  <div class="col-md-3"><img src="border-width.png" alt="Style text"  width=80></div>
+  <div class="col-md-3">Set borders' width</div>
+</div>
+<div class="row">
+  <div class="col-md-3"><img src="double.png" alt="Merge and split cells" width=80></div>
+  <div class="col-md-3">Set cell's margins
+</div>
+  <div class="col-md-3"><img src="margin.png" alt="Style text" width=120></div>
+  <div class="col-md-3">Import from CSV, JSON and plain text (with a tool to split columns and rows)
+</div>
+</div>
+<div class="row">
+  <div class="col-md-3"><img src="import.png" alt="Merge and split cells" width=100></div>
+  <div class="col-md-3">Merge and split cells</div>
+  <div class="col-md-3"><img src="export.png" alt="Style text" width=100></div>
+  <div class="col-md-3">Export to LaTeX, HTML, CSV, JSON and text
+</div>
+</div>
+
+<h1><img src="logo.png" alt="Logo" height=120> <span>Examples and comparison</span></h1>
+
+<p>Here are some comparisons between LaTeX tables produced by the generator (at early stage) and its HTML reproduction (with inline CSS option activated)</p>
+
+<hr>
+
+<div class="row">
+  <div class="col-md-6"><center>
+<table border="1" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+	<tr>
+		<td style="background-image: linear-gradient(to right top, rgba(255,255,255,0) 0%,rgba(255,255,255,0) 49.9%,#000000 50%,#000000 51%,rgba(255,255,255,0) 51.1%,rgba(255,255,255,0) 100%);padding-left:6px;padding-right:6px;">
+			<div style="text-align:right">Day</div>
+			<div style="text-align:left;">Time</div>
+		</td>
+		<td style="padding:0 6pt;text-align:center;">Monday</td>
+		<td style="padding:0 6pt;text-align:center;">Tuesday</td>
+		<td style="padding:0 6pt;text-align:center;">Wednesday</td>
+		<td style="padding:0 6pt;text-align:center;">Thursday</td>
+		<td style="padding:0 6pt;text-align:center;">Friday</td>
+	</tr>
+	<tr>
+		<td style="padding:0 6pt;text-align:right;">Morning</td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+		<td></td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td style="padding:0 6pt;text-align:right;">Afternoon</td>
+		<td></td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+	</tr>
+	<tr>
+		<td style="padding:0 6pt;text-align:right;">Evening</td>
+		<td></td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&#10004;</td>
+		<td></td>
+		<td></td>
+	</tr>
+</table></center>
+<textarea><table border="1" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+	<tr>
+		<td style="background-image: linear-gradient(to right top, rgba(255,255,255,0) 0%,rgba(255,255,255,0) 49.9%,#000000 50%,#000000 51%,rgba(255,255,255,0) 51.1%,rgba(255,255,255,0) 100%);padding-left:6px;padding-right:6px;">
+			<div style="text-align:right">Day</div>
+			<div style="text-align:left;">Time</div>
+		</td>
+		<td style="padding:0 6pt;text-align:center;">Monday</td>
+		<td style="padding:0 6pt;text-align:center;">Tuesday</td>
+		<td style="padding:0 6pt;text-align:center;">Wednesday</td>
+		<td style="padding:0 6pt;text-align:center;">Thursday</td>
+		<td style="padding:0 6pt;text-align:center;">Friday</td>
+	</tr>
+	<tr>
+		<td style="padding:0 6pt;text-align:right;">Morning</td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+		<td></td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td style="padding:0 6pt;text-align:right;">Afternoon</td>
+		<td></td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+	</tr>
+	<tr>
+		<td style="padding:0 6pt;text-align:right;">Evening</td>
+		<td></td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+		<td style="padding:0 6pt;text-align:center;">&amp;#10004;</td>
+		<td></td>
+		<td></td>
+	</tr>
+</table></textarea>
+
+</div>
+<div class="col-md-6"><center><img src="comparaison1.png" height=100></center>
+<textarea>
+% \usepackage{diagbox,booktabs}
+% \usepackage{amssymb}
+\begin{table}
+\centering
+\begin{tabular}{|r|c|c|c|c|c|}
+\hline
+\backslashbox{Time}{Day} & Monday     & Tuesday    & Wednesday  & Thursday   & Friday \\\hline
+Morning                  & \checkmark &            & \checkmark &            & \\\hline
+Afternoon                &            & \checkmark & \checkmark & \checkmark & \checkmark\\\hline
+Evening                  &            & \checkmark & \checkmark &            & \\\hline
+\end{tabular}
+\end{table}
+</textarea></div>
+</div>
+<hr>
+
+<div class="row">
+  <div class="col-md-6"><center>
+<table border="0" cellpadding="0" cellspacing="0">
+	<tr style="border-top:0.1em solid black" >
+		<td colspan="2" style="border-bottom:0.05em solid black;padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Item</td>
+		<td></td>
+	</tr>
+	<tr style="border-bottom:0.05em solid black;">
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Name</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Quantity</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Price</td>
+	</tr>
+	<tr>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Pencil</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">100</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">1.50$</td>
+	</tr>
+	<tr style="border-bottom:0.1em solid black;">
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Eraser</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">20</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">2.50$</td>
+	</tr>
+</table></center>
+<textarea><table border="0" cellpadding="0" cellspacing="0">
+	<tr style="border-top:0.1em solid black" >
+		<td colspan="2" style="border-bottom:0.05em solid black;padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Item</td>
+		<td></td>
+	</tr>
+	<tr style="border-bottom:0.05em solid black;">
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Name</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Quantity</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Price</td>
+	</tr>
+	<tr>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Pencil</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">100</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">1.50$</td>
+	</tr>
+	<tr style="border-bottom:0.1em solid black;">
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">Eraser</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">20</td>
+		<td style="padding: 0.65ex 6pt 0.4ex 6pt;text-align:center;">2.50$</td>
+	</tr>
+</table></textarea>
+
+</div>
+<div class="col-md-6"><center><img src="comparaison2.png" height=100></center>
+<textarea>
+\begin{table}
+\centering
+\begin{tabular}{ccc}
+\toprule
+\multicolumn{2}{c}{Item} &        \\ \cmidrule{1-2}
+Name   & Quantity        & Price  \\ \midrule
+Pencil & 100             & 1.50\$ \\
+Eraser & 20              & 2.50\$ \\ \bottomrule
+\end{tabular}
+\end{table}
+</textarea></div>
+</div>
+</section>
+</body>
+</html>

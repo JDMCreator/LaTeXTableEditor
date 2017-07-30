@@ -1,0 +1,84 @@
+<meta charset="UTF-8"> 
+	<title>Help | LaTeX Tables Editor</title>
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+	<script type="text/javascript" src="js/jquery.min.js">
+	</script>
+	<script type="text/javascript" src="js/bootstrap.min.js">
+	</script>
+<script>
+$(function(){
+	var d = document.querySelectorAll(".question"), frag = document.createDocumentFragment();
+	for(var i=0;i<d.length;i++){
+		var li = document.createElement("li");
+		var a = document.createElement("a");
+		a.href = "#" + d[i].id;
+		a.innerHTML = d[i].querySelector("strong").innerHTML;
+		li.appendChild(a);
+		frag.appendChild(li);
+	}
+	document.getElementById("ul").appendChild(frag);
+});
+</script>
+<div class="container"><h2>Help</h2>
+<h4>Summary</h4>
+<ul id="ul">
+</ul>
+<div id="json" class="question">
+<p><strong>What does the "Save/export to JSON" do ?</strong>
+<p>The JSON format is the best lossless format to save your tables if you want to edit them again later. Save the JSON data in a file. When you want to load a table again with a JSON file, click the "New table" button, paste the content of your JSON file in the text zone at the top right and click "Import the content of a file".
+</div>
+<div id="import" class="question">
+<p><strong>Which format can I use to import a table ?</strong>
+<p>You can import a JSON table (from this generator) and a LaTeX table. You can also import tables from webpages, Word documents, Excel documents and more.
+</div>
+<div id="import_more" class="question">
+<p><strong>How can I import tables from other formats?</strong>
+<p>See if you can import this format in Word, Excel or another program and use the feature to import tables from these programs (in "New table")
+</div>
+<div id="export" class="question">
+<p><strong>Which format are supported to export a table ?</strong>
+<p>LaTeX, Plain TeX, Markdown, JSON and HTML
+</div>
+<div id="latex" class="question">
+<p><strong>Which features are supported when you import a LaTeX table?</strong>
+<p>The following environments are supported :
+<ul>
+<li>tabular
+<li>tabular*
+<li>tabularx
+<li>tabulary
+<li>tabu
+<li>{tabu} to <i>&lt;dim&gt;</i>
+<li>{tabu} spread <i>&lt;dim&gt;</i>
+</ul>
+<p>The following environments will be supported soon (in order of priority)
+<ul>
+<li>tabu*
+<li>longtabu
+<li>tabularht
+<li>longtable
+<li>halign
+<li>xtabular
+<li>supertabular
+<li>valign <i>(not sure about this one)</i>
+</ul>
+</div>
+<div id="tex" class="question">
+<p><strong>Can I import a table written in Plain TeX?</strong>
+<p>No.
+</div>
+<div id="local" class="question">
+<p><strong>How can I run this program locally?</strong>
+<p>Download the files <a href="https://github.com/JDMCreator/LaTeXTableEditor">here</a>. Open "index.html" with Chrome or Firefox. You don't need a server.
+</div>
+<div id="local" class="question">
+<p><strong>Where can I access the changelog ?</strong>
+<p>You can access the changelog <a href="changelog.txt">here</a>.
+</div>
+<div id="contact" class="question">
+<p><strong>How can I contact you?</strong>
+<p>You can contact me here : in<span></span>f<!---rararar--->o<i>@</i>latex-<script type="text/javascript">
+document.write("t")
+</script><noscript>t</noscript>ables<i>.</i>com
+</div>
+</div>

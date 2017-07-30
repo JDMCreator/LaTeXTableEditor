@@ -1,0 +1,306 @@
+		#table {
+			font-family: "Computer Modern", sans-serif;
+		}
+		#table span.latex-equation{
+			background:rgba(255, 112, 77, 0.3);
+			font-family:monospace;
+			padding:2px;
+			margin:2px;
+		}
+		#table span.latex-equation::after,#table span.latex-equation::before{
+			content:"$";
+			margin-left:3px;
+			margin-right:3px;
+		}
+		#create_table{
+			border-collapse:separate;
+			border-spacing:2px;
+		}
+		#create_table td{
+			border:1px solid black;
+			height:15px;
+			width:15px;
+		}
+		#create_table td.selected{
+			background:highlight;
+		}
+		#table td {
+			margin: 0;
+		}
+
+		body[data-view-editor] #table {
+			border-collapse: collapse !important;
+			border-spacing:0px !important;
+		}
+
+		body:not([data-view-editor]) #table td {
+			border: 1px dotted lightgrey;
+		}
+
+		#table .outer {
+			padding-left: 3px;
+			padding-right: 3px;
+		}
+
+		nav {
+			font-family: Helvetica;
+		}
+
+		.group {
+			display: inline-block;
+			border: 1px solid black;
+			border-radius: 5px;
+			padding: 2px;
+		}
+
+		.group .button {
+			display: inline-block;
+			cursor: default;
+			border: 1px solid black;
+			border-radius: 3px;
+			margin-top: 2px;
+			margin-bottom: 2px;
+			padding: 2px;
+		}
+
+		.group .button:hover:active,
+		.group .button:active {
+			background: lightgray;
+		}
+
+		.group .button.button-selected {
+			background: darkgray;
+			color: white;
+		}
+
+		.group .button.button-selected:active,
+		.group .button.button-selected:hover:active {
+			background: dimgray;
+		}
+
+		.group .button:not(.button-selected):hover {
+			background: whitesmoke;
+		}
+
+		.group .button .button-legend {
+			font-size: x-small;
+		}
+
+		.group-legend {
+			font-size: smaller;
+			text-align: center;
+			border-top: 1px solid black;
+			margin-left: 2px;
+			margin-right: 2px;
+		}
+
+		#table td div[contenteditable] {
+			min-height: 1em;
+			min-width: 1ex;
+		}
+
+		em em {
+			font-style: normal;
+		}
+
+		body[data-border-editor] #table * {
+			cursor: pointer !important;
+		}
+
+		body[data-view-editor] #table * {
+			cursor: default !important;
+		}
+		td[data-two-diagonals] {
+			position: relative;
+		}
+
+		td[data-two-diagonals]:before,
+		td[data-two-diagonals]::before {
+			content: "";
+			position: absolute;
+			top: 33%;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: -1;
+			background: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, #000000 50%, #000000 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);
+		}
+
+		td[data-two-diagonals]:after,
+		td[data-two-diagonals]::after {
+			content: "";
+			position: absolute;
+			top: 0;
+			left: 33%;
+			right: 0;
+			bottom: 0;
+			z-index: -1;
+			background: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, #000000 50%, #000000 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);
+		}
+
+		td[data-two-diagonals] div[contenteditable]:not(:last-child) {
+			display: inline-block;
+		}
+
+		td[data-align="l"] {
+			text-align: left;
+		}
+
+		td[data-align="c"] {
+			text-align: center;
+		}
+
+		td[data-align="r"] {
+			text-align: right;
+		}
+
+		td[data-diagonal], #extract-div td[style*=mso-diagonal-down] {
+			background: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, #000000 50%, #000000 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);
+		}
+		td[data-diagonal] div[contenteditable] {
+			text-align: left;
+			word-break: keep-all;
+			white-space: nowrap;
+			padding-right:50px;
+		}
+
+		td[data-diagonal] div[contenteditable]:first-child {
+			padding-left:50px;
+			padding-right:0;
+			text-align: right !important;
+		}
+
+		body:not([data-view-editor]) #table td[data-rotated]:not([data-selected]) div.outer {
+			display: inline-block;
+			overflow: hidden;
+		}
+
+		#popup_new {
+			z-index: 9999;
+			background: white;
+			position: fixed;
+			background: white;
+			top: 5%;
+			left: 5%;
+			right: 5%;
+			bottom: 5%;
+			padding: 5px;
+			border: 1px solid gray;
+			text-align: center;
+			display: none;
+		}
+
+
+		#right {
+			position: fixed;
+			top: 0;
+			right: 0;
+			margin:0;
+			padding:0;
+			background:#ddd;
+			bottom:0;
+			overflow-y:hidden;
+		}
+		#right-container{
+			width:100%;
+			height:100%;
+			overflow-y:auto;
+		}
+
+		#properties,
+		#borders {
+			margin: 5px;
+			background: whitesmoke;
+			padding: 5px;
+			border-radius:10px;
+		}
+
+		#properties h3,
+		#borders h3 {
+			margin: 0;
+			border-bottom: 1px solid gray;
+			text-align: center;
+		}
+
+		#right_cell h6,
+		#borders h6 {
+			margin: 0;
+			padding-top: 2px;
+			padding-bottom: 2px;
+			margin-top: 3px;
+			margin-bottom: 3px;
+			border-top: 1px solid gray;
+			border-bottom: 1px solid gray;
+		}
+
+		#latex_content {
+			width: 100%;
+		}
+
+		#table tr[data-border-top="toprule"] td,
+		#table td[data-border-top="toprule"] {
+			padding-top: 0.65ex !important;
+		}
+
+		#table[data-booktabs] tr:first-child td {
+			padding-top: 0.65ex !important;
+			border-top: 2px solid black !important;
+		}
+
+		#table[data-booktabs] tr:last-child td {
+			padding-bottom: 0.4ex;
+			border-bottom: 2px solid black !important;
+		}
+
+		#table tr[data-border-bottom="midrule"] td,
+		#table td[data-border-bottom="midrule"] {
+			padding-bottom: 0.4ex;
+		}
+
+		#table tr[data-border-bottom="hline"] td,
+		#table td[data-border-bottom="hline"] {
+			//border-bottom:0.4pt solid black;
+		}
+
+		#table tr[data-border-bottom="bottomrule"] td,
+		#table td[data-border-bottom="bottomrule"] {
+			padding-bottom: 0.4ex; //border-bottom:0.08em solid black;
+		}
+
+		#table td[data-rotated]:not([data-selected]) div[contenteditable],
+		body[data-view-editor] #table td[data-rotated] div[contenteditable] {
+			display: inline-block;
+			white-space: nowrap;
+			transform: translate(0, 100%) rotate(-90deg);
+			transform-origin: 0 0;
+		}
+
+		body:not([data-view-editor]) #table td[data-selected][data-diagonal] {
+			background: linear-gradient(to right top, highlight 0%, highlight 49.9%, #000000 50%, #000000 51%, highlight 51.1%, highlight 100%);
+		}
+
+		body:not([data-view-editor]) #table td[data-selected][data-two-diagonals] div.outer {
+			position: relative;
+		}
+
+		body:not([data-view-editor]) #table td[data-selected][data-two-diagonals] div.outer:before {
+			content: "";
+			position: absolute;
+			background: highlight;
+			z-index: -2;
+			left: 0;
+			bottom: 0;
+			top: 0;
+			right: 0;
+		}
+
+		#table td,
+		#table tr,
+		#table {
+			margin: 0;
+			padding: 0;
+		}
+
+		body:not([data-view-editor]) #table td[data-selected]:not([data-two-diagonals]):not([data-diagonal]) {
+			background: highlight;
+		}
