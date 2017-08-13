@@ -175,7 +175,7 @@
 	}
 	table.createInterpreter("plain", function(){
 
-		var matrix = this.getMatrixOfCells(),
+		var matrix = this.matrix(),
 		booktabs = this.element.hasAttribute("data-booktabs")
 		str  = "\\vbox{\n";
 		str += "\\offinterlineskip\n"

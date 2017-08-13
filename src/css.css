@@ -1,5 +1,8 @@
 		#table {
 			font-family: "Computer Modern", sans-serif;
+			margin-top:4px;
+			margin-bottom:4px;
+			padding:0;
 		}
 		#table span.latex-equation{
 			background:rgba(255, 112, 77, 0.3);
@@ -295,8 +298,7 @@
 		}
 
 		#table td,
-		#table tr,
-		#table {
+		#table tr{
 			margin: 0;
 			padding: 0;
 		}

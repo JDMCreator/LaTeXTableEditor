@@ -27,12 +27,19 @@
 </head>
 
 <body>
+<div style="border-top:1px dashed black;transform-origin: top left;z-index:9999;display:none;position:absolute;width:100px;height:5px;" id="line"></div>
 <div class="container-fluid">
 <div class="row">
   <div class="col-md-8" style="padding-bottom:10px;">
 <div class="alert alert-info" role="alert" style="margin:3px;display:none;">
   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 <span class="glyphicon glyphicon-info-sign"></span> <strong>Preview.</strong> You are now using a preview version of our upcoming Open Source LaTeX table editor. Please report any issues <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues">here</a>.</div>
+
+<div class="alert alert-info" role="alert" style="margin:3px;display:none;" id="edge-info">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<span class="glyphicon glyphicon-info-sign"></span> <strong>Microsoft Edge.</strong> You seems to be using Microsoft Edge. We are working hard to fix issues with this browser. You will have better results with Firefox or Chrome.</div>
+
+
 <p class="text-right" style="margin:0"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="help.html" target="_blank">Help</a></p>
 <div style="height:50px;margin-bottom:10px;"><img src="logo.png" height="50"><span style="
 	font-size:30px;
@@ -145,6 +152,8 @@
 							<div class="form-group">
 							<label for="md-header">Number of headers' rows</label>
 							<input type="number" value="1" min="0" class="form-control" id="md-header">
+						</div> <div class="form-group">
+							<label><input type="checkbox" id="md-html" checked> Use HTML when needed</label>
 						</div>
 						</div>
 						<div class="form-group" data-option-group="plain" style="display:none;">
@@ -229,7 +238,7 @@
 <option value="bottomrule">[\bottomrule] Bottom rule</option>
 </optgroup>
 <optgroup label="arydshln">
-<option value="hdashline">[\hdashline] Dash line</option>
+<option value="hdashline">[\hdashline] Dashed line</option>
 <option value="dottedline">[\hdashline[1pt/1pt]] Dotted line</option>
 </optgroup>
 </select>      </div>
@@ -307,11 +316,12 @@
 					<option value="auto">Auto</option>
 					<option value="json">JSON</option>
 					<option value="latex">LaTeX</option>
+					<option value="csv">CSV</option>
 				</select></div>
 			<div class="form-group">
 				<textarea class="form-control" id="import_value" placeholder="Content of your file to import"></textarea>
 			</div><div class="text-center">
-			<button type="button" class="btn btn-primary" onclick="table.import();$('#myModal').modal('hide')">Import the content of a file</button></div>
+			<button type="button" class="btn btn-primary" onclick="table.importData();$('#myModal').modal('hide')">Import the content of a file</button></div>
 <p class="text-center">- or -</p>
 <p>Paste here a table from a webpage, a Word document, an Excel document or an OpenOffice document.</p>
 <div class="form-control" contenteditable id="extract-div" style="height:auto;max-height:300px;"></div>
@@ -341,6 +351,11 @@
 
 		<script type="text/javascript">
 		$(function(){
+			var isIE = /*@cc_on!@*/false || !!document.documentMode;
+			var isEdge = !isIE && !!window.StyleMedia;
+			if(isEdge || true){
+				$("#edge-info").show();
+			}
 			$('nav a')
 				.click(function(e) {
 					e.preventDefault()
@@ -405,6 +420,7 @@
 			}
 			createTableCreater();
 		});
+/*
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -412,6 +428,7 @@
 
   ga('create', 'UA-102898458-1', 'auto');
   ga('send', 'pageview');
+*/
 		</script>
 </body>
 

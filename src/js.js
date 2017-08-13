@@ -20,34 +20,55 @@ function $id(id) {
 				this.element.innerHTML = "";
 				this.element.appendChild(fr);
 			};
-			this.import = function(content, format){
+			this.importData = function(content, format){
 				content = content || $id("import_value").value;
 				format = (format || $id("import_format").value).toLowerCase();
 				if(format == "auto"){
 					var json;
-					try{
-						json = JSON.parse(content);
-					}
-					catch(e){
+					if(/(\\begin{|\\halign|\\valign)/.test(content)){
 						try{
-							json = this.latex.importTable(content);
+							this.importFromJSON(this.latex.importTable(content));
 						}
-						catch(f){
-							alert("Your file could not be loaded");
-							if(window.console){
-								console.error(e);
-								console.error(f);
+						catch(e){
+							try{
+								this.importFromJSON(JSON.parse(content))
 							}
-							return false;							
+							catch(f){
+								alert("Your file was detected as LaTeX but could not be loaded.");
+								if(window.console){
+									console.error(e);
+								}
+							}
 						}
 					}
-					table.importFromJSON(json);
+					else{
+						try{
+							json = JSON.parse(content);
+						}
+						catch(e){
+							try{
+								json = this.importCSV(content);
+							}
+							catch(f){
+								alert("Your file could not be loaded");
+								if(window.console){
+									console.error(e);
+									console.error(f);
+								}
+								return false;							
+							}
+						}
+						this.importFromJSON(json);
+					}
 				}
 				else if(format == "json"){
-					table.importFromJSON(JSON.parse(content));
+					this.importFromJSON(JSON.parse(content));
 				}
 				else if(format == "latex"){
-					table.importFromJSON(table.latex.importTable(content));
+					this.importFromJSON(table.latex.importTable(content));
+				}
+				else if(format == "csv"){
+					this.importFromJSON(this.importCSV(content));
 				}
 			}
 			this.removeAllSelection = function() {
@@ -189,7 +210,7 @@ function $id(id) {
 					if (!cell.hasAttribute("data-diagonal")) {
 						if (cell.hasAttribute("data-two-diagonals")) {
 							var toDel = cell.querySelector("div[contenteditable]");
-							cell.setAttribute("data-two-diagonals-data", toDel.innerHTML);
+							cell.setAttribute("data-two-diagonals-data", this.getHTML(cell));
 							toDel.parentElement.removeChild(toDel);
 							cell.removeAttribute("data-two-diagonals");
 						} else {
@@ -355,9 +376,22 @@ function $id(id) {
 						.value = this.generateForCell(cell);
 				}
 			}
-			this.getHTML = function(cell) {
-				return cell.querySelector("div[contenteditable]")
-					.innerHTML;
+			this.getHTML = function(cell, n) {
+				var element, html;
+				if(!n){
+					element = cell.querySelector("div[contenteditable]");
+				}
+				else{
+					element = cell.querySelectorAll("div[contenteditable]")[n]
+				}
+				html = element.innerHTML;
+				if(html == "<br>" && element.innerText === ""){
+					// Fix this : https://connect.microsoft.com/IE/feedback/details/802442/ie11-rtm-implicit-br-tags-in-innerhtml-on-empty-content-editable-elements
+					return "";
+				}
+				else{
+					return html;
+				}
 			}
 			this.setHTML = function(cell, HTML) {
 				cell.querySelector("div[contenteditable]")
@@ -370,19 +404,41 @@ function $id(id) {
 			this.isSelected = function(cell) {
 				return cell.hasAttribute("data-selected");
 			}
+			this.lastSelectedCell = false;
 			this.selectCell = function(element, CTRL, SHIFT) {
-				if (!CTRL) {
+				if ((!CTRL && !SHIFT) || !this.lastSelectedCell) {
 					this.removeAllSelection();
 					this.showInfo(element);
-					this.selectedCell = element;
+					this.lastSelectedCell = this.selectedCell = element;
+					element.setAttribute("data-selected", "data-selected");
 				}
-				if (SHIFT && false) { //TODO
-					var actualSelected = document.querySelector("#table td[data-selected]");
+				else if (SHIFT) { //TODO
+					var rows = this.element.rows, cells, startSelection = false;
+					for(var i=0;i<rows.length;i++){
+						cells = rows[i].cells;
+						for(var j=0, cell;j<cells.length;j++){
+							cell = cells[j];
+							if(startSelection){
+								if(cell === element || cell === this.lastSelectedCell){
+									this.lastSelectedCell = element;
+									// Hard break
+									j = cells.length;
+									i = rows.length;
+								}
+								cell.setAttribute("data-selected", "data-selected");
+							}
+							else if(cell === element || cell === this.lastSelectedCell){
+								startSelection = true;
+								element.setAttribute("data-selected", "data-selected");
+							}
+						}
+					}
 				} else {
 					if (CTRL && element.hasAttribute("data-selected")) {
 						element.removeAttribute("data-selected");
 					} else {
 						element.setAttribute("data-selected", "data-selected");
+						this.lastSelectedCell = element
 					}
 				}
 			}
@@ -606,7 +662,7 @@ function $id(id) {
 							cellO = {};
 						cellO.dataset = cell.dataset;
 						if (cell.dataset.diagonal) {
-							cellO.html = [this.getHTML(cell), cell.querySelectorAll("div[contenteditable]")[1].innerHTML]
+							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1)]
 						} else {
 							cellO.html = this.getHTML(cell);
 						}
@@ -621,6 +677,68 @@ function $id(id) {
 				}
 				return o;
 			}
+			this.importCSV = function(text){
+				function createObject(str){
+					var o = {}, div = document.createElement("div");
+					div.innerText = div.textContent = str;
+					o.html = div.innerHTML.replace(/\n/g, "<br>");
+					return o;
+				}
+
+				text = text.replace(/^[\n\r]+/, "").replace(/[\n\r]+$/, "") + "\n";
+				var table = [],
+				row = [],
+				indbl = false,
+				start = true,
+				content = "";
+				for(var i=0, c;i<text.length;i++){
+					c = text.charAt(i);
+					if(start){
+						start = false;
+						if(c == '"'){
+							indbl = true;
+						}
+						else{
+							content += c;
+						}
+					}
+					else if(c == '"' && indbl){
+						if(text.charAt(i+1) == '"'){
+							i++;
+							content += c;
+						}
+						else{
+							indbl = false;
+						}
+					}
+					else if(c == "," && !indbl){
+						row.push(createObject(content));
+						indbl = false;
+						content = "";
+						start = true
+					}
+					else if(c == "\n" && !indbl){
+						row.push(createObject(content));
+						indbl = false;
+						content = "";
+						start = true
+						table.push(row);
+						row = [];
+					}
+					else{
+						content += c;
+					}
+				}
+				return {
+					autoBooktabs : false,
+					caption: {
+       						caption: "",
+        					numbered: false,
+       			 			label: ""
+    					},
+					cells: table
+				}
+			};
 			this.insertEquation = function() {
 				if (window.getSelection) {
 					var sel = window.getSelection();
@@ -656,19 +774,48 @@ function $id(id) {
 			this._clickCellManager = function(event) {
 				if (table.selectionAllowed) {
 					table.selectCell(this, event.ctrlKey, event.shiftKey);
-				} else if (document.body.hasAttribute("data-border-editor")) {
-					table.editBorder(this, event.pageX || event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft,
-						event.pageY || event.clientY + document.body.scrollTop + document.documentElement.scrollTop);
 				}
 			}
-			this.setBorder = function(element, pos, border, css) {
-				var pos2 = pos.toLowerCase();
-				if (element.getAttribute("data-border-" + pos2) == border) {
-					element.removeAttribute("data-border-" + pos2);
-					element.style["border" + pos] = "";
-				} else {
-					element.setAttribute("data-border-" + pos2, border);
-					element.style["border" + pos] = css;
+			this.isBorderSet = function(element, where){
+				return element.getAttribute("data-border-" + where.toLowerCase()) == document.getElementById('border').value
+			}
+			this.setBorder = function(element, where, affect){
+				where = where.toLowerCase();
+				var where2 = where.charAt(0).toUpperCase() + where.substring(1),
+				border = this.borderStyle();
+				if(affect){
+					element.setAttribute("data-border-" + where, border.name);
+					element.style["border" + where2] = border.css;
+				}
+				else if(element.style.removeProperty){
+					element.removeAttribute("data-border-" + where);
+					element.style.removeProperty("border-" + where);
+				}
+				else{
+					element.removeAttribute("data-border-" + where);
+					element.style["border" + where2] = "";
+				}
+			}
+			this.borderStyle = function(style){
+				style = (style || document.getElementById('border').value).toLowerCase();
+				var css = "1px solid black";
+				if(style == "toprule" || style == "bottomrule"){
+					css = "2px solid black";
+				}
+				else if(style == "double"){
+					css = "2px double black";
+				}
+				else if(style == "hdashline"){
+					css = "1px dashed black";
+				}
+				else if(style == "dottedline"){
+					css = "1px dotted black";
+				}
+				
+				return {
+					name : style,
+					css : css,
+					color : "000000"
 				}
 			}
 			this.setAllBorders = function() {
@@ -735,6 +882,22 @@ function $id(id) {
 					bottom: top + height
 				};
 			}
+			this.defineBorder = function(element, where){	
+				var borderType = document.getElementById('border').value,
+					border = "1px solid black";
+				if (borderType == "toprule" || borderType == "bottomrule") {
+					border = "2px solid black";
+				} else if (borderType == "double") {
+					border = "2px double black";
+				} else if (borderType == "hdashline") {
+					border = "1px dashed black";
+				} else if (borderType == "dottedline") {
+					border = "1px dotted black";
+				}
+				where = where.toLowerCase();
+				where = where.charAt(0).toUpperCase() + where.substring(1);
+				this.setBorder(element, where, borderType, border, true)
+			}
 			this.editBorder = function(element, x, y) {
 				var pos = this._absolutePosition(element),
 					borderType = document.getElementById('border')
@@ -750,13 +913,13 @@ function $id(id) {
 					border = "1px dotted black";
 				}
 				if (y - pos.top < 4) {
-					this.setBorder(element, "Top", borderType, border);
+					this.setBorder(element, "top", !this.isBorderSet(element, "top"));
 				} else if (pos.bottom - y < 4) {
-					this.setBorder(element, "Bottom", borderType, border);
+					this.setBorder(element, "bottom", !this.isBorderSet(element, "bottom"));
 				} else if (x - pos.left < 4) {
-					this.setBorder(element, "Left", borderType, border);
+					this.setBorder(element, "left", !this.isBorderSet(element, "left"));
 				} else if (pos.right - x < 4) {
-					this.setBorder(element, "Right", borderType, border);
+					this.setBorder(element, "right", !this.isBorderSet(element, "right"));
 				}
 			}
 			this.loaded = false;
@@ -832,10 +995,9 @@ function $id(id) {
 			this.generateForCell = function(cell) {
 				var text = "";
 				if (cell.hasAttribute("data-two-diagonals")) {
-					var ce = cell.querySelectorAll("div[contenteditable]");
 					this.packages["diagbox"] = true;
-					text = "\\diagbox{" + this.generateFromHTML(ce[2].innerHTML) + "}{" + this.generateFromHTML(ce[0].innerHTML) + "}{" +
-						this.generateFromHTML(ce[1].innerHTML) + "}"
+					text = "\\diagbox{" + this.generateFromHTML(this.getHTML(cell, 2)) + "}{" + this.generateFromHTML(this.getHTML(cell)) + "}{" +
+						this.generateFromHTML(this.getHTML(cell, 1)) + "}"
 				} else if (cell.hasAttribute("data-diagonal")) {
 					var ce = cell.querySelectorAll("div[contenteditable]");
 					if (this.blacklistPackages["diagbox"]) {
@@ -843,12 +1005,11 @@ function $id(id) {
 					} else {
 						this.packages["diagbox"] = true;
 					}
-					text = "\\backslashbox{" + this.generateFromHTML(ce[0].innerHTML) + "}{" + this.generateFromHTML(ce[1].innerHTML) + "}";
+					text = "\\backslashbox{" + this.generateFromHTML(this.getHTML(cell)) + "}{" + this.generateFromHTML(this.getHTML(cell, 1)) + "}";
 				} else if (cell.hasAttribute("data-rotated")) {
 					if (cell.rowSpan > 1) {
 						if (this.blacklistPackages["makecell"]) {
-							var inside = this.generateFromHTML(cell.querySelector("div[contenteditable]")
-								.innerHTML, true)
+							var inside = this.generateFromHTML(this.getHTML(cell), true)
 							if (this.blacklistPackages["tabularx"]) {
 								this.message("You may have to adjust the following value in one of your rotated cell : \"" + (cell.rowSpan - 0.2) + "\\normalbaselineskip\"");
 								text = "\\begin{sideways}\\begin{tabular}{@{}p{" + (cell.rowSpan - 0.2) + "\\normalbaselineskip}@{}}" +
@@ -861,28 +1022,23 @@ function $id(id) {
 								this.packages["rotating"] = this.packages["tabularx"] = true;
 							}
 						} else {
-							text = "\\rotcell{" + this.generateFromHTML(cell.querySelector("div[contenteditable]")
-								.innerHTML) + "}"
+							text = "\\rotcell{" + this.generateFromHTML(this.getHTML(cell)) + "}"
 							this.packages["makecell"] = true;
 						}
 					} else {
 						if (this.blacklistPackages["rotating"]) {
-							text = "\\rotcell{" + this.generateFromHTML(cell.querySelector("div[contenteditable]")
-								.innerHTML) + "}"
+							text = "\\rotcell{" + this.generateFromHTML(this.getHTML(cell)) + "}"
 							this.packages["makecell"] = true;
 						} else {
-							text = "\\begin{sideways}" + this.generateFromHTML(cell.querySelector("div[contenteditable]")
-								.innerHTML) + "\\end{sideways}"
+							text = "\\begin{sideways}" + this.generateFromHTML(this.getHTML(cell)) + "\\end{sideways}"
 							this.packages["rotating"] = true;
 						}
 					}
 				} else if (cell.rowSpan > 1 && !this.blacklistPackages["makecell"] && !this.blacklistPackages["multirow"]) {
-					text = "\\makecell{" + this.generateFromHTML(cell.querySelector("div[contenteditable]")
-						.innerHTML, true) + "}";
+					text = "\\makecell{" + this.generateFromHTML(this.getHTML(cell), true) + "}";
 					this.packages["makecell"] = true;
 				} else {
-					text = this.generateFromHTML(cell.querySelector("div[contenteditable]")
-						.innerHTML);
+					text = this.generateFromHTML(this.getHTML(cell));
 				}
 				return text;
 			}
@@ -1055,65 +1211,6 @@ function $id(id) {
 					}
 				}
 				return result;
-			}
-			this.getMatrixOfCells = function() {
-
-				var table = this.element,
-					rg = [],
-					maxCols = 0,
-					rows = table.rows;
-				for (var i = 0; i < rows.length; i++) {
-					rg.push([]);
-				}
-				for (var i = 0; i < rows.length; i++) {
-					var row = rows[i],
-						realCol = 0;
-					for (var j = 0; j < row.cells.length; j++) {
-						var cell = row.cells[j],
-							cellHeader = this.getHeaderForCell(cell);
-						if (typeof rg[i][realCol] != "object" && rg[i][realCol] !== false) {
-							if (!cell.rowSpan || cell.rowSpan < 2) {
-								if (!cell.colSpan || cell.colSpan < 2) {
-									rg[i][realCol] = this.createCellObject("", cell, "");
-								} else {
-									var o = rg[i][realCol] = this.createCellObject("\\multicolumn{" + cell.colSpan + "}{" + cellHeader +
-										"}{", cell, "}");
-									for (var k = 1; k < cell.colSpan; k++) {
-										rg[i][realCol + k] = this.createCellObject(false, o);
-									}
-								}
-							} else {
-								this.packages["multirow"] = true;
-								var o;
-								if (!cell.colSpan || cell.colSpan < 2) {
-									o = rg[i][realCol] = this.createCellObject("\\multirow{" + cell.rowSpan + "}{*}{", cell, "}");
-								} else {
-									o = rg[i][realCol] = this.createCellObject("\\multicolumn{" + cell.colSpan + "}{" + cellHeader +
-										"}{\\multirow{" + cell.rowSpan + "}{*}{", cell, "}}");
-								}
-								for (var k = 0; k < cell.rowSpan; k++) {
-									for (var l = 0; l < cell.colSpan; l++) {
-										// I hate four-level loops
-										if (l == 0 && k != 0) {
-											if (cell.colSpan > 1) {
-												rg[i + k][realCol] = this.createCellObject("\\multicolumn{" + cell.colSpan + "}{" +
-													cellHeader + "}{}", o);
-											} else {
-												rg[i + k][realCol] = this.createCellObject("", o)
-											}
-										} else if (l != 0 || k != 0) {
-											rg[i + k][realCol + l] = this.createCellObject(false, o);
-										}
-									}
-								}
-							}
-						} else {
-							j--;
-						}
-						realCol++;
-					}
-				}
-				return rg;
 			}
 			this.buildBlacklist = function() {
 				var o = {},
@@ -1627,3 +1724,121 @@ window.addEventListener("beforeunload", function() {
 		}
 	}
 }, false);
+(function(){
+	var initialX = 0,
+	initialY = 0,element, start = false;
+	function intersectRect(r1, r2) {
+	  return !(r2.left > r1.right || 
+	           r2.right < r1.left || 
+	           r2.top > r1.bottom ||
+	           r2.bottom < r1.top);
+	   }
+	function calculate(x, y){
+		if(document.body.hasAttribute("data-border-editor")){
+			element.style.top = initialY + "px";
+			element.style.left = initialX + "px";
+			element.style.width = Math.sqrt((initialY-y)*(initialY-y)+(initialX-x)*(initialX-x))+"px";
+			var angle = Math.atan2(x- initialX,- (y- initialY) )*(180/Math.PI)-90;
+			element.style.transform = "rotate(" + angle + "deg)";
+		}
+	}
+	window.addEventListener("selectstart", function(e){
+		if(start){
+			e.preventDefault();
+			return false;
+		}
+	});
+	window.addEventListener("mousedown", function(e){
+		if(!element){
+			element = document.getElementById('line');
+		}
+		if(document.body.hasAttribute("data-border-editor") && element){
+			element.style.display="block";
+			initialX = e.pageX;
+			initialY = e.pageY;
+			calculate(initialX, initialY);
+			start = true;
+		}
+	});
+	window.addEventListener("mousemove", function(e){
+		if(start){
+			if(document.body.hasAttribute("data-border-editor") && element){
+				calculate(e.pageX, e.pageY);
+			}
+			else{
+				start = false;should = null;
+			}
+		}
+	});
+	window.addEventListener("mouseup", function(e){
+		if(document.body.hasAttribute("data-border-editor") && element){
+			var rectangle = {
+						top : Math.min(initialY, e.pageY),
+						bottom : Math.max(initialY, e.pageY),
+						left : Math.min(initialX, e.pageX),
+						right : Math.max(initialX, e.pageX)
+					},
+			tableElement = table.element;
+			element.style.display="none";
+			var should = null;
+			if(Math.sqrt((rectangle.bottom-rectangle.top)*(rectangle.bottom-rectangle.top)+(rectangle.bottom-rectangle.top)
+			   + (rectangle.right-rectangle.left)*(rectangle.right-rectangle.left))<8){
+				for(var i=0;i<tableElement.rows.length;i++){
+					var cells = tableElement.rows[i].cells;
+					for(var j=0;j<cells.length;j++){
+						var cell = cells[j],
+						posCell = table._absolutePosition(cell);
+						if(intersectRect(posCell, rectangle)){
+							table.editBorder(cell, e.pageX, e.pageY)
+							// Force exit
+							j = cells.length;
+							i = tableElement.rows.length;
+							break;
+						}
+					}
+				}
+			}
+			else if(Math.abs(initialY-e.pageY)<=10){
+				var matrix = table.Table.matrix(),row;
+				for(var i=0;i<matrix.length;i++){
+					row = matrix[i];
+					for(var j=0,cell,posCell;j<row.length;j++){
+						cell = row[j];
+						cell = (cell.refCell||cell).cell;
+						posCell = table._absolutePosition(cell);
+						if(intersectRect(posCell, rectangle)){
+							var where = (rectangle.top+(rectangle.bottom-rectangle.top)/2 > posCell.top+posCell.height/2) 
+								    ? "bottom" : "top";
+							if(should === null){
+								should = !table.isBorderSet(cell, where);
+							}
+							table.setBorder(cell, where, should)
+						}
+					}
+				}
+			}
+			else if(Math.abs(initialX-e.pageX) <= 10){
+				var matrix = table.Table.matrix(),row;
+				for(var i=0;i<matrix.length;i++){
+					row = matrix[i];
+					for(var j=0,cell,posCell;j<row.length;j++){
+						cell = row[j];
+						cell = (cell.refCell||cell).cell;
+						posCell = table._absolutePosition(cell);
+						if(intersectRect(posCell, rectangle)){
+							var where = (rectangle.left+(rectangle.right-rectangle.left)/2 > posCell.left+posCell.width/2)
+								    ? "right" : "left";
+							if(should === null){
+								should = !table.isBorderSet(cell, where);
+							}
+							table.setBorder(cell, where, should)
+						}
+					}
+				}
+			}
+			start = false;
+			should = null;
+			initialY = initialX = 0;
+		}
+	});
+})();

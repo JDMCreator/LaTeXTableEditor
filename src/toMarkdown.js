@@ -11,7 +11,12 @@
 			this.message("Cells with diagonal slashes are unsupported in Markdown.");
 		}
 		var html = table.getHTML(cell.cell);
-		html = html.replace(/(<\s*(?:p|br|div)[^>]*>)/g," &lt;br&gt; $1");
+		if(document.getElementById('md-html').checked){
+			html = html.replace(/(<\s*(?:p|br|div)[^>]*>)/g," &lt;br&gt; $1");
+		}
+		else{
+			html = html.replace(/(<\s*(?:p|br|div)[^>]*>)/g," $1");
+		}
 		html = html.replace(/(\\|\||\*|_|#)/g,"\\$1").replace(/(\d)\./,"$1\\.");
 		html = html.replace(/<\s*\/?\s*(b|(strong))((\s+[^>]*)|)>/ig,"**").replace(/<\s*\/?\s*(i|(em))[^>]*>/ig,"*")
 		var div = document.createElement("div");
@@ -52,7 +57,7 @@
 	}
 	table.createInterpreter("md", function(){
 
-		var matrix = this.getMatrixOfCells(),
+		var matrix = this.matrix(),
 		headersNb = parseInt(document.getElementById('md-header').value,10)||0,
 		str = ""
 		isHeader = true,

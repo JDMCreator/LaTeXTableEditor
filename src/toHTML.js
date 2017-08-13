@@ -21,6 +21,7 @@
 	table.createInterpreter("html", function(){
 		var table = this.element,
 		caption = this.caption(),
+		booktabs = table.hasAttribute("data-booktabs"),
 		otable = document.createElement("table");
 		if(caption.caption){
 			otable.createCaption().appendChild(document.createTextNode(caption.caption));
@@ -39,6 +40,14 @@
 				}
 				else if(cell.getAttribute("data-align") == "r"){
 					ocell.style.textAlign = "right";
+				}
+				if(booktabs){
+					if(i === 0){
+						ocell.style.borderTop = "2px solid black";
+					}
+					if(i+cell.rowSpan-1 === table.rows.length-1){
+						ocell.style.borderBottom = "2px solid black";
+					}
 				}
 				ocell.style.paddingLeft = ocell.style.paddingRight = "3cm";
 				if(cell.rowSpan != 1){ocell.rowSpan=cell.rowSpan}
