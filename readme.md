@@ -1,8 +1,8 @@
 ## LaTeX Table Editor ##
 
-**Version 0.2**
+**Version 0.3**
 
-This is the GitHub page of an upcoming Open Source WYSIWYG table editor that exports to multiples languages including LaTeX, Plain TeX and Markdown.
+This is the GitHub page of an upcoming Open Source WYSIWYG table editor that exports to multiples languages including LaTeX, Plain TeX, HTML and Markdown.
 
 ### Use
 
@@ -18,7 +18,7 @@ You need Bootstrap 3 and JQuery. See the online example.
  - Plain TeX
  - Markdown
  - HTML
- - CSV (coming soon)
+ - CSV
  - Text (coming soon)
  - ConTeXt (coming soon)
  - BBCode (coming soon)

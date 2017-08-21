@@ -29,8 +29,8 @@
 <body>
 <div style="border-top:1px dashed black;transform-origin: top left;z-index:9999;display:none;position:absolute;width:100px;height:5px;" id="line"></div>
 <div class="container-fluid">
-<div class="row">
-  <div class="col-md-8" style="padding-bottom:10px;">
+<div>
+  <div style="float:left;width:calc(100% - 300px);padding-bottom:10px;">
 <div class="alert alert-info" role="alert" style="margin:3px;display:none;">
   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 <span class="glyphicon glyphicon-info-sign"></span> <strong>Preview.</strong> You are now using a preview version of our upcoming Open Source LaTeX table editor. Please report any issues <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues">here</a>.</div>
@@ -96,8 +96,8 @@
 							<button type="button" class="btn btn-default" onclick="table.insertRowUnder()" data-toggle="tooltip" title="Insert a row under"><span class="glyphicon glyphicon-arrow-down"></span></button>
 						</div>
 						<div class="btn-group" role="group" aria-label="...">
-							<button type="button" class="btn btn-default" onclick="table.removeRow()" data-toggle="tooltip" title="Delete rows"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-vertical"></span></button>
-							<button type="button" class="btn btn-default" data-toggle="tooltip" onclick="table.removeCol()" title="Delete columns"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-horizontal"></span></button>
+							<button type="button" class="btn btn-default" onclick="table.removeCol()" data-toggle="tooltip" title="Delete columns"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-vertical"></span></button>
+							<button type="button" class="btn btn-default" data-toggle="tooltip" onclick="table.removeRow()" title="Delete rows"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-horizontal"></span></button>
 						</div>
 						<div class="btn-group" role="group" aria-label="...">
 							<button type="button" class="btn btn-default" onclick="table.merge()" data-toggle="tooltip" title="Merge cells"><span class="glyphicon glyphicon-resize-small" style="transform:rotate(45deg)"></span></button>
@@ -129,6 +129,9 @@
 						</div>
 						<div class="form-group" data-option-group="latex">
 							<h4>LaTeX options</h4>
+
+							<div><label><input type="checkbox" id="opt-latex-whitespace"> Remove whitespace</label></div>
+							<div><label><input type="checkbox" id="opt-latex-border" checked> Border commands are on separated lines</label></div>
 							<h5>Packages</h5>
 							<div class="row">
 								<div class="col-md-6">
@@ -186,7 +189,7 @@
 		<hr><center><button onclick="table.generate()" class="btn btn-default">Generate</button></center><br>
 <div class="row">
 
-<div class="col-md-8"><textarea id="c" class="form-control" style="width:100%;height:20%;min-height:300px;">
+<div class="col-md-8"><textarea id="c" class="form-control">
 </textarea>
 </div>
 <div class="col-md-4">
@@ -195,7 +198,7 @@
 </div>
 </div>
 		</div>
-  <div class="col-md-4" id="right">
+  <div style="float:right;width:300px;" id="right">
 <div id="right-container">
 
 <div class="panel-group" id="right_accordion" role="tablist" aria-multiselectable="true">

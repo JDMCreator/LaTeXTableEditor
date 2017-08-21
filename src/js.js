@@ -10,6 +10,7 @@ function $id(id) {
 			return cellHeader == colHeader
 		},
 		table = new(function() {
+			this.version = "0.3";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -376,23 +377,90 @@ function $id(id) {
 						.value = this.generateForCell(cell);
 				}
 			}
-			this.getHTML = function(cell, n) {
-				var element, html;
-				if(!n){
-					element = cell.querySelector("div[contenteditable]");
-				}
-				else{
-					element = cell.querySelectorAll("div[contenteditable]")[n]
-				}
-				html = element.innerHTML;
-				if(html == "<br>" && element.innerText === ""){
-					// Fix this : https://connect.microsoft.com/IE/feedback/details/802442/ie11-rtm-implicit-br-tags-in-innerhtml-on-empty-content-editable-elements
-					return "";
-				}
-				else{
-					return html;
-				}
+this.getHTML = (function(){
+	var newline = false,
+	_eqHTML = function(node, cont){
+		if(node.nodeType == 3){
+			cont.appendChild(node.cloneNode(true));
+			if(!newline && /\S/.test(node.nodeValue)){
+				newline = true;
 			}
+		}
+		else if(node.nodeType == 1){
+			var tagName = node.tagName, newnode;
+			if(tagName == "B" || tagName == "I"){
+				newnode = document.createElement(tagName);
+				cont.appendChild(newnode);
+			}
+			else if(tagName == "STRONG"){
+				newnode = document.createElement("B");
+				cont.appendChild(newnode);
+			}
+			else if(tagName == "EM"){
+				newnode = document.createElement("I");
+				cont.appendChild(newnode);
+			}
+			else if(tagName.charAt(0) == "H" && /^\d$/.test(tagName.charAt(1))){
+				// H1, H2, H3, H4, H5, H6
+				if(newline){
+					cont.appendChild(document.createElement("BR"));
+				}
+				newnode = document.createElement("B");
+				cont.appendChild(newnode);
+				cont.appendChild(document.createElement("BR"));
+				newline = false;
+			}
+			else if(newline && (tagName == "DIV" || tagName == "P" || tagName == "HEADER" || tagName == "SECTION" || tagName == "FOOTER")){
+				cont.appendChild(document.createElement("BR"));
+				newline = false;
+			}
+			else if(tagName == "BR"){
+				cont.appendChild(document.createElement("BR"));
+				newline = false;
+			}
+			else if(node.className == "latex-equation"){
+				newnode = document.createElement("span");
+				newnode.className = "latex-equation";
+				cont.appendChild(newnode);
+				
+			}
+			else if(node.style.fontWeight == "bold" || node.style.fontWeight == "bolder" || (+node.style.fontWeight)>= 700){
+				newnode = document.createElement("B");
+				cont.appendChild(newnode);
+			}
+			else if(node.style.fontStyle == "italic" || node.style.fontStyle == "oblique"){
+				newnode = document.createElement("I");
+				cont.appendChild(newnode);
+			}
+			for(var i=0;i<node.childNodes.length;i++){
+				_eqHTML(node.childNodes[i], newnode || cont)
+			}
+		}
+	}
+	return function(cell, n){
+		var div;
+		if(!n){
+			div = cell.querySelector("div[contenteditable]");
+		}
+		else{
+			div = cell.querySelectorAll("div[contenteditable]")[n]
+		}
+		if(div.innerHTML.indexOf("<") == -1){
+			// Shortcut for text-only cells (most cells)
+			return div.innerHTML;
+		}
+		if(div.innerText === "" && div.childNodes.length === 1 && div.firstChild.tagName == "BR"){
+			// Fix this : https://connect.microsoft.com/IE/feedback/details/802442/ie11-rtm-implicit-br-tags-in-innerhtml-on-empty-content-editable-elements
+			return "";
+		}
+		var cont = document.createElement("div");
+		newline = false;
+		for(var i=0;i<div.childNodes.length;i++){
+			_eqHTML(div.childNodes[i], cont)
+		}
+		return cont.innerHTML;
+	}
+})();
 			this.setHTML = function(cell, HTML) {
 				cell.querySelector("div[contenteditable]")
 					.innerHTML = HTML;
@@ -675,6 +743,7 @@ function $id(id) {
 						o.cells[o.cells.length - 1].push(cellO);
 					}
 				}
+				o.version = this.version;
 				return o;
 			}
 			this.importCSV = function(text){
@@ -950,46 +1019,77 @@ function $id(id) {
 				this.Table = new Table(table);
 			}
 			this.generateFromHTML = function(html, ignoreMultiline) {
-				var div = document.createElement("div");
+				var div = document.createElement("div"), hasMultiline;
 				div.innerHTML = html;
 				var el = div.querySelectorAll("span.latex-equation");
 				var eq = []
 				for (var i = 0; i < el.length; i++) {
 					var kbd = document.createElement("kbd");
-					eq.push(document.createTextNode("$" + (el[i].innerText || el[i].textContent) + "$"));
+					eq.push("$" + (el[i].innerText || el[i].textContent) + "$");
 					el[i].parentNode.replaceChild(kbd, el[i]);
 				}
 				html = div.innerHTML;
-				//ToDo : improve backslash
-				html = html.replace(/\\/g, "\\textbackslash ")
-					.replace(/(\$|\%|\{|\|\#)/ig, "\\$1").replace(/~/g, "\\textasciitilde");
-				var hasMultiline = false;
-				html = html.replace(/&nbsp;/g, "~")
-					.replace(/\&/g, "\\&")
-					.replace(/<br[/\s]*>/ig, function() {
-						hasMultiline = true;
-						return " \\\\ "
-					});
-				html = html.replace(/<(b|(strong))((\s+[^>]*)|)>/ig, "\\textbf{")
-					.replace(/<(i|(em))[^>]*>/ig, "\\textit{")
-					.replace(/<\s*\/\s*(b|(strong)|(em)|i)[^>]*>/ig, "}");
-				html = html.replace(/(<((div)|p))/ig, function(a, b) {
-						hasMultiline = true;
-						return " \\\\ " + b
-					})
-					.replace(/(\[|\])/ig, "{$1}");
-				div.innerHTML = html
-				el = div.getElementsByTagName("kbd");
-				for (var i = 0; i < el.length; i++) {
-					el[i].parentNode.replaceChild(eq[i], el[i]);
+				var str = "", kbdcount = 0;
+				for(var i=0,c;i<html.length;i++){
+					c = html.charAt(i);
+					if(c == "<"){
+						var inside = html.substring(i, html.indexOf(">", i+1)+1),
+						tagname = /^<?\s*\/?\s*([a-z]+)/i.exec(inside)[1].toLowerCase();
+						if(/^<?\s*\//.test(inside)){tagname="/"+tagname;}
+						if(tagname == "br"){
+							hasMultiline = true;
+							str += "\\\\";
+						}
+						else if(tagname == "kbd"){
+							str += eq[kbdcount];
+							kbdcount++;
+						}
+						else if(tagname == "b"){
+							str += "\\textbf{";
+						}
+						else if(tagname == "i"){
+							str += "\\textit{";
+						}
+						else if(tagname == "/b" || tagname == "/i"){
+							str += "}";
+						}
+						else if(tagname != "/kbd"){
+							str += inside;
+						}
+						i += inside.length-1;
+					}
+					else if(c == "&"){
+						var inside = html.substring(i, html.indexOf(";", i+1)+1);
+						if(inside == "&nbsp;"){
+							str += "~";
+						}
+						else if(inside == "&amp;"){
+							str += "\\&";
+						}
+						else if(inside == "&quot;"){
+							str += '"';
+						}
+						i += inside.length-1;
+					}
+					else if(c == "\\"){
+						str += "\\textbackslash{}";
+					}
+					else if(c == "$" || c == "%" || c == "^" || c == "_" || c == "{" || c == "}" || c == "|" || c == "#"){
+						str += "\\" + c;
+					}
+					else if(c == "~"){
+						str += "\\textasciitilde{}";
+					}
+					else{
+						str+= c;
+					}
 				}
-				var text = div.innerText || div.textContent;
-				text = text.replace(/[ ]{2,}/g, " ")
+				str = str.replace(/[ ]{2,}/g, " ")
 					.replace(/[\n\r]+/g, "");
 				if (hasMultiline && !ignoreMultiline) {
-					text = "\\begin{tabular}[c]{@{}l@{}}" + text + "\\end{tabular}";
+					str = "\\begin{tabular}[c]{@{}l@{}}" + str + "\\end{tabular}";
 				}
-				return text
+				return str
 			};
 
 			this.generateForCell = function(cell) {
@@ -1135,6 +1235,8 @@ function $id(id) {
 				o.header = this.convertToHeader(this.getComparableHeader(before, o, after));
 				o.span = (cell.rowSpan != 1 || cell.colSpan != 1);
 				o.static = false;
+				o.rowSpan = cell.rowSpan;
+				o.colSpan = cell.colSpan;
 				o.leftBorder = cell.getAttribute("data-border-left") || "";
 				if(!o.leftBorder && before){
 					o.leftBorder = (before.refCell||before).cell.getAttribute("data-border-right") || ""
@@ -1371,6 +1473,7 @@ function $id(id) {
 					border;
 				// Determine header
 				var colHeaders = this.headers(),
+				borderNewLine = $id("opt-latex-border").checked
 				header = colHeaders.join("");
 				var str = "\\begin{table}[]\n";
 				if(this._id("table-opt-center").checked){
@@ -1383,42 +1486,63 @@ function $id(id) {
 					str += "\\label{" + caption.label + "}\n";
 				}
 				str += "\\begin{tabular}{" + header + "}";
-				for (var i = 0; i < rg.length; i++) {
+				var rg2 = [];
+				for(var i=0;i<rg.length;i++){
 					var cells = rg[i];
+					var row = []
+					for(var j=0;j<cells.length;j++){
+						var cell = cells[j],
+						header = colHeaders[j] || "l";
+						if(!cell || cell.ignore){
+							row.push(false);
+						}
+						else if(!cell.static && cell.header != header){
+							row.push({
+								 	text:this.multicolumn(1, cell.header, cell.fullContent),
+								 	colSpan : cell.colSpan
+								 })
+						}
+						else{
+							row.push({
+									text:cell.fullContent, 
+									colSpan : cell.colSpan || (cell.refCell ? cell.refCell.colSpan : 1) || 1
+								 })
+						}
+					}
+					rg2.push(row);
+				}
+				var beautifyRows = this.beautifyRows(rg2);
+				for(var i=0;i<beautifyRows.length;i++){
+					var row = beautifyRows[i];
 					if (i === 0 && booktabs) {
-						border = " \n\\toprule";
+						if(borderNewLine){
+							border = " \n\\toprule";
+						}
+						else{
+							border = " \\toprule";
+						}
 					} else {
 						border = this.getBorder(i, rg);
-						border = border ? " \n" + border : ""
+						if(borderNewLine){
+							border = border ? " \n" + border : ""
+						}
+						else{
+							border = border ? " " + border : "";
+						}
 					}
 					if (i !== 0) {
 						str += " \\\\" + border
 					} else {
 						str += border;
 					}
-					str += "\n"
-					for (var j = 0; j < cells.length; j++) {
-						header = colHeaders[j] || "l";
-						var cell = cells[j];
-						if (j !== 0 && cell !== false && !cell.ignore) {
-							str += " & ";
-						}
-						if (cell !== false && !cell.ignore) {
-							if(!cell.static && cell.header != header){
-								str += this.multicolumn(1, cell.header, cell.fullContent);
-							}
-							else{
-								str += cell.fullContent;
-							}
-						}
-					}
+					str += "\n" + row;
 				}
 				if (booktabs) {
-					str += "\\\\\n\\bottomrule"
+					str += "\\\\"+ (borderNewLine ? "\n" : " ") +"\\bottomrule"
 				} else {
 					border = this.getBorder(rg.length, rg);
 					if (border) {
-						str += "\\\\\n" + border;
+						str += "\\\\"+ (borderNewLine ? "\n" : " ") + border;
 					}
 				}
 				str += "\n\\end{tabular}\n\\end{table}";
@@ -1448,6 +1572,59 @@ function $id(id) {
 					)
 				}
 				return (packages ? packages + "\n\n" : "") + str;
+			}
+			this.beautifyRows = function(rows){
+console.dir(rows);debugger;
+				var rows2 = [], n = 0, start = [], max = [];
+				if($id("opt-latex-whitespace").checked){
+					for(var i=0;i<rows.length;i++){
+						rows2[i] = "";
+						var cells = rows[i];
+						for(var j=0;j<cells.length;j++){
+							var cell = cells[j];
+							if(cell){
+								if(j!==0){
+									rows2[i] += " & ";
+								}
+								rows2[i] += cell.text;
+							}
+						}
+					}
+					return rows2;
+				}
+				for(var i=0;i<rows.length;i++){
+					rows2.push("");
+					start.push(0);
+					max.push(0);
+					n = Math.max(n, rows[i].length);
+				}
+				for(var i=0;i<n;i++){
+					var unspace = false;
+					for(var j=0;j<rows.length;j++){
+						var cell = rows[j][i];
+						if(start[j] != i){continue}
+						if(i !== 0){
+							var submax = max[i-1];
+							for(var k=rows2[j].length;k<submax+1;k++){
+								rows2[j]+= " ";
+							}
+							rows2[j] += "& ";
+						}
+						rows2[j]+= cell.text;
+						max[i] = Math.max(max[i], rows2[j].length);
+						start[j]+= cell.colSpan;
+					}
+				}
+				max = 0;
+				for(var i=0;i<rows2.length;i++){
+					max = Math.max(max, rows2[i].length);
+				}
+				for(var i=0;i<rows2.length;i++){
+					for(var j=rows2[i].length;j<max+1;j++){
+						rows2[i]+= " ";
+					}
+				}
+				return rows2;
 			}
 			this.extract = (function() {
 				function borderInfo(cell, o) {

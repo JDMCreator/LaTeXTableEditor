@@ -619,9 +619,9 @@ Table = function(table){
 								for(var l=0;l<cell.colSpan;l++){
 									// I hate four-level loops
 									if(!(k===0 && l===0)){
-										o = rg[i+k][realCol+l]={refCell:o, x:realCol+l, y:i+k}
+										var o2 = rg[i+k][realCol+l]={refCell:o, x:realCol+l, y:i+k}
 										if(rowSpan === 0){
-											expandCells.push(o);
+											expandCells.push(o2);
 										}
 									}
 								}

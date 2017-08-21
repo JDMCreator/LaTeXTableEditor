@@ -144,22 +144,22 @@ var latex = {},
 	}
 },
 importTable = function(code){
-var tabular = /\\begin{(tabu|table|tabular[xy]?\*?)}/g.exec(code);
+var tabular = /\\begin{(tabu\*?|sidewaystable|table|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code);
 	if(!tabular){
 		return false;
 	}
 	var type = tabular[1], obj = {}, code2 = code.substring(tabular.index), initEnv = envirn(code2);
 	code = initEnv.content;
-	if(type == "table"){
-		if(/\\begin{(tabu|tabular[xy]?)}/.test(code)){
+	if(type == "table" || type == "sidewaystable"){
+		if(/\\begin{(tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
 			var caption = code.indexOf("\\caption");
 			if(caption >=0){
 				caption = command(code.substring(caption));
-				o.caption = {}
-				o.caption.caption = caption.args[0];
-				o.caption.numbered = caption.asterisk;
+				obj.caption = {}
+				obj.caption.caption = caption.args[0];
+				obj.caption.numbered = caption.asterisk;
 			}
-			tabular = /\\begin{(tabu|tabular[xy]?\*?)}/g.exec(code2);
+			tabular = /\\begin{(tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
 			if(!tabular){
 				return false; // Should not happen
 			}
@@ -173,13 +173,13 @@ var tabular = /\\begin{(tabu|table|tabular[xy]?\*?)}/g.exec(code);
 	}
 	code = initEnv.content;
 	var head;
-	if(type == "tabular"){
+	if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable"){
 		head = header(initEnv.command.args[1]);
 	}
 	else if(type == "tabular*" || type == "tabularx" || type == "tabulary"){
 		head = header(initEnv.command.args[2]);
 	}
-	else if(type == "tabu"){
+	else if(type == "tabu" || type == "tabu*"){
 		// Because "tabu" supports "tabu to <dim>" and "tabu spread <dim>", we need to handle these special and rarely used cases
 		if(initEnv.command.args.length == 2){
 			head = header(initEnv.command.args[1]);
@@ -217,7 +217,6 @@ var tabular = /\\begin{(tabu|table|tabular[xy]?\*?)}/g.exec(code);
 					totalbracket++;
 				}
 			}
-			console.log(head);
 			head = header(head);
 		}
 	}
@@ -270,10 +269,10 @@ var tabular = /\\begin{(tabu|table|tabular[xy]?\*?)}/g.exec(code);
 			}
 			else if(name == "hline" || name == "firsthline" || name == "lasthline"){
 				if(actuBorder == "normal"){
-					actuBorder == "double";
+					actuBorder = "double";
 				}
 				else{
-					actuBorder == "normal"
+					actuBorder = "normal"
 				}
 				i+=com.full.length-1;
 			}
@@ -285,7 +284,7 @@ var tabular = /\\begin{(tabu|table|tabular[xy]?\*?)}/g.exec(code);
 				if(name == "tabucline"){
 					// SHORT FIX TO MAKE THE FUNCTION UNDERSTAND 'TABUCLINE' LIKE CLINE
 					// TODO : Implement different styles for tabucline (ex : dotted, dashed)
-					name == "cline";
+					name = "cline";
 				}
 				if(!actuBorder){
 					if(!actuBorder.push){
@@ -317,6 +316,13 @@ var tabular = /\\begin{(tabu|table|tabular[xy]?\*?)}/g.exec(code);
 		var row = table[i];
 		for(var j=0;j<row.length;j++){
 			setCellO(table, j, i, row[j], head[j])
+		}
+	}
+	// REMOVE EMPTY CELL AT THE END
+	if(table[table.length-1].length == 1){
+		var lastCell = table[table.length-1][0];
+		if(/^\s*$/.test(lastCell.html) && (!lastCell.dataset || (!lastCell.borderLeft && !lastCell.borderRight && !lastCell.borderBottom))){
+			table.pop();
 		}
 	}
 	// ROWSPAN
@@ -437,7 +443,6 @@ var tabular = /\\begin{(tabu|table|tabular[xy]?\*?)}/g.exec(code);
 		realtable.push(realrow);
 	}
 	obj.cells = realtable;
-	//return JSON.stringify(obj, false, "\t");
 	return obj;
 },
 setCellO = function(table, x, y, code, header){
@@ -784,7 +789,7 @@ treatCom = function(code){
 	else if(name == "textasciitilde"){html += "~"}
 	else if(name == "og"){html+="&laquo;"}
 	else if(name == "fg"){html+="&raquo;"}
-	else if(com.args.length == 1 && name != "label" && name != "ref" && name != "pageref" && name != "phantom" && name != "hspace" && name != "vspace" && name != "rule" && name != "cite"){
+	else if(com.args.length == 1 && name != "label" && name != "ref" && name != "pageref" && name != "hhline" && name != "phantom" && name != "hspace" && name != "vspace" && name != "rule" && name != "cite"){
 		html += getHTML(com.args[0]);
 	}
 	

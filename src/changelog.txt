@@ -6,6 +6,50 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 0.3
+===========
+
+CORE
+
+[+] HTML tags <h1>, <h2>, <h3>, <h4>, <h5> and <h6> are now converted to a bold font.
+[+] CSS styles for bold and italic texts are now supported (font-weight:bold, font-weight:bolder, font-weight:700+, font-style:italic and font-style:oblique). This way, you can copy/paste rich text from the Internet into the cells.
+[+] The textarea which contains the generated code now has a monospace font (default to Monaco, then Lucida Console, then Courier)
+[/] Change the way to access HTML to cells. Its now a reliable function. That fixes many bugs
+[/] Changed the position and icons of the counterintuitive "Delete rows" and "Delete columns" buttons.
+[/] Table.js updated to version 0.1.2
+[#] Table.js v 0.1.2 solved a bug which prevented the generation of code for some tables with merged columns
+
+LATEX EXPORT MODULE
+
+[+] The code of tables is now beautified (columns are aligned). This can be desactived in the options.
+[#] In some cases, the character "\" in cells could cause LaTeX issues. Now, it is converted to "\textbackslash{}" instead of "\textbackslash "
+[#] Some newlines in Edge were ignored
+[#] Underscore character (_) is now converted to "\_"
+[#] Closing bracket character (}) is now converted to "\}"
+[#] "~" is now converted to "\textasciitilde{}" instead of "\textasciitilde"
+
+JSON EXPORT MODULE
+
+[+] It now exports the version of the editor
+
+LATEX IMPORT MODULE
+
+[+] Support for "sidewaystable" environment from "rotating" package
+[+] Support for "tabu*", "tabu* to <dim>" and "tabu* spread <dim>" environments
+[+] Support for "xtabular" and "mpxtabular" environments from "xtab" package
+[+] Support for "longtable" environment from "longtable" package
+[#] Captions and labels caused errors
+[#] "tabularx*" and "tabulary*" environment were ignored when inside a "table" environments
+[#] \hhline command is now ignored (support is coming)
+[#] \hline, \hline\hline and others are now interpreted as they should
+
+Version 0.2.1 BETA
+============
+
+CORE
+
+[#] Fixed an issue where a warning about Edge appeared on all browsers
+
 Version 0.2 BETA
 ==========
 
