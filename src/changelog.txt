@@ -6,7 +6,43 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 0.3
+Version 0.4 BETA (2017/09/18)
+
+CORE
+
+[+] Added basic support for Undo
+[+] Updated import modal with new "paste" and "import data" separated modal, for improved clarity
+[+] New favicon
+[+] New <META> description
+[#] Issue with "booktabs" attribute from JSON
+[#] Removing columns and rows could generate errors after
+[#] Support for two-diagonals for JSON import/export
+
+LATEX EXPORT MODULE
+
+[+] Now possible to disable "arydshln" package. The editor will generate a "tabu" environment instead if needed.
+
+LATEX IMPORT MODULE
+
+[+] Support for \multirowcell and \multirowthead from "makecell" package
+[+] Support for "table*" environment
+[+] Support for \P command (gives ¶)
+[#] Now support short forms of "multirow" and "multicolumn" (ex: \multirow3*{My Text})
+[#] \cmidrule(){} are not ignored anymore
+[#] \taburulecolor is now ignored
+[#] \tabucline[]-, \tabucline{#-} and \tabucline{-#} are now supported
+[#] Fixed a bug where a space was inserted in some cells
+
+TEX EXPORT MODULE
+
+[+] Added support for centering table option
+[/] Removed the space after \kern, for consistancy
+
+CSV EXPORT MODULE
+
+[+] New CSV export module
+
+Version 0.3 BETA (2017/08/20)
 ===========
 
 CORE
@@ -43,14 +79,14 @@ LATEX IMPORT MODULE
 [#] \hhline command is now ignored (support is coming)
 [#] \hline, \hline\hline and others are now interpreted as they should
 
-Version 0.2.1 BETA
+Version 0.2.1 BETA (2017/08/14)
 ============
 
 CORE
 
 [#] Fixed an issue where a warning about Edge appeared on all browsers
 
-Version 0.2 BETA
+Version 0.2 BETA (2017/08/12)
 ==========
 
 CORE
@@ -90,7 +126,7 @@ IMPORT MODULE
 [/] Faster autodetection of formats for import in most case
 [#] "table.import()" changed name to "table.importData()" because it's a reserved keyword
 
-Version 0.1 BETA
+Version 0.1 BETA (2017/07/29)
 ===========
 
 CORE

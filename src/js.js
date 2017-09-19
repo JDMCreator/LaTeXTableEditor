@@ -10,7 +10,7 @@ function $id(id) {
 			return cellHeader == colHeader
 		},
 		table = new(function() {
-			this.version = "0.3";
+			this.version = "0.4";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -130,6 +130,7 @@ function $id(id) {
 					.value = this.interpreters[format].call(this);
 			}
 			this.insertRowUnder = function(cell) {
+				this.statesManager.registerState();
 				cell = cell || this.selectedCell;
 				if (!cell) {
 					return false;
@@ -145,6 +146,7 @@ function $id(id) {
 				});
 			}
 			this.insertRowOver = function(cell) {
+				this.statesManager.registerState();
 				cell = cell || this.selectedCell;
 				if (!cell) {
 					return false;
@@ -160,6 +162,7 @@ function $id(id) {
 				});
 			}
 			this.insertColBefore = function(cell) {
+				this.statesManager.registerState();
 				cell = cell || this.selectedCell;
 				if (!cell) {
 					return false;
@@ -175,6 +178,7 @@ function $id(id) {
 				});
 			}
 			this.insertColAfter = function(cell) {
+				this.statesManager.registerState();
 				cell = cell || this.selectedCell;
 				if (!cell) {
 					return false;
@@ -190,6 +194,7 @@ function $id(id) {
 				});
 			}
 			this.split = function() {
+				this.statesManager.registerState();
 				var _this = this;
 				this.Table.split(document.querySelectorAll("#table td[data-selected]"), function(cell) {
 					_this.applyToCell(cell)
@@ -206,6 +211,7 @@ function $id(id) {
 				return td;
 			}
 			this.diagonal = function() {
+				this.statesManager.registerState();
 				this.updateLaTeXInfoCell();
 				this.forEachSelectedCell(function(cell) {
 					if (!cell.hasAttribute("data-diagonal")) {
@@ -224,6 +230,7 @@ function $id(id) {
 				});
 			}
 			this.twoDiagonals = function() {
+				this.statesManager.registerState();
 				this.updateLaTeXInfoCell();
 				this.forEachSelectedCell(function(cell) {
 					if (!cell.hasAttribute("data-two-diagonals")) {
@@ -242,6 +249,7 @@ function $id(id) {
 				});
 			}
 			this.rotate = function(state) {
+				this.statesManager.registerState();
 				this.forEachSelectedCell(function(cell) {
 					if (state) {
 						cell.setAttribute("data-rotated", "data-rotated");
@@ -261,6 +269,7 @@ function $id(id) {
 			}
 			this.selectedCell = null;
 			this.merge = function() {
+				this.statesManager.registerState();
 				var _this = this;
 				this.Table.merge(document.querySelectorAll("#table td[data-selected]"), function(colspan, rowspan, keep, removed) {
 					var html = _this.getHTML(keep);
@@ -350,6 +359,7 @@ function $id(id) {
 				});
 			}
 			this.setAlign = function(value) {
+				this.statesManager.registerState();
 				if (value != "l" && value != "r" && value != "c") {
 					value = "l";
 				}
@@ -447,7 +457,7 @@ this.getHTML = (function(){
 		}
 		if(div.innerHTML.indexOf("<") == -1){
 			// Shortcut for text-only cells (most cells)
-			return div.innerHTML;
+			return div.innerHTML.replace(/\s*$/, "").replace(/^\s*/, "");
 		}
 		if(div.innerText === "" && div.childNodes.length === 1 && div.firstChild.tagName == "BR"){
 			// Fix this : https://connect.microsoft.com/IE/feedback/details/802442/ie11-rtm-implicit-br-tags-in-innerhtml-on-empty-content-editable-elements
@@ -573,6 +583,7 @@ this.getHTML = (function(){
 				return td;
 			}
 			this.split = function() {
+				this.statesManager.registerState();
 				this.Table.split(document.querySelector("#table td[data-selected]"), this.applyToCell);
 			}
 			this.createCell = function(classNames) {
@@ -587,12 +598,25 @@ this.getHTML = (function(){
 				}
 				return tr;
 			}
-			this.undo = function() {
+			this.statesManager = new (function(table) {
 				// A better undo manager is on the way;
-				if (document.queryCommandEnabled("undo")) {
-					document.execCommand("undo");
+				this.states = []
+				this.registerState = function(){
+					this.states.push(table.exportToJSON());
+					this.stateNumber = this.states.length-1
 				}
-			}
+				this.stateNumber = 0;
+				this.undo = function(){
+					if (document.queryCommandEnabled("undo")) {
+						document.execCommand("undo");
+					}
+					else if(this.states[this.stateNumber]){
+						table.importFromJSON(this.states[this.stateNumber]);
+						this.stateNumber--;
+						this.states.pop();
+					}
+				}
+			})(this)
 			this.selectionAllowed = true;
 			this.hasShownBorderEditorInfo = false;
 			this.mode = function(n) {
@@ -659,11 +683,11 @@ this.getHTML = (function(){
 			}
 			this.importFromJSON = function(o) {
 				if (o.autoBooktabs) {
-					document.body.setAttribute("data-booktabs", "data-booktabs");
+					this.element.setAttribute("data-booktabs", "data-booktabs");
 					$id("button-booktabs")
 						.classList.add("active");
 				} else {
-					document.body.removeAttribute("data-booktabs");
+					this.element.removeAttribute("data-booktabs");
 					$id("button-booktabs")
 						.classList.remove("active");
 				}
@@ -685,7 +709,12 @@ this.getHTML = (function(){
 						var cellO = row[j];
 						var cell = document.createElement("td");
 						cell = this.applyToCell(cell);
-						if (cellO.dataset.diagonal) {
+						if (cellO.dataset.twoDiagonals){
+							var div = cell.querySelector(".outer")
+							div.innerHTML = "<div contenteditable>" + cellO.html[0] + "</div><div contenteditable>"
+									+ cellO.html[1] + "</div><div contenteditable>" + cellO.html[2] + "</div>";
+						}
+						else if (cellO.dataset.diagonal) {
 							cell.querySelector(".outer")
 								.innerHTML += "<div contenteditable>" + cellO.html[1] +
 								"</div>";
@@ -727,9 +756,16 @@ this.getHTML = (function(){
 					o.cells.push([]);
 					for (var j = 0; j < cells.length; j++) {
 						var cell = cells[j],
-							cellO = {};
-						cellO.dataset = cell.dataset;
-						if (cell.dataset.diagonal) {
+							cellO = {dataset:{}};
+						for(var prop in cell.dataset){
+							if(cell.dataset.hasOwnProperty(prop)){
+								cellO.dataset[prop] = cell.dataset[prop]
+							}
+						}
+						if (cell.dataset.twoDiagonals){
+							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1), this.getHTML(cell, 2)]
+						}
+						else if (cell.dataset.diagonal) {
 							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1)]
 						} else {
 							cellO.html = this.getHTML(cell);
@@ -829,6 +865,7 @@ this.getHTML = (function(){
 					.value = JSON.stringify(o, null, "    ");
 			}
 			this.autoBooktabs = function() {
+				this.statesManager.registerState();
 				var table = this.element;
 				if (table.hasAttribute("data-booktabs")) {
 					table.removeAttribute("data-booktabs");
@@ -849,6 +886,7 @@ this.getHTML = (function(){
 				return element.getAttribute("data-border-" + where.toLowerCase()) == document.getElementById('border').value
 			}
 			this.setBorder = function(element, where, affect){
+				this.statesManager.registerState();
 				where = where.toLowerCase();
 				var where2 = where.charAt(0).toUpperCase() + where.substring(1),
 				border = this.borderStyle();
@@ -880,6 +918,9 @@ this.getHTML = (function(){
 				else if(style == "dottedline"){
 					css = "1px dotted black";
 				}
+				else if(style == "trimfull"){
+					css = "";
+				}
 				
 				return {
 					name : style,
@@ -888,6 +929,7 @@ this.getHTML = (function(){
 				}
 			}
 			this.setAllBorders = function() {
+				this.statesManager.registerState();
 				var borderType = document.getElementById('border')
 					.value,
 					border = "1px solid black";
@@ -910,6 +952,7 @@ this.getHTML = (function(){
 				});
 			}
 			this.removeBorders = function() {
+				this.statesManager.registerState();
 				this.forEachSelectedCell(function(cell) {
 					var style = cell.style;
 					style.borderTop = style.borderLeft = style.borderRight = style.borderBottom = "";
@@ -1077,6 +1120,9 @@ this.getHTML = (function(){
 					else if(c == "$" || c == "%" || c == "^" || c == "_" || c == "{" || c == "}" || c == "|" || c == "#"){
 						str += "\\" + c;
 					}
+					else if(c == "¶"){
+						str += "\\P{}";
+					}
 					else if(c == "~"){
 						str += "\\textasciitilde{}";
 					}
@@ -1192,8 +1238,8 @@ this.getHTML = (function(){
 						"=": "||",
 						"#": "!{\\vrule width \\heavyrulewidth}",
 						"_": "!{\\vrule width \\lightrulewidth}",
-						":": ":",
-						";": ";{1pt/1pt}"
+						":": (_this.useTabu) ? "|[\\arrayrulewidth on 4pt off 4pt]" : ":",
+						";": (_this.useTabu) ? "|[\\arrayrulewidth on 1pt off 1pt]" : ";{1pt/1pt}" 
 					}[c] || ""
 				});
 			}
@@ -1326,14 +1372,21 @@ this.getHTML = (function(){
 				return o;
 			}
 			this.removeRow = function() {
+				this.statesManager.registerState();
 				if (this.selectedCell) {
 					this.Table.removeRow(this.selectedCell.parentElement.rowIndex);
 				}
+				if(!this.selectedCell || !this.selectedCell.parentElement){
+					this.selectedCell = null;
+				}
 			}
 			this.removeCol = function() {
+				this.statesManager.registerState();
 				if (this.selectedCell) {
-					this.Table.removeCol(this.Table.position(this.selectedCell)
-						.x);
+					this.Table.removeCol(this.Table.position(this.selectedCell).x);
+				}
+				if(!this.selectedCell || !this.selectedCell.parentElement){
+					this.selectedCell = null;
 				}
 			}
 			this.getContextualHeader = function(before, middle, after) {
@@ -1464,16 +1517,34 @@ this.getHTML = (function(){
 				}
 				return colHeaders;
 			}
+			this.useTabu = false;
+			this.shouldUseTabu = function(){
+				if(this.blacklistPackages["arydshln"]){
+					return this.hasBorderType("hdashline") || this.hasBorderType("dottedline");
+				}
+				else if(this.blacklistPackages["tabu"]){
+					return false;
+				}
+				else{
+					// Detect hhline
+					return false;
+				}
+			}
+			this.hasBorderType = function(type){
+				return !!this.element.querySelector("td[data-border-left='"+type+"'],td[data-border-bottom='"+type+"'],td[data-border-top='"+type+"'],td[data-border-right='"+type+"']")
+			}
 			this.generateLaTeX = function(opt) {
 				this.packages = {}
 				var table = this.element,
 					caption = this.caption(),
 					booktabs = table.hasAttribute("data-booktabs"),
 					rg = this.matrix(),
-					border;
+					border,
+					useTabu = this.shouldUseTabu(); // Must we use "tabu" package ?
+				this.useTabu = useTabu;
 				// Determine header
 				var colHeaders = this.headers(),
-				borderNewLine = $id("opt-latex-border").checked
+				borderNewLine = $id("opt-latex-border").checked,
 				header = colHeaders.join("");
 				var str = "\\begin{table}[]\n";
 				if(this._id("table-opt-center").checked){
@@ -1485,7 +1556,13 @@ this.getHTML = (function(){
 				if (!caption.numbered && caption.label) {
 					str += "\\label{" + caption.label + "}\n";
 				}
-				str += "\\begin{tabular}{" + header + "}";
+				if(useTabu){
+					this.packages["tabu"] = true;
+					// Convert header to tabu
+					header = header.replace(/\:/g, "|[\\arrayrulewidth on 4pt off 4pt]")
+						       .replace(/\;\{[^}]*\}/g, "|[\\arrayrulewidth on 1pt off 1pt]");
+				}
+				str += "\\begin{"+(useTabu ? "tabu" : "tabular")+"}{" + header + "}";
 				var rg2 = [];
 				for(var i=0;i<rg.length;i++){
 					var cells = rg[i];
@@ -1545,13 +1622,19 @@ this.getHTML = (function(){
 						str += "\\\\"+ (borderNewLine ? "\n" : " ") + border;
 					}
 				}
-				str += "\n\\end{tabular}\n\\end{table}";
+				str += "\n\\end{"+(useTabu ? "tabu" : "tabular")+"}\n\\end{table}";
 				// Booktabs
 				if (/\\(bottomrule)|(toprule)|(midrule)|(cmidrule)|(heavyrulewidth)|(lightrulewidth)/.test(str)) {
 					this.packages["booktabs"] = true;
 				}
+				if(useTabu){
+					str = str.replace(/\\hdashline\[[^\]]+\]/g, "\\tabucline[\\arrayrulewidth on 1pt off 1pt]{-}")
+						 .replace(/\\hdashline/g, "\\tabucline[\\arrayrulewidth on 4pt off 4pt]{-}")
+						 .replace(/\\cdashline{([^}]+)}\[[^\]]+\]/g, "\\tabucline[\\arrayrulewidth on 1pt off 1pt]{$1}")
+						 .replace(/\\cdashline{([^}]+)}/g, "\\tabucline[\\arrayrulewidth on 4pt off 4pt]{$1}");
+				}
 				// arydshln
-				if (/\\(cdashline|hdashline)/.test(str)) {
+				else if (/\\(cdashline|hdashline)/.test(str)) {
 					this.packages["arydshln"] = true;
 				}
 				// Packages
@@ -1561,7 +1644,7 @@ this.getHTML = (function(){
 						packages += "% \\usepackage{" + i + "}\n";
 					}
 				}
-				if (this.packages["arydshln"]) {
+				if (!useTabu && this.packages["arydshln"]) {
 					// Compatibility between packages
 					packages += "% \\usepackage{arydshln}\n";
 				}
@@ -1574,7 +1657,6 @@ this.getHTML = (function(){
 				return (packages ? packages + "\n\n" : "") + str;
 			}
 			this.beautifyRows = function(rows){
-console.dir(rows);debugger;
 				var rows2 = [], n = 0, start = [], max = [];
 				if($id("opt-latex-whitespace").checked){
 					for(var i=0;i<rows.length;i++){
@@ -1793,15 +1875,23 @@ console.dir(rows);debugger;
 						return ""
 					}
 					if (always) {
-						return {
-							normal: "\\hline",
-							double: "\\hline\\hline",
-							toprule: "\\toprule",
-							midrule: "\\midrule",
-							bottomrule: "\\bottomrule",
-							hdashline: "\\hdashline",
-							dottedline: "\\hdashline[1pt/1pt]"
-						}[border];
+						if(border == "trimfull"){
+							var border = "";
+							for(var i=0;i<matrix[Math.max(0,n-1)].length;i++){
+								border+="\\cmidrule(lr){"+i+"-"+i+"}";
+							}
+						}
+						else{
+							return {
+								normal: "\\hline",
+								double: "\\hline\\hline",
+								toprule: "\\toprule",
+								midrule: "\\midrule",
+								bottomrule: "\\bottomrule",
+								hdashline: "\\hdashline",
+								dottedline: "\\hdashline[1pt/1pt]"
+							}[border];
+						}
 					} else {
 						border = ""
 						var o = {
@@ -1811,6 +1901,12 @@ console.dir(rows);debugger;
 							bottomrule: "\\cmidrule[\\heavyrulewidth]",
 							hdashline: "\\cdashline",
 							dottedline: "\\cdashline"
+						}
+						if(subBorder.trimfull){
+							var bd = subBorder.trimfull;
+							for(var i=0;i<bd.length;i++){
+								border += "\\cmidrule(lr){"+bd[i]+"-"+bd[i]+"}";
+							}
 						}
 						if (!subBorder["double"] || subBorder.toprule || subBorder.midrule || subBorder.bottomrule) {
 							for (var i in subBorder) {
@@ -1826,7 +1922,7 @@ console.dir(rows);debugger;
 													// Rare case
 													var part = "\\cmidrule{" + (start + 1) + "-" + (actu + 1) + "}";
 													border += part + "\\morecmidrule" + part;
-												} else {
+												} else if(i != "trimfull"){
 													border += o[i] + "{" + (start + 1) + "-" + (actu + 1) + "}";
 													if (i == "dottedline") {
 														border += "[1pt/1pt]";

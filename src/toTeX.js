@@ -28,10 +28,10 @@
 		}
 		if(headerRule != rule || expand){
 			if(oldtex == tex){
-				tex = "\\kern 3pt " + tex + "\\hfill\\kern 3pt ";
+				tex = "\\kern3pt " + tex + "\\hfill\\kern3pt ";
 			}
 			else{
-				tex = "\\kern 3pt " + tex + "\\kern 3pt ";
+				tex = "\\kern3pt " + tex + "\\kern3pt ";
 			}
 			if(isFirst){
 				if(/^[^%]+%/.test(rule)){
@@ -112,7 +112,7 @@
 			if(i==0 && finalvrules[i] && finalvrules[i].charAt(0) != "%"){
 				header+="\\vrule";
 			}
-			header += "\\kern 3pt "
+			header += "\\kern3pt "
 			if(finalalign[i] != "l"){
 				header += "\\hfil ";
 			}
@@ -120,7 +120,7 @@
 			if(finalalign[i] != "r"){
 				header += "\\hfil";
 			}
-			header+="\\kern 3pt";
+			header+="\\kern3pt";
 			if(finalvrules[i] && !/^[^%]*%$/.test(finalvrules[i])){
 				header += "\\vrule"
 			}
@@ -139,10 +139,10 @@
 		if(always){
 			return "\\noalign{" +
 				(({
-					"toprule" : "\\hrule height 0.8pt",
-					"bottomrule" : "\\hrule height 0.8pt",
-					"midrule" : "\\hrule height 0.5pt",
-					"double" : "\\hrule\\kern 1pt\\hrule"
+					"toprule" : "\\hrule height0.8pt",
+					"bottomrule" : "\\hrule height0.8pt",
+					"midrule" : "\\hrule height0.5pt",
+					"double" : "\\hrule\\kern1pt\\hrule"
 				}[border]) || "\\hrule" )
 			+ "}"
 		}
@@ -176,8 +176,13 @@
 	table.createInterpreter("plain", function(){
 
 		var matrix = this.matrix(),
-		booktabs = this.element.hasAttribute("data-booktabs")
-		str  = "\\vbox{\n";
+		booktabs = this.element.hasAttribute("data-booktabs"),
+                centering = this._id("table-opt-center").checked,
+		str = "";
+		if(centering){
+			str = "$$"; 
+		}
+		str += "\\vbox{\n";
 		str += "\\offinterlineskip\n"
 		str += "\\halign{\n";
 		var isHeader = true,
@@ -188,7 +193,7 @@
 		str += header;
 		for(var i=0, border;i<matrix.length;i++){
 			if(i  == 0 && booktabs){
-				border = "\\noalign{\\hrule height 0.8pt}"
+				border = "\\noalign{\\hrule height0.8pt}"
 			}
 			else{
 				border = this.hBorder(i, getHBorder, matrix);
@@ -217,7 +222,7 @@
 		}
 		var bottomborder;
 		if(booktabs){
-			bottomborder = "\\noalign{\\hrule height 0.8pt}"
+			bottomborder = "\\noalign{\\hrule height0.8pt}"
 		}
 		else{
 			bottomborder = this.hBorder(matrix.length, getHBorder, matrix);
@@ -227,8 +232,11 @@
 			str += "\n"+bottomborder
 		}
 		str += "\n}\n}";
+		if(centering){
+			str += "$$";
+		}
 		if(useRotate){
-			this.message("The rotation macro for Plain TeX is in development and only works with PDFTeX.");
+			this.message("The rotation macro for Plain TeX only works with PDFTeX.");
 			return rotateMacro+str;
 		}
 		return str;

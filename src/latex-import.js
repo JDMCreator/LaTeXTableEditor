@@ -42,10 +42,42 @@ var latex = {},
 		}
 	}
 },
+getLength = function(code){
+	// TODO
+	var length = "";
+	var actu = "";
+	for(var i=0;i<code.length;i++){
+		var c = code.charAt(i);
+		if(c == " " || c == "\\"){
+			if(/\s*-?(?:[0-9]*.[0-9]+|[0-9]+)(?:pt|mm|cm|in|ex|em|bp|pc|dd|cc|nd|nc|sp)\s*/i.test(actu)){
+				length += actu;
+			}
+			else if(actu.trim() == "plus" || actu.trim() == "minus"){
+				length += actu;
+			}
+			else if(/\\(baselineskip|baselinestretch|columnsep|columnwidth|evensidemargin|linewidth|normalbaselineskip|oddsidemargin|paperwidth|paperheight|parindent|parskip|tabcolsep|textheight|textwidth|topmargin|unitlength)/.test(actu)){
+				length += actu;
+			}
+		}
+	}
+},
+commandNumbers = {
+	multicolumn : 3,
+	multirow : 3,
+	multirowcell : 2,
+	multirowthead : 2,
+	tabucline : 1,
+	taburowcolors : 2
+},
+specialSeparators = {
+	cmidrule : ["(", ")"],
+	taburulecolor : ["|", "|"]
+},
  command=function(code){
 	var o ={
 		options : [],
 		args : [],
+		sp : [],
 		full : "",
 		asterisk : false
 	}
@@ -76,7 +108,7 @@ var latex = {},
 		o.asterisk = true;
 		nextchar = code.charAt(name.length+1);
 	}
-	if(nextchar!="[" && nextchar!="{" && !/^\s$/.test(nextchar)){
+	if(nextchar!="[" && nextchar!="{" && !/^\s$/.test(nextchar) && !commandNumbers[realname]){
 		o.name = realname;
 		o.args.push(nextchar);
 		o.full="\\"+realname+""+nextchar;
@@ -95,6 +127,13 @@ var latex = {},
 				mode = 2;
 				nbofbrack = 0;
 				actu = "";
+			}
+			else if(specialSeparators[realname] && char == specialSeparators[realname][0]){
+				mode = 3;
+				actu = "";
+			}
+			else if(commandNumbers[realname] && o.args.length < commandNumbers[realname]){
+				o.args.push(char);
 			}
 			else{
 				o.name = realname;
@@ -122,6 +161,15 @@ var latex = {},
 				actu += ""+char;
 			}
 		}
+		else if(mode == 3){
+			if(char == specialSeparators[realname][1]){
+				mode = 1;
+				o.sp.push(actu);
+			}
+			else{
+				actu += "" + char;
+			}
+		}
 		else{ // mode 2
 			if(char == "}"){
 				if(nbofbrack<=0){
@@ -144,13 +192,13 @@ var latex = {},
 	}
 },
 importTable = function(code){
-var tabular = /\\begin{(tabu\*?|sidewaystable|table|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code);
+var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code);
 	if(!tabular){
 		return false;
 	}
 	var type = tabular[1], obj = {}, code2 = code.substring(tabular.index), initEnv = envirn(code2);
 	code = initEnv.content;
-	if(type == "table" || type == "sidewaystable"){
+	if(type == "table" || type == "table*" || type == "sidewaystable"){
 		if(/\\begin{(tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
 			var caption = code.indexOf("\\caption");
 			if(caption >=0){
@@ -280,12 +328,25 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table|xtabular|longtable|mpxtabula
 				actuBorder = name;
 				i+=com.full.length-1;
 			}
-			else if(name == "cline" || name == "cmidrule" || name == "tabucline"){
-				if(name == "tabucline"){
-					// SHORT FIX TO MAKE THE FUNCTION UNDERSTAND 'TABUCLINE' LIKE CLINE
-					// TODO : Implement different styles for tabucline (ex : dotted, dashed)
-					name = "cline";
+			else if(name == "tabucline"){
+				// TODO : Implement different styles for tabucline (ex : dotted, dashed)
+				var span = com.args[0];
+				if(span == "-"){
+					// Span full row
+					actuBorder = "normal";
 				}
+				else{
+					if(!actuBorder){
+						if(!actuBorder.push){
+							actuBorder = [];
+						}
+						actuBorder.push(["cline", com.args[0].replace(/^-/,"1-")]);
+					}
+				}
+				i+=com.full.length-1;
+			}
+			else if(name == "cline" || name == "cmidrule"){
+
 				if(!actuBorder){
 					if(!actuBorder.push){
 						actuBorder = [];
@@ -406,7 +467,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table|xtabular|longtable|mpxtabula
 				if(subborder[0]  == "cline" || subborder[0] == "cmidrule"){
 					var end = subborder[1].split(/-+/),
 					start = parseInt(end[0],10)-1;
-					end = parseInt(end[1],10)-1,
+					end = (parseInt(end[1],10)||row.length)-1,
 					pos = 0;
 					for(k=0;k<row.length;k++){
 						var o = row[k];
@@ -450,15 +511,16 @@ setCellO = function(table, x, y, code, header){
 	html = getHTML(code,o);
 	o.html = html;
 	var css = "";
-	var span = /\\multicolumn{([0-9]*)}{([^}]+)}/.exec(code);
+	var span = /\\multicolumn(?:{([0-9]*)}|([0-9]))(?:{([^}]+)}|[^}])/.exec(code);
 	if(span){
-		header = span[2];
-		o.colSpan = parseInt(span[1], 10);
+		header = span[3]||span[4];
+		o.colSpan = parseInt(span[1]||span[2], 10);
 	}
-	span = /\\multirow{(-?[0-9]*)}{/.exec(code);
+	span = /\\multirow(?:cell|thead|)(?:{(-?[0-9]*)}|([0-9]))/.exec(code);
 	if(span){
-		o.rowSpan = parseInt(span[1], 10);
+		o.rowSpan = parseInt(span[1]||span[2], 10);
 	}
+	
 	// Treat header;
 	header = header || "l";
 	header = header.replace(/!{\\vrule[^}]*}/g, "|");
@@ -757,6 +819,9 @@ treatCom = function(code){
 	else if(name == "\\" || name == "newline" || name == "linebreak"){
 		html += "<br>"
 	}
+	else if(name == "P"){
+		html += "¶"
+	}
 	else if(name == "^"){
 		if(com.args.length == 0){
 			html += "^";
@@ -778,6 +843,9 @@ treatCom = function(code){
 	}
 	else if(name == "multicolumn" || name == "multirow"){
 		html += getHTML(com.args[2]);
+	}
+	else if(name == "multirowcell" || name == "multirowhead"){
+		html += getHTML(com.args[1]);
 	}
 	else if(name == "verb"){
 		var div = document.createElement("div");

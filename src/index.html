@@ -4,10 +4,12 @@
 <head>
 <meta charset="UTF-8"> 
 
-<meta name="description" content="A powerful and robust LaTeX, Plain TeX, Markdown and HTML Table Editor">
+<meta name="description" content="A powerful and robust LaTeX, Plain TeX, Markdown, CSV and HTML Table Editor. Also convert LaTeX tables to Plain TeX, Markdown, CSV or HTML.">
 	<title>LaTeX Tables Editor</title>
 	<link href="css.css" rel="stylesheet">
 	<link href="css/bootstrap.min.css" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 	<script type="text/javascript" src="js/jquery.min.js">
 	</script>
 	<script type="text/javascript" src="js/bootstrap.min.js">
@@ -20,6 +22,8 @@
 	<script type="text/javascript" src="toTeX.js">
 	</script>
 	<script type="text/javascript" src="toHTML.js">
+	</script>
+	<script type="text/javascript" src="toCSV.js">
 	</script>
 
 	<script type="text/javascript" src="latex-import.js">
@@ -75,6 +79,9 @@
 							<button type="button" data-toggle="tooltip" title="Save/Export to JSON" class="btn btn-default" onclick="table.saveToJSON()"><span class="glyphicon glyphicon-floppy-disk"></span></button>
 							<button type="button" data-toggle="tooltip" title="Download LaTeX" class="btn btn-default" data-toggle="tooltip" onclick="table.prepareDownload()"><span class="glyphicon glyphicon-download-alt"></span></button>
 						</div>
+						<div class="btn-group" role="group" aria-label="Undo">
+							<button type="button" data-toggle="tooltip" title="Undo" onclick="table.statesManager.undo()" class="btn btn-default"><span class="glyphicon glyphicon-repeat" style="transform: scale(-1, 1)"></span></button>
+						</div>
 						<div class="btn-group" role="group" aria-label="...">
 							<button type="button" data-toggle="tooltip" title="Edit mode" class="btn btn-default active" id="button-mode-edit" onclick="table.mode(0)"><span class="glyphicon glyphicon-pencil"></span></button>
 							<button type="button" data-toggle="tooltip" title="View mode" class="btn btn-default" id="button-mode-view" onclick="table.mode(1)"><span class="glyphicon glyphicon-eye-open"></span></button>
@@ -125,6 +132,7 @@
 	<option value="plain">Plain TeX</option>
 	<option value="md">Markdown</option>
 	<option value="html">HTML</option>
+	<option value="csv">CSV</option>
 	</select>
 						</div>
 						<div class="form-group" data-option-group="latex">
@@ -136,16 +144,17 @@
 							<div class="row">
 								<div class="col-md-6">
 									<input type="checkbox" class="input-control" id="blacklist-array" value="array" checked disabled> <label for="blacklist-array">Array</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-arydshln" value="arydshln" checked disabled> <label for="blacklist-arydshln">Arydshln</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-arydshln" value="arydshln" checked> <label for="blacklist-arydshln">Arydshln</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-booktabs" value="booktabs" checked disabled> <label for="blacklist-booktabs">Booktabs</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked disabled> <label for="blacklist-hhline">Hhline</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
 								</div>
 								<div class="col-md-6">
-									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-multirow" value="multirow" checked> <label for="blacklist-multirow">Multirow</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label>
 								</div>
 							</div>
@@ -164,6 +173,9 @@
 						</div>
 						<div class="form-group" data-option-group="html" style="display:none;">
 							<h4>HTML options</h4>
+						</div>
+						<div class="form-group" data-option-group="csv" style="display:none;">
+							<h4>CSV options</h4>
 						</div>
 					</div>
 
@@ -239,6 +251,9 @@
 <option value="toprule">[\toprule] Top rule</option>
 <option value="midrule">[\midrule] Mid rule</option>
 <option value="bottomrule">[\bottomrule] Bottom rule</option>
+<!---
+<option value="trimfull">[\cmidrule(lr)] Trimmed rule</option>
+----->
 </optgroup>
 <optgroup label="arydshln">
 <option value="hdashline">[\hdashline] Dashed line</option>
@@ -314,21 +329,16 @@
 </div>
 		</div>
 		<div class="col-md-6">
-			<div class="form-group">
-				<select class="form-control" id="import_format">
-					<option value="auto">Auto</option>
-					<option value="json">JSON</option>
-					<option value="latex">LaTeX</option>
-					<option value="csv">CSV</option>
-				</select></div>
-			<div class="form-group">
-				<textarea class="form-control" id="import_value" placeholder="Content of your file to import"></textarea>
-			</div><div class="text-center">
-			<button type="button" class="btn btn-primary" onclick="table.importData();$('#myModal').modal('hide')">Import the content of a file</button></div>
-<p class="text-center">- or -</p>
-<p>Paste here a table from a webpage, a Word document, an Excel document or an OpenOffice document.</p>
-<div class="form-control" contenteditable id="extract-div" style="height:auto;max-height:300px;"></div>
-			<button type="button" class="btn btn-primary" onclick="table.extract($id('extract-div'));$('#myModal').modal('hide')">Extract content</button>
+			<div class="text-center">
+			<p> - Or use one of these options - </p> 
+			<div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$id('import_format').value='latex';$('#importModal').modal('show');">Import a LaTeX table</button></div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$id('import_format').value='auto';$('#importModal').modal('show');">Import JSON or CSV</button></div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$('#pasteModal').modal('show');">Import from Word, Excel or OpenOffice</button></div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$('#pasteModal').modal('show');">Import by pasting a table</button></div>
+			</div>
+			</div>
+			
 		</div>
 	</div>
 	</div>
@@ -337,6 +347,51 @@
   </div>
 </div>
 
+
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Import from LaTeX, JSON and CSV</h4>
+      </div>
+      <div class="modal-body">
+<div class="form-group">
+				<select class="form-control" id="import_format">
+					<option value="auto">Auto</option>
+					<option value="json">JSON</option>
+					<option value="latex">LaTeX</option>
+					<option value="csv">CSV</option>
+				</select></div>
+			<div class="form-group">
+				<textarea class="form-control" id="import_value" style="min-height:200px;" placeholder="Content of your file to import"></textarea>
+			</div><div class="text-center">
+			<button type="button" class="btn btn-primary" onclick="table.importData();$('#importModal').modal('hide')">Import the content of a file</button></div>
+
+
+	</div>
+	</div>
+      </div>
+</div>
+
+<div class="modal fade" id="pasteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Paste a table</h4>
+      </div>
+      <div class="modal-body">
+<p>Paste here a table from a webpage, a Word document, an Excel document or an OpenOffice document.</p>
+<div class="form-control" contenteditable id="extract-div" style="height:auto;min-height:200px;margin-bottom:2px;max-height:300px;"></div>
+<div class="text-center">
+			<button type="button" class="btn btn-primary" onclick="table.extract($id('extract-div'));$('#myModal').modal('hide')">Extract content</button></div>
+
+
+	</div>
+	</div>
+      </div>
+</div>
 
 <div class="modal fade" id="download" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
@@ -356,7 +411,7 @@
 		$(function(){
 			var isIE = /*@cc_on!@*/false || !!document.documentMode;
 			var isEdge = !isIE && !!window.StyleMedia;
-			if(isEdge || true){
+			if(isEdge){
 				$("#edge-info").show();
 			}
 			$('nav a')
@@ -423,7 +478,13 @@
 			}
 			createTableCreater();
 		});
-/*
+		document.addEventListener("keydown", function(e){
+			e = event || e;
+			if(e.keyCode == 90 && (e.ctrlKey || e.metaKey) && table.statesManager && table.statesManager.undo){
+				table.statesManager.undo();
+				e.preventDefault();
+			}
+		}, true);
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -431,7 +492,6 @@
 
   ga('create', 'UA-102898458-1', 'auto');
   ga('send', 'pageview');
-*/
 		</script>
 </body>
 

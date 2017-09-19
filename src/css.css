@@ -7,6 +7,12 @@
 			min-height:300px;
 			font-family:monaco, "Lucida Console", Courier, monospace;
 		}
+		.btn-import{
+			width:100%;
+			margin-top:2px;
+			margin-bottom:2px;
+			text-align:center;
+		}
 		#table {
 			font-family: "Computer Modern", sans-serif;
 			margin-top:4px;
@@ -248,7 +254,34 @@
 		#latex_content {
 			width: 100%;
 		}
-
+		#table td[data-border-bottom="trimfull"]{
+			position:relative;
+		}
+		#table td[data-border-bottom="trimfull"]::after{
+			  content:" ";
+  			  position:absolute;
+  			left:0.5em;
+  			right:0.5em;
+  			bottom:-1px;
+  			border-bottom:0.5px solid black;
+		}
+		#table td[data-border-top="trimfull"]{
+			position:relative;
+		}
+		#table td[data-border-top="trimfull"]::after{
+			  content:" ";
+  			  position:absolute;
+  			left:0.5em;
+  			right:0.5em;
+  			top:-1px;
+  			border-top:0.5px solid black;
+		}
+		#table td[data-border-left="trimfull"]{
+			border-left:1px solid black !important;
+		}
+		#table td[data-border-right="trimfull"]{
+			border-right:1px solid black !important;
+		}
 		#table tr[data-border-top="toprule"] td,
 		#table td[data-border-top="toprule"] {
 			padding-top: 0.65ex !important;
