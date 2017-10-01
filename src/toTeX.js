@@ -1,4 +1,5 @@
 (function(){
+	"use strict";
 	var getTexFromCell = function(cell){
 		if(!cell || !cell.cell){return "";}
 		var latex = this.generateFromHTML(this.getHTML(cell.cell), true);
@@ -6,11 +7,93 @@
 		if(latex.indexOf("\\\\") >= 0){
 			latex = "\\vtop{\\hbox{\\strut " + latex.replace(/\s*\\{2,}\s*/g, "}\\hbox{\\strut ") + "}}";
 		}
-		if(cell.cell.hasAttribute("data-rotated")){
+		if(cell.cell.hasAttribute("data-rotated") && document.getElementById('opt-tex-macro').checked){
 			useRotate = true;
 			latex = "\\rotatecell{"+latex+"}";
 		}
 		return latex;
+	},
+	nonASCII = false,
+	escapeStr = function(str) {
+		if (!str.normalize) {
+			return str;
+		}
+		var newstr = "",
+			graph_table = {
+				"768": "`",
+				"769": "'",
+				"770": "^",
+				"776": "\"",
+				"807": "c ",
+				"771": "~",
+				"776": "\"",
+				"865": "t ",
+				"772": "=",
+				"775": ".",
+				"778": "r ",
+				"774": "u ",
+				"780": "v ",
+				"779": "H ",
+				"808": "k ",
+				"803": "d ",
+				"817": "b ",
+			},
+			char_table = {
+				"338": "OE",
+				"339": "oe",
+				"198": "AE",
+				"230": "ae",
+				"216": "O",
+				"248": "o",
+				"338": "OE",
+				"321": "L",
+				"322": "l",
+				"223": "ss"
+			};
+		str = str.normalize("NFD");
+		var lastchar = "",
+			waiting = false;
+		for (var i = 0, code, char; i < str.length; i++) {
+			code = str.charCodeAt(i),
+				char = str.charAt(i);
+			if (waiting) {
+				if (char == "i" || char == "j") {
+					newstr += "\\";
+				}
+				newstr += char + "}";
+				waiting = false;
+				continue;
+			}
+			waiting = false;
+			if (code < 128) {
+				newstr += "" + char;
+				lastchar = char;
+			} else if (graph_table[code.toString()]) {
+				var code = graph_table[code.toString()];
+				newstr = newstr.slice(0, -1)
+				if (code == "t ") {
+					newstr += "\\t{";
+					if (lastchar == "i" || lastchar == "j") {
+						newstr += "\\";
+					}
+					newstr += lastchar;
+					waiting = true;
+				} else {
+					newstr += "\\" + code;
+					if (lastchar == "i" || lastchar == "j") {
+						newstr += "\\";
+					}
+					newstr += lastchar;
+				}
+			} else if (char_table[code.toString()]) {
+				newstr += "\\" + char_table[code.toString()] + "{}";
+			} else {
+				nonASCII = true;
+				newstr += "" + char;
+				lastchar = char;
+			}
+		}
+		return newstr
 	},
 	useRotate = false,
 	updateCellInfo = function(cell, isFirst, rule, headerAlign, headerRule){
@@ -182,6 +265,7 @@
 		if(centering){
 			str = "$$"; 
 		}
+		useRotate = false;
 		str += "\\vbox{\n";
 		str += "\\offinterlineskip\n"
 		str += "\\halign{\n";
@@ -191,7 +275,38 @@
 		headerV = headerO.rules,
 		headerA = headerO.align;
 		str += header;
+		var rg = [];
 		for(var i=0, border;i<matrix.length;i++){
+			var row = matrix[i],
+			rgrow = [{text:"",colSpan:1}];
+			for(var j=0;j<row.length;j++){
+				var cell = row[j];
+				if(!cell || cell.ignore){
+					rgrow.push(false);
+				}
+				else{
+					var data = cell.update(headerA[j],headerV[j]),
+					colspan = (cell.cell||cell.refCell.cell).colSpan,
+					content = "";
+					j+=colspan-1;
+					if(colspan>1){
+						if(colspan>9){
+							colspan = "{" + colspan + "}";
+						}
+						content = "\\multispan"+colspan+ cell.update(true);
+					}
+					else{
+						content = data;
+					}
+					rgrow.push({text:content, colSpan:colspan});
+				}
+				
+			}
+			rg.push(rgrow);
+			
+		}
+		var beautifyRows = this.beautifyRows(rg);
+		for(var i=0;i<beautifyRows.length;i++){
 			if(i  == 0 && booktabs){
 				border = "\\noalign{\\hrule height0.8pt}"
 			}
@@ -199,27 +314,9 @@
 				border = this.hBorder(i, getHBorder, matrix);
 			}
 			str +="\\cr\n"+(border ? border + "\n" : "");
-			var row = matrix[i];
-			for(var j=0;j<row.length;j++){
-				var cell = row[j];
-				str += "&"
-				if(cell && !cell.ignore){
-					var data = cell.update(headerA[j],headerV[j]),
-					colspan = (cell.cell||cell.refCell.cell).colSpan;
-					j+=colspan-1;
-					if(colspan>1){
-						if(colspan>9){
-							colspan = "{" + colspan + "}";
-						}
-						str+= "\\multispan"+colspan+ cell.update(true);
-					}
-					else{
-						str+=data;
-					}
-				}
-				
-			}
+			str += beautifyRows[i];
 		}
+		console.dir(beautifyRows);
 		var bottomborder;
 		if(booktabs){
 			bottomborder = "\\noalign{\\hrule height0.8pt}"
@@ -236,8 +333,15 @@
 			str += "$$";
 		}
 		if(useRotate){
-			this.message("The rotation macro for Plain TeX only works with PDFTeX.");
-			return rotateMacro+str;
+			this.message("The rotation macro for Plain TeX only works with PDFTeX.", "warning");
+			str = rotateMacro+str;
+		}
+		if(document.getElementById('opt-tex-escape').checked){
+			// We escape the characters in the document
+			str = escapeStr(str);
+			if(nonASCII){
+				this.message("Your generated TeX code still contains non-ASCII characters.", "warning")
+			}
 		}
 		return str;
 	})

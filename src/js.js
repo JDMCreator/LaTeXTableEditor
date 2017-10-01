@@ -10,7 +10,7 @@ function $id(id) {
 			return cellHeader == colHeader
 		},
 		table = new(function() {
-			this.version = "0.4";
+			this.version = "0.5";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -66,7 +66,15 @@ function $id(id) {
 					this.importFromJSON(JSON.parse(content));
 				}
 				else if(format == "latex"){
-					this.importFromJSON(table.latex.importTable(content));
+					try{
+						this.importFromJSON(table.latex.importTable(content));
+					}
+					catch(e){
+						if(window.console){
+							console.error(e);
+						}
+						$("#latex_import_error").show();
+					}
 				}
 				else if(format == "csv"){
 					this.importFromJSON(this.importCSV(content));
@@ -675,11 +683,24 @@ this.getHTML = (function(){
 						$id("button-mode-edit")
 							.classList.add("active");
 					}
+					if(n != 2){
+						// If we are not in the border editor, we hide information about it
+						$("#border-editor-info").hide();
+					}
 				}
 			}
 			this.log = "";
 			this.message = function(text, type) {
-				this.log += text + "\n---------------\n";
+				if(type){
+					type=type.toLowerCase();
+				}
+				else{type = "";}
+				if(type == "warning"){
+					this.log += "<table><tr><td><span class='glyphicon glyphicon-exclamation-sign' style='padding-right:4px;'></span></td><td>"+text+"</td><tr></table><hr>";
+				}
+				else{
+					this.log += "<p class='"+type+"'>"+text+"</p><hr>";
+				}
 			}
 			this.importFromJSON = function(o) {
 				if (o.autoBooktabs) {
@@ -690,6 +711,19 @@ this.getHTML = (function(){
 					this.element.removeAttribute("data-booktabs");
 					$id("button-booktabs")
 						.classList.remove("active");
+				}
+				if (o.options){
+					for(var i in o.options){
+						var elem = $id("opt-"+i);
+						if(o.options.hasOwnProperty(i) && elem){
+							if(elem.type == "radio" || elem.type == "checkbox"){
+								elem.checked = o.options[i];
+							}
+							else{
+								elem.value = o.options[i];
+							}
+						}
+					}
 				}
 				if (o.caption) {
 					if (o.caption.numbered) {
@@ -746,11 +780,16 @@ this.getHTML = (function(){
 				this.element.appendChild(table);
 			}
 			this.exportToJSON = function() {
-				var o = {},
+				var o = {options:{}},
 					table = this.element;
 				o.autoBooktabs = table.hasAttribute("data-booktabs");
 				o.caption = this.caption();
-				o.cells = []
+				o.cells = [];
+				var options = document.querySelectorAll("*[id^='opt-']");
+				for( var i = 0,option; i < options.length;i++){
+					option = options[i];
+					o.options[option.id.substring(option.id.indexOf("-")+1)] = (option.type == "radio" || option.type == "checkbox") ? option.checked : option.value;
+				}
 				for (var i = 0; i < table.rows.length; i++) {
 					var cells = table.rows[i].cells;
 					o.cells.push([]);
@@ -1061,7 +1100,8 @@ this.getHTML = (function(){
 				document.execCommand("insertBrOnReturn", false, false);
 				this.Table = new Table(table);
 			}
-			this.generateFromHTML = function(html, ignoreMultiline) {
+			this.generateFromHTML = function(html, ignoreMultiline, align) {
+				align = align || "l";
 				var div = document.createElement("div"), hasMultiline;
 				div.innerHTML = html;
 				var el = div.querySelectorAll("span.latex-equation");
@@ -1133,12 +1173,13 @@ this.getHTML = (function(){
 				str = str.replace(/[ ]{2,}/g, " ")
 					.replace(/[\n\r]+/g, "");
 				if (hasMultiline && !ignoreMultiline) {
-					str = "\\begin{tabular}[c]{@{}l@{}}" + str + "\\end{tabular}";
+					str = "\\begin{tabular}[c]{@{}"+ align +"@{}}" + str + "\\end{tabular}";
 				}
 				return str
 			};
 
-			this.generateForCell = function(cell) {
+			this.generateForCell = function(cell, align) {
+				align = align || "l";
 				var text = "";
 				if (cell.hasAttribute("data-two-diagonals")) {
 					this.packages["diagbox"] = true;
@@ -1155,36 +1196,31 @@ this.getHTML = (function(){
 				} else if (cell.hasAttribute("data-rotated")) {
 					if (cell.rowSpan > 1) {
 						if (this.blacklistPackages["makecell"]) {
-							var inside = this.generateFromHTML(this.getHTML(cell), true)
-							if (this.blacklistPackages["tabularx"]) {
-								this.message("You may have to adjust the following value in one of your rotated cell : \"" + (cell.rowSpan - 0.2) + "\\normalbaselineskip\"");
-								text = "\\begin{sideways}\\begin{tabular}{@{}p{" + (cell.rowSpan - 0.2) + "\\normalbaselineskip}@{}}" +
-									inside + "\\end{tabular}\\end{sideways}";
+							var inside = this.generateFromHTML(this.getHTML(cell), true, align)
+								this.message("You may have to adjust the following value in one of your rotated cell : \"" + (cell.rowSpan) + "\\normalbaselineskip\"", "warning");
+								text = "\\begin{sideways}\\begin{tabular*}{" + 
+									cell.rowSpan + "\\normalbaselineskip}{"+align+"}"
+									+ inside +
+									"\\end{tabular*}\\end{sideways}";
 								this.packages["rotating"] = true;
-							} else {
-								this.message("You may have to adjust the following value in one of your rotated cell : \"" + (cell.rowSpan) + "\\normalbaselineskip\"");
-								text = "\\begin{sideways}\\begin{tabularx}{" + cell.rowSpan + "\\normalbaselineskip}{X}" + inside +
-									"\\end{tabularx}\\end{sideways}";
-								this.packages["rotating"] = this.packages["tabularx"] = true;
-							}
 						} else {
-							text = "\\rotcell{" + this.generateFromHTML(this.getHTML(cell)) + "}"
+							text = "\\rotcell{" + this.generateFromHTML(this.getHTML(cell), false, align) + "}"
 							this.packages["makecell"] = true;
 						}
 					} else {
 						if (this.blacklistPackages["rotating"]) {
-							text = "\\rotcell{" + this.generateFromHTML(this.getHTML(cell)) + "}"
+							text = "\\rotcell{" + this.generateFromHTML(this.getHTML(cell), false, align) + "}"
 							this.packages["makecell"] = true;
 						} else {
-							text = "\\begin{sideways}" + this.generateFromHTML(this.getHTML(cell)) + "\\end{sideways}"
+							text = "\\begin{sideways}" + this.generateFromHTML(this.getHTML(cell), false, align) + "\\end{sideways}"
 							this.packages["rotating"] = true;
 						}
 					}
 				} else if (cell.rowSpan > 1 && !this.blacklistPackages["makecell"] && !this.blacklistPackages["multirow"]) {
-					text = "\\makecell{" + this.generateFromHTML(this.getHTML(cell), true) + "}";
+					text = "\\makecell{" + this.generateFromHTML(this.getHTML(cell), true, align) + "}";
 					this.packages["makecell"] = true;
 				} else {
-					text = this.generateFromHTML(this.getHTML(cell));
+					text = this.generateFromHTML(this.getHTML(cell), false, align);
 				}
 				return text;
 			}
@@ -1271,12 +1307,26 @@ this.getHTML = (function(){
 				return o;
 			}
 			this.createCellO = function(o, row){
-				var before = row[o.x-1],
-				    after = row[o.x+1],
+				var before = null,
+				    after = null,
 				    cell = o.cell,
 				    blockMultirow = this.blacklistPackages["multirow"];
+				// find real Before
+				for(var i=o.x-1;i>=0;i--){
+					var before2 = row[i];
+					if(!before2.refCell || before2.refCell != (o.refCell || o)){
+						before = before2;break;
+					}
+				}
+				// find real After
+				for(var i=o.x+1;i<row.length;i++){
+					var after2 = row[i];
+					if(!after2.refCell || after2.refCell != (o.refCell || o)){
+						after = after2;break;
+					}
+				}
 				o.align = cell.getAttribute("data-align") || "l"
-				o.content = this.generateForCell(cell);
+				o.content = this.generateForCell(cell, o.align);
 				o.fullHeader = this.convertToHeader(this.getContextualHeader(before, o, after));
 				o.header = this.convertToHeader(this.getComparableHeader(before, o, after));
 				o.span = (cell.rowSpan != 1 || cell.colSpan != 1);
@@ -1480,18 +1530,74 @@ this.getHTML = (function(){
 				}
 				this.message("Generated in " + ((+new Date()) - start) + "ms");
 				$id("log")
-					.value = "Log (" + ((new Date())
-						.toLocaleTimeString()) + ")\n=========\n" + this.log;
+					.innerHTML = "<strong>Log</strong> (" + ((new Date())
+						.toLocaleTimeString()) + ")<hr>" + this.log;
+			}
+			this.shrinkHeader = function(value, shrinkRatio){
+					var _this = this;
+					if(shrinkRatio){
+						if(/\\(centering|Ragged|ragged)/.test(value)){return value;}
+						if(value.indexOf("c") >= 0){
+							value = value.replace(/c/, function(){
+								_this.packages["array"] = true;
+								return ">{\\centering\\arraybackslash}p{"+shrinkRatio+"\\linewidth}";				
+							})
+						}
+						else if(value.indexOf("l") >= 0){
+							value = value.replace(/l/, function(){
+								_this.packages["array"] = _this.packages["ragged2e"] = true;
+								return ">{\\RaggedRight\\arraybackslash}p{"+shrinkRatio+"\\linewidth}";				
+							})
+						}
+						else if(value.indexOf("r") >= 0){
+							value = value.replace(/r/, function(){
+								_this.packages["array"] = _this.packages["ragged2e"] = true;
+								return ">{\\RaggedLeft\\arraybackslash}p{"+shrinkRatio+"\\linewidth}";				
+							})
+						}
+					}
+					return value;
 			}
 			this.headers = function(matrix){
 				matrix = matrix || this.matrix();
-				var headers = [], colHeaders = [];
+				var headers = [], colHeaders = [], widthArray = [], _this = this, table = this.element;
+				if(this.shrink){
+					this.element.style.width = "8.5in";
+					for(var i=0;i<table.rows.length;i++){
+						var cells = table.rows[i].cells;
+						for(var j=0;j<cells.length;j++){
+							cells[j].style.wordBreak = "break-all";
+						}
+					}
+					var fakeRow = document.createElement("tr");
+					for(var i=0;i<matrix[0].length;i++){
+						fakeRow.appendChild(document.createElement("td"));
+					}
+					table.appendChild(fakeRow);
+					for(var i=0;i<fakeRow.childNodes.length;i++){
+						widthArray.push(Math.round(fakeRow.childNodes[i].scrollWidth/table.scrollWidth*1000)/1000);
+					}
+					for(var i=0;i<table.rows.length;i++){
+						var cells = table.rows[i].cells;
+							for(var j=0;j<cells.length;j++){
+							cells[j].style.wordBreak = "";
+						}
+					}
+					table.removeChild(fakeRow);
+					this.element.style.width = "";
+					console.log(widthArray);
+				}
 				for(var i=0;i<matrix.length;i++){
 					var row = matrix[i];
 					for(var j=0;j<row.length;j++){
 						var cell = row[j];
 						if(cell && !cell.ignore){
 							var align = (cell.refCell||cell).header;
+							if(this.shrink && widthArray[cell.x] && cell.header){
+								cell.shrinkRatio = widthArray[cell.x]
+								align = this.shrinkHeader(align, cell.shrinkRatio)
+								cell.header = align;
+							}
 							if (!headers[j]) {
 								headers[j] = {}
 							}
@@ -1518,6 +1624,27 @@ this.getHTML = (function(){
 				return colHeaders;
 			}
 			this.useTabu = false;
+			this.togglePin = (function(){
+				var isPinned = false;
+				return function(){
+					var nav = document.getElementsByTagName("nav")[0],
+					height = nav.offsetHeight;
+					if(isPinned){
+						$(".hide-on-full").show();
+						document.body.style.paddingTop = "";
+						nav.style.position = "static";
+					}
+					else{
+						$(".hide-on-full").hide();
+						document.body.style.paddingTop = (height+20) + "px";
+						nav.style.position = "fixed";
+						nav.style.left = 0;
+						nav.style.right = "300px";
+						nav.style.top = 0;						
+					}
+					isPinned = !isPinned;
+				}
+			})();
 			this.shouldUseTabu = function(){
 				if(this.blacklistPackages["arydshln"]){
 					return this.hasBorderType("hdashline") || this.hasBorderType("dottedline");
@@ -1533,6 +1660,7 @@ this.getHTML = (function(){
 			this.hasBorderType = function(type){
 				return !!this.element.querySelector("td[data-border-left='"+type+"'],td[data-border-bottom='"+type+"'],td[data-border-top='"+type+"'],td[data-border-right='"+type+"']")
 			}
+			this.shrink = false;
 			this.generateLaTeX = function(opt) {
 				this.packages = {}
 				var table = this.element,
@@ -1540,13 +1668,18 @@ this.getHTML = (function(){
 					booktabs = table.hasAttribute("data-booktabs"),
 					rg = this.matrix(),
 					border,
-					useTabu = this.shouldUseTabu(); // Must we use "tabu" package ?
+					useTabu = this.shouldUseTabu(), // Must we use "tabu" package ?
+					fit = $id("opt-fit-table").value,
+					scale = fit.indexOf("sc") >= 0,
+					shrink = fit.indexOf("sh") >= 0;
 				this.useTabu = useTabu;
-				// Determine header
-				var colHeaders = this.headers(),
+				if(shrink){
+					this.shrink = true;
+				}
+				var colHeaders = this.headers(rg),
 				borderNewLine = $id("opt-latex-border").checked,
 				header = colHeaders.join("");
-				var str = "\\begin{table}[]\n";
+				var str = "\\begin{table}\n";
 				if(this._id("table-opt-center").checked){
 					str += "\\centering\n"
 				}
@@ -1555,6 +1688,10 @@ this.getHTML = (function(){
 				}
 				if (!caption.numbered && caption.label) {
 					str += "\\label{" + caption.label + "}\n";
+				}
+				if(scale){
+					this.packages["graphicx"] = true;
+					str += "\\resizebox{\\linewidth}{!}{%\n";
 				}
 				if(useTabu){
 					this.packages["tabu"] = true;
@@ -1615,14 +1752,18 @@ this.getHTML = (function(){
 					str += "\n" + row;
 				}
 				if (booktabs) {
-					str += "\\\\"+ (borderNewLine ? "\n" : " ") +"\\bottomrule"
+					str += " \\\\"+ (borderNewLine ? "\n" : " ") +"\\bottomrule"
 				} else {
 					border = this.getBorder(rg.length, rg);
 					if (border) {
-						str += "\\\\"+ (borderNewLine ? "\n" : " ") + border;
+						str += " \\\\"+ (borderNewLine ? "\n" : " ") + border;
 					}
 				}
-				str += "\n\\end{"+(useTabu ? "tabu" : "tabular")+"}\n\\end{table}";
+				str += "\n\\end{"+(useTabu ? "tabu" : "tabular")+"}\n"
+				if(scale){
+					str += "}\n";
+				}
+				str +="\\end{table}";
 				// Booktabs
 				if (/\\(bottomrule)|(toprule)|(midrule)|(cmidrule)|(heavyrulewidth)|(lightrulewidth)/.test(str)) {
 					this.packages["booktabs"] = true;
@@ -1649,9 +1790,12 @@ this.getHTML = (function(){
 					packages += "% \\usepackage{arydshln}\n";
 				}
 				/* Show some message*/
+				if (this.shrink && this.packages["multirow"]){
+					this.message("The shrink algorithmn might not work with cells spanning multiple rows.","warning");
+				}
 				if (this.element.querySelector("td[data-two-diagonals]")) {
 					this.message(
-						"If you get an '! FP error: Logarithm of negative value!.' error, the content of the bottom part of one of your cells with two diagonals is too long."
+						"If you get an '! FP error: Logarithm of negative value!.' error, the content of the bottom part of one of your cells with two diagonals is too long.", "warning"
 					)
 				}
 				return (packages ? packages + "\n\n" : "") + str;

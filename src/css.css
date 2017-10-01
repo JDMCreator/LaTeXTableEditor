@@ -7,6 +7,14 @@
 			min-height:300px;
 			font-family:monaco, "Lucida Console", Courier, monospace;
 		}
+		#log hr{
+			margin-top:5px;
+			margin-bottom:5px;
+			border-color:#ccc;
+		}
+		#log hr:first-of-type{
+			border-width:2px;
+		}
 		.btn-import{
 			width:100%;
 			margin-top:2px;

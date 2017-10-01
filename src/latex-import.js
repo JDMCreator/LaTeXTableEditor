@@ -511,12 +511,43 @@ setCellO = function(table, x, y, code, header){
 	html = getHTML(code,o);
 	o.html = html;
 	var css = "";
-	var span = /\\multicolumn(?:{([0-9]*)}|([0-9]))(?:{([^}]+)}|[^}])/.exec(code);
+	var span = /\\multicolumn(?:{[ ]*([0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
-		header = span[3]||span[4];
+		var follow = code.substring(span.index+span[0].length);
+		if(follow.charAt(0) == "{"){
+			header = "", commentmode = false, count = 0;
+			for(var i=1,c;i<follow.length;i++){
+				c = follow.charAt(i);
+				if(commentmode && (c != "\n" || c != "\r")){
+					continue;
+				}
+				commentmode = false;
+				if(c == "%"){
+					commentmode = true;
+				}
+				else if(c == "{"){
+					header += c;
+					count ++;
+				}
+				else if(c == "}"){
+					count--;
+					if(count<0){
+						break;
+					}
+					header += c;
+				}
+				else if(c != " " && c != "\t" && c != "\n" && c != "\r"){
+					header += c;
+				}
+			}
+			console.log(header);
+		}
+		else{
+			header = follow.charAt(0);
+		}
 		o.colSpan = parseInt(span[1]||span[2], 10);
 	}
-	span = /\\multirow(?:cell|thead|)(?:{(-?[0-9]*)}|([0-9]))/.exec(code);
+	span = /\\multirow(?:cell|thead|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		o.rowSpan = parseInt(span[1]||span[2], 10);
 	}

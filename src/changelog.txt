@@ -6,7 +6,43 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 0.5 BETA (2017/10/01)
+===========
+
+CORE
+
+[+] "Pin" button near the toolbar to pin/unpin the toolbar at the top of the page
+[+] Rebranded "log" section, which is no longer a textarea
+[/] Table.js upgraded to 0.1.3
+[/] "Border editor mode" information box is now hidden when you're not in the "border editor mode" anymore
+[/] Changed the text of the "border editor mode" information box
+[/] Smaller "log" section and larger textarea for the generated code
+[#] Speed improvments
+[#] New version of Table.js solves bugs with inserting rows and columns when there are cells spanning multiple columns or rows
+
+LATEX EXPORT MODULE
+
+[+] Now possible to scale the table to fit the page, or shrink the columns to fit the page, or both
+[+] New packages options for "ragged2e" and "graphicx"
+[#] Problems with right border for cells that spans multiple columns
+[#] Centered and right-aligned multiline cells didn't work
+[#] Beautified rows had a missing space when there was a bottom border
+[#] Removed the empty option argument for \begin{table}
+
+LATEX IMPORT MODULE
+
+[+] Better support for second argument of \multicolumn. Complex preambule and comments are now accepted.
+[#] Space before or after number for \multicolumn, \multirow, \multirowcell and \multirowthead are now tolerated
+
+TEX EXPORT MODULE
+
+[+] Rows are beautified (but not rows that are in fact horizontals borders)
+[+] New option to escape accented characters with TeX commands (activated by default)
+[+] New option to disable the rotation macro \rotatecell
+[#] Log messages adapted to fit the new style
+
 Version 0.4 BETA (2017/09/18)
+===========
 
 CORE
 
@@ -80,7 +116,7 @@ LATEX IMPORT MODULE
 [#] \hline, \hline\hline and others are now interpreted as they should
 
 Version 0.2.1 BETA (2017/08/14)
-============
+===========
 
 CORE
 
