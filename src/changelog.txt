@@ -6,6 +6,32 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+
+Version 0.5.1 BETA (2017/10/08)
+===========
+
+| Note on this release :
+|     This release fixes many bugs with importing LaTeX tables
+
+CORE
+
+[+] Better handling of errors when loading a table
+
+LATEX IMPORT MODULE
+
+[+] Support dashed and dotted line with the "arydshln" package
+[+] Support for inverted question/interrogation mark with "?`", \textquestionmark, "!`" and \textexclamdown
+[+] Support for pound symbol (\pounds and \textsterling)
+[+] Support for alternative \^{} (\textasciicircum)
+[+] Support for English quotation with `` and ''
+[#] Problems with environments embed inside environments
+[#] Tables inside tables could caused issues
+[#] Better support for LaTeX commands without arguments
+[#] Support for \multirow when there's an optional "vpos" argument
+[#] Support for multiple horizontal borders on the same row
+[#] Paragraph symbol (\P) caused encoding issues
+[#] Part of the code prevented some commands starting with \text to be executed
+
 Version 0.5 BETA (2017/10/01)
 ===========
 

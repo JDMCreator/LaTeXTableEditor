@@ -1,7 +1,7 @@
 (function(){
 var latex = {},
    envirn = function(code){
-	o = {full: ""}
+	var o = {full: ""}
 	var com = command(code);
 	if(com.name != "begin"){return false}
 	o.command = com;
@@ -17,7 +17,7 @@ var latex = {},
 		}
 		commentmode = false;
 		if(char == "\\"){
-			if(sub == "\\begin{"){
+			if(sub.lastIndexOf("\\begin{",0)===0){
 				var env = envirn(sub);
 				content += env.full;
 				i += env.full.length - 1;
@@ -28,9 +28,9 @@ var latex = {},
 				return o;
 			}
 			else{
-				com = command(sub);
-				content += com.full;
-				i += com.full.length - 1;
+				var com2 = command(sub);
+				content += com2.full;
+				i += com2.full.length - 1;
 			}
 		}
 		else if(char == "%"){
@@ -107,6 +107,11 @@ specialSeparators = {
 	else if(nextchar == "*"){
 		o.asterisk = true;
 		nextchar = code.charAt(name.length+1);
+	}
+	if(nextchar == "]" || nextchar == "}" || nextchar == "\\"){
+		o.name = realname;
+		o.full = "\\" + realname;
+		return o;
 	}
 	if(nextchar!="[" && nextchar!="{" && !/^\s$/.test(nextchar) && !commandNumbers[realname]){
 		o.name = realname;
@@ -275,7 +280,9 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		"bottomrule" : "2px solid black",
 		"midrule" : "1px solid black",
 		"cline" : "1px solid black",
-		"cmidrule" : "1px solid black"
+		"cmidrule" : "1px solid black",
+		"hdashline" : "1px dashed black",
+		"dottedline" : "1px dotted black"
 	};
 	var cellpos = 0, commandmode = false, otherseparator = "",
 	table = [[]], cell = "", row = table[0], ignoreSpace = false, actuBorder="", borders = [];
@@ -328,6 +335,20 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				actuBorder = name;
 				i+=com.full.length-1;
 			}
+			else if(name == "hdashline" || name == "firsthdashline" || name == "lasthdashline"){
+				if(com.options[0]){
+					if(parseInt(com.options[0].split(/\//)[0],10)<=1.5){
+						actuBorder = "dottedline";
+					}
+					else{
+						actuBorder = "hdashline"
+					}
+				}
+				else{
+					actuBorder = "hdashline";
+				}
+				i+=com.full.length-1;
+			}
 			else if(name == "tabucline"){
 				// TODO : Implement different styles for tabucline (ex : dotted, dashed)
 				var span = com.args[0];
@@ -345,9 +366,14 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				}
 				i+=com.full.length-1;
 			}
-			else if(name == "cline" || name == "cmidrule"){
+			else if(name == "cline" || name == "cmidrule" || name == "cdashline"){
+				if(name == "cdashline" && com.options[0]){
+					if(parseInt(com.options[0].split(/\//)[0],10) <= 1.5){
+						name = "cdottedline";
+					}
+				}
 
-				if(!actuBorder){
+				if(!actuBorder || actuBorder.push){
 					if(!actuBorder.push){
 						actuBorder = [];
 					}
@@ -447,7 +473,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 			continue;
 		}
 		if(!border || !row){continue;}
-		if(border == "normal" || border == "double" || border == "midrule" || border == "toprule" || border == "bottomrule"){
+		if(border == "normal" || border == "double" || border == "midrule" || border == "toprule" || border == "bottomrule" || border == "hdashline" || border == "dottedline"){
 			for(var j=0;j<row.length;j++){
 				var o = row[j];
 				o = o.refCell || o;
@@ -464,23 +490,29 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		else if(border.push){
 			for(var j=0;j<border.length;j++){
 				var subborder = border[j];
-				if(subborder[0]  == "cline" || subborder[0] == "cmidrule"){
+				if(subborder[0]  == "cline" || subborder[0] == "cmidrule" || subborder[0] == "cdottedline" || subborder[0] == "cdashline"){
 					var end = subborder[1].split(/-+/),
 					start = parseInt(end[0],10)-1;
 					end = (parseInt(end[1],10)||row.length)-1,
-					pos = 0;
+					pos = 0,
+					realname = {
+						cline : "normal",
+						cmidrule : "midrule",
+						cdottedline : "dottedline",
+						cdashline : "hdashline"
+					}[subborder[0]];
 					for(k=0;k<row.length;k++){
 						var o = row[k];
 						o = o.refCell || o;
 						if(pos >= start){
 							if(pos <= end){
 								if(first){
-									o.dataset.borderTop = (subborder[0] == "cline") ? "normal" : "midrule";
-									o.css+="border-top:1px solid black;";
+									o.dataset.borderTop = realname;
+									o.css+="border-top:"+borderCSS[realname]+";";
 								}
 								else{
-									o.dataset.borderBottom = (subborder[0] == "cline") ? "normal" : "midrule";
-									o.css+="border-bottom:1px solid black;";
+									o.dataset.borderBottom = realname;
+									o.css+="border-bottom:"+borderCSS[realname]+";";
 								}
 							}
 							else{
@@ -506,82 +538,59 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 	obj.cells = realtable;
 	return obj;
 },
-setCellO = function(table, x, y, code, header){
+setCellO = function(table, x, y, code, head){
 	var o = {html:"", dataset:{}},
 	html = getHTML(code,o);
 	o.html = html;
 	var css = "";
 	var span = /\\multicolumn(?:{[ ]*([0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
-		var follow = code.substring(span.index+span[0].length);
-		if(follow.charAt(0) == "{"){
-			header = "", commentmode = false, count = 0;
-			for(var i=1,c;i<follow.length;i++){
-				c = follow.charAt(i);
-				if(commentmode && (c != "\n" || c != "\r")){
-					continue;
-				}
-				commentmode = false;
-				if(c == "%"){
-					commentmode = true;
-				}
-				else if(c == "{"){
-					header += c;
-					count ++;
-				}
-				else if(c == "}"){
-					count--;
-					if(count<0){
-						break;
-					}
-					header += c;
-				}
-				else if(c != " " && c != "\t" && c != "\n" && c != "\r"){
-					header += c;
-				}
-			}
-			console.log(header);
-		}
-		else{
-			header = follow.charAt(0);
-		}
-		o.colSpan = parseInt(span[1]||span[2], 10);
+		span = command(code.substring(span.index));
+		head = header(span.args[1])[0];
+		o.colSpan = parseInt(span[0], 10);
 	}
-	span = /\\multirow(?:cell|thead|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
+	span = /\\multirow(?:cell|thead|)(?:[ ]*\[[^\]]*\]|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		o.rowSpan = parseInt(span[1]||span[2], 10);
 	}
 	
 	// Treat header;
-	header = header || "l";
-	header = header.replace(/!{\\vrule[^}]*}/g, "|");
-	header = header.replace(/[@!]?{[^}]*}/g, "");
-	if(header.substring(0,2) == "||"){
+	head = head || "l";
+	if(head.substring(0,2) == "||"){
 		o.dataset.borderLeft = "double";
 		css += "border-left: 2px double black;"
 	}
-	else if(header.charAt(0) == "|"){
+	else if(head.charAt(0) == "|"){
 		o.dataset.borderLeft = "normal";
 		css += "border-left: 1px solid black;"
 	}
-	else if(header.charAt(0) == ";"){
+	else if(head.charAt(0) == ":"){
 		o.dataset.borderLeft = "hdashline";
 		css += "border-left: 1px dashed black;"
 	}
-	if(/\|\|$/.test(header)){
+	else if(head.charAt(0) == ";"){
+		o.dataset.borderLeft = "dottedline";
+		css += "border-left: 1px dotted black;"
+	}
+	if(/\|\|$/.test(head)){
 		o.dataset.borderRight = "double";
 		css += "border-right: 2px double black;";
 	}
-	else if(header.charAt(header.length-1) == "|"){
+	else if(head.charAt(head.length-1) == "|"){
 		o.dataset.borderRight = "normal";
 		css += "border-right: 1px solid black;"
 	}
-	else if(header.charAt(header.length-1) == ";"){
+	else if(head.charAt(head.length-1) == ";"){
+		o.dataset.borderRight = "dottedline";
+		css += "border-right: 1px dotted black;"
+	}
+	else if(head.charAt(head.length-1) == ":"){
 		o.dataset.borderRight = "hdashline";
 		css += "border-right: 1px dashed black;"
 	}
-	for(var i=0,c;i<header.length;i++){
-		c = header.charAt(i);
+	o.dataset.align = "l";
+	for(var i=0,c;i<head.length;i++){
+		c = head.charAt(i);
 		if(c == "l" || c == "c" || c == "r"){
 			o.dataset.align = c;
 			continue;
@@ -626,6 +635,22 @@ getHTML = function(code,o){
 			}
 			else{html += "-"}
 			continue;
+		}
+		else if(char == "?" && sub.charAt(1) == "`"){
+			html += "&iquest;";
+			i++;
+		}
+		else if(char == "!" && sub.charAt(1) == "`"){
+			html += "&iexcl;";
+			i++;
+		}
+		else if(char == "`" && sub.charAt(1) == "`"){
+			html += "&ldquo;"
+			i++;
+		}
+		else if(char == "'" && sub.charAt(1) == "'"){
+			html += "&rdquo;"
+			i++;
 		}
 		else if(char == "%"){
 			commentmode = true;
@@ -733,6 +758,7 @@ header = function(head){
 		}
 		else if(c == "%"){
 			commentmode = true;
+
 			continue;
 		}
 		else if(c == "*" && info.args.length >= 2 && (+info.args[0] || 0) > 0){
@@ -741,7 +767,6 @@ header = function(head){
 				subpreamble += info.args[1]
 			}
 			head = head.substring(0, i) + subpreamble + head.substring(i + info.full.length);
-			console.log(head);
 			i--;
 			continue;
 		}
@@ -771,6 +796,16 @@ header = function(head){
 				foundfirst = true;
 				actu += c;
 			}
+		}
+		else if(c == ";"){
+			if(info.args.length > 0){
+				var splitcom = info.args[0].split(/\//)[0];
+				if(parseInt(splitcom,10) <= 1.5){
+					actu += ";";
+					continue;
+				}
+			}
+			actu += ":";
 		}
 		else if(c == "!" && info.args.length > 0){
 			if(info.args[0].indexOf("\\vrule") != -1){
@@ -840,7 +875,7 @@ treatCom = function(code){
 	else if(name == "emph"){
 		html+="<i>" + getHTML(com.args[0]) + "</i>";
 	}
-	else if(name.lastIndexOf("text",0) === 0 || name == "url" || name == "underline" || name == "part" || name == "chapter" || name == "subsection" || name == "section" ||
+	else if(name == "url" || name == "underline" || name == "part" || name == "chapter" || name == "subsection" || name == "section" ||
 		name == "caption"){
 		html+= getHTML(com.args[0]);
 	}
@@ -851,7 +886,7 @@ treatCom = function(code){
 		html += "<br>"
 	}
 	else if(name == "P"){
-		html += "¶"
+		html += "&para;"
 	}
 	else if(name == "^"){
 		if(com.args.length == 0){
@@ -883,9 +918,17 @@ treatCom = function(code){
 		div.innerText = div.textContent = com.args[0];
 		html += div.innerHTML;
 	}
+	else if(name == "textquestiondown"){
+		html += "&iquest;";
+	}
+	else if(name == "textexclamdown"){
+		html += "&iexcl;";
+	}
 	else if(name == "textbar"){html += "|"}
 	else if (name == "textbackslash"){html += "\\"}
 	else if(name == "textasciitilde"){html += "~"}
+	else if(name == "textasciicircum"){html += "^"}
+	else if(name == "pounds" || name == "textsterling"){html += "&pound;"}
 	else if(name == "og"){html+="&laquo;"}
 	else if(name == "fg"){html+="&raquo;"}
 	else if(com.args.length == 1 && name != "label" && name != "ref" && name != "pageref" && name != "hhline" && name != "phantom" && name != "hspace" && name != "vspace" && name != "rule" && name != "cite"){
