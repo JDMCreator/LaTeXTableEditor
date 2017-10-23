@@ -215,42 +215,40 @@
 			align : finalalign};
 	},
 	length = 0,
-	getHBorder = function(always, border, subBorder){
+	getHBorder = function(o){
 		if(arguments.length == ""){
 			return "";
 		}
-		if(always){
-			return "\\noalign{" +
-				(({
-					"toprule" : "\\hrule height0.8pt",
-					"bottomrule" : "\\hrule height0.8pt",
-					"midrule" : "\\hrule height0.5pt",
-					"double" : "\\hrule\\kern1pt\\hrule"
-				}[border]) || "\\hrule" )
-			+ "}"
+		var complete = o.complete,
+		borders = o.borders,
+		border = "";
+		if(complete){
+			if(!borders[0]){
+				return "";
+			}
+			else{
+				return "\\noalign{" +
+					(({
+						"toprule" : "\\hrule height0.8pt",
+						"bottomrule" : "\\hrule height0.8pt",
+						"midrule" : "\\hrule height0.5pt",
+						"double" : "\\hrule\\kern1pt\\hrule"
+					}[borders[0].type]) || "\\hrule" )
+				+ "}"
+			}
 		}
 		else{
-			var borderArr = [];
-			for(var i in subBorder){
-				if(subBorder.hasOwnProperty(i)){
-					var bb = subBorder[i];
-					for(var j=0;j<bb.length;j++){
-						borderArr[bb[j]]=i;
-					}
-				}
-			}
-			border = "";
-			if(!borderArr.length){return "";}
-			for(var i=-1;i<length;i++){
+			for(var i=-1;i<borders.length;i++){
+				var borderO = borders[i];
 				if(i!=-1){border+= "&"}
 				else{border+="\\omit"}
-				if(borderArr[i]){
+				if(borderO){
 					border+="\\omit" + ({
 							"toprule" : "\\leavevmode\\leaders\\hrule height 0.8pt\\hfill\\kern 0pt",
 							"bottomrule" : "\\leavevmode\\leaders\\hrule height 0.8pt\\hfill\\kern 0pt",
 							"midrule" : "\\leavevmode\\leaders\\hrule height 0.5pt\\hfill\\kern 0pt",
 							"double" : "\\hrulefill" // TODO : SUPPORT DOUBLE
-						}[borderArr[i]] || "\\hrulefill") 
+						}[borderO.type] || "\\hrulefill") 
 				}
 			}
 			return border+"\n\\cr";
@@ -311,7 +309,7 @@
 				border = "\\noalign{\\hrule height0.8pt}"
 			}
 			else{
-				border = this.hBorder(i, getHBorder, matrix);
+				border = this.HBorder(i, getHBorder, matrix);
 			}
 			str +="\\cr\n"+(border ? border + "\n" : "");
 			str += beautifyRows[i];
@@ -322,7 +320,7 @@
 			bottomborder = "\\noalign{\\hrule height0.8pt}"
 		}
 		else{
-			bottomborder = this.hBorder(matrix.length, getHBorder, matrix);
+			bottomborder = this.HBorder(matrix.length, getHBorder, matrix);
 		}
 		str += "\\cr"
 		if(bottomborder){

@@ -7,6 +7,9 @@
 			min-height:300px;
 			font-family:monaco, "Lucida Console", Courier, monospace;
 		}
+		.package{
+			font-family:monospace;
+		}
 		#log hr{
 			margin-top:5px;
 			margin-bottom:5px;

@@ -9,8 +9,47 @@ function $id(id) {
 			}
 			return cellHeader == colHeader
 		},
+		packagesDatabase = {
+			"array" : [],
+			"arydshln" : [],
+			"booktabs" : [],
+			"colortbl" : ["array", "color"],
+			"diagbox" : ["keyval","pict2e","fp"],
+			"fp" : ["defpattern","fp-basic","fp-addons","fp-snap","fp-exp",
+			       "fp-trigo","fp-pas","fp-random","fp-eqn","fp-upn","fp-eval"],
+			"graphics" : ["trig"],
+			"graphicx" : ["keyval", "graphics"],
+			"hhline" : [],
+			"makecell" : ["array"],
+			"multirow" : [],
+			"ragged2e" : ["everysel"],
+			"rotating" : ["graphicx", "ifthen"],
+			"slashbox" : [],
+			"tabu" : ["array","varwidth"],
+			"tabularx" : ["array"]
+		},
+		noColor = false,
+		areSameColors = function(color1, color2){
+			if(noColor){return true;}
+			color1 = toRGBA(color1);
+			color2 = toRGBA(color2);
+			for(var i=0;i<3;i++){
+				if(color1[i] !== color2[i]){
+					return false;
+				}
+			}
+			return true;
+		},
+		getColor = function(color){
+			var arr = []
+			color = toRGBA(color);
+			for(var i=0;i<3;i++){
+				arr.push(Math.round((+color[i]||0)/255*1000)/1000);
+			}
+			return "[rgb]{"+arr.join(",")+"}";
+		},
 		table = new(function() {
-			this.version = "0.5.1";
+			this.version = "0.6";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -105,7 +144,7 @@ function $id(id) {
 			this.forEachSelectedCell = function(fn) {
 				var allCells = document.querySelectorAll("#table td[data-selected]");
 				for (var i = 0, l = allCells.length; i < l; i++) {
-					if (fn(allCells[i], i) === false) {
+					if (fn.call(this, allCells[i], i) === false) {
 						break;
 					}
 				}
@@ -472,11 +511,16 @@ this.getHTML = (function(){
 	}
 	return function(cell, n){
 		var div;
-		if(!n){
-			div = cell.querySelector("div[contenteditable]");
+		if(cell.tagName == "TD" || cell.tagName == "TH"){
+			if(!n){
+				div = cell.querySelector("div[contenteditable]");
+			}
+			else{
+				div = cell.querySelectorAll("div[contenteditable]")[n]
+			}
 		}
 		else{
-			div = cell.querySelectorAll("div[contenteditable]")[n]
+			div = cell;
 		}
 		if(div.innerHTML.indexOf("<") == -1){
 			// Shortcut for text-only cells (most cells)
@@ -491,7 +535,12 @@ this.getHTML = (function(){
 		for(var i=0;i<div.childNodes.length;i++){
 			_eqHTML(div.childNodes[i], cont)
 		}
-		return cont.innerHTML;
+		return cont.innerHTML.replace(/<\/(b|i)\s*>(\s*)<\s*(b|i)\s*>/gi, function(full, close, space, open){
+			if(open.toLowerCase() == close.toLowerCase()){
+				return space;
+			}
+			return full;
+		});
 	}
 })();
 			this.setHTML = function(cell, HTML) {
@@ -705,12 +754,22 @@ this.getHTML = (function(){
 				}
 			}
 			this.log = "";
+			var logArchive = {};
+			this.uniqueLog = function(text, type){
+				if(!logArchive[text]){
+					this.message(text, type);
+				}
+			}
 			this.message = function(text, type) {
 				if(type){
-					type=type.toLowerCase();
+					type=type.toString().toLowerCase();
 				}
 				else{type = "";}
-				if(type == "warning"){
+				if(this.log == ""){
+					logArchive = {};
+				}
+				logArchive[text] = true;
+				if(type == "warning" || type == "1"){
 					this.log += "<table><tr><td><span class='glyphicon glyphicon-exclamation-sign' style='padding-right:4px;'></span></td><td>"+text+"</td><tr></table><hr>";
 				}
 				else{
@@ -959,18 +1018,19 @@ this.getHTML = (function(){
 			}
 			this.borderStyle = function(style){
 				style = (style || document.getElementById('border').value).toLowerCase();
-				var css = "1px solid black";
+				var color = this._id("border-color").value;
+				var css = "1px solid " + color;
 				if(style == "toprule" || style == "bottomrule"){
-					css = "2px solid black";
+					css = "2px solid " + color;
 				}
 				else if(style == "double"){
-					css = "2px double black";
+					css = "2px double " + color;
 				}
 				else if(style == "hdashline"){
-					css = "1px dashed black";
+					css = "1px dashed " + color;
 				}
 				else if(style == "dottedline"){
-					css = "1px dotted black";
+					css = "1px dotted " + color;
 				}
 				else if(style == "trimfull"){
 					css = "";
@@ -979,25 +1039,25 @@ this.getHTML = (function(){
 				return {
 					name : style,
 					css : css,
-					color : "000000"
+					color : color
 				}
 			}
 			this.setAllBorders = function() {
 				this.statesManager.registerState();
 				var borderType = document.getElementById('border')
 					.value,
-					border = "1px solid black";
+					color = this._id("border-color").value,
+					border = "1px solid " + color;
 				if (borderType == "toprule" || borderType == "bottomrule") {
-					border = "2px solid black";
+					border = "2px solid " + color;
 				} else if (borderType == "double") {
-					border = "2px double black";
+					border = "2px double " + color;
 				} else if (borderType == "hdashline") {
-					border = "1px dashed black";
+					border = "1px dashed " + color;
 				} else if (borderType == "dottedline") {
-					border = "1px dotted black";
+					border = "1px dotted " + color;
 				}
 				this.forEachSelectedCell(function(cell) {
-					done = true;
 					var style = cell.style;
 					style.borderTop = style.borderLeft = style.borderRight = style.borderBottom = border;
 					cell.setAttribute("data-border-top", borderType);
@@ -1094,10 +1154,26 @@ this.getHTML = (function(){
 			this.load = function(table) {
 				this.loaded = true;
 				this.element = table;
-				var _this = this;
+				var _this = this,
+				waitingforpaste = false;
+				table.addEventListener("paste", function(e) {
+					console.log(1);
+					var target = e.target || e.srcElement;
+					target = target.nodeType == 3 ? target.parentElement : target;
+					do{
+						if(target.tagName && target.hasAttribute("contenteditable")){
+							break;
+						}
+					}while(target = target.parentElement);
+					waitingforpaste = target;
+				}, false);
 				table.addEventListener("input", function(e) {
 					var target = e.target || e.srcElement;
 					target = target.nodeType == 3 ? target.parentElement : target;
+					if(target && target == waitingforpaste){
+						waitingforpaste = false;
+						target.innerHTML = _this.getHTML(target);
+					}
 					if (_this.selectedCell === (target.parentElement || {})
 						.parentElement) {
 						_this.updateLaTeXInfoCell();
@@ -1295,6 +1371,36 @@ this.getHTML = (function(){
 					}[c] || ""
 				});
 			}
+			this.toggleExecCommand = function(command){
+				var sel = window.getSelection();
+				if(this.element.querySelectorAll("td[data-selected]").length <= 1){
+					return document.execCommand(command, false, null);
+				}
+				else{
+					var foundFirst = false,
+					state = null;
+					sel.removeAllRanges();
+					this.forEachSelectedCell(function(cell){
+						setTimeout(function(){
+							var node = cell.querySelector("div[contenteditable]");
+							sel.selectAllChildren(node);
+							if(!foundFirst){
+								foundFirst = true;
+								state = !document.queryCommandEnabled(command);
+								document.execCommand(command, false, null);
+							}
+							else{
+								if(document.queryCommandEnabled(command) == state){
+									document.execCommand(command, false, null);
+								}
+								document.execCommand(command, false, null);
+							}
+							sel.removeAllRanges();
+						}, 1);
+					});
+					return state;
+				}
+			}
 			this.createCellObject = function(before, cell, after) {
 				if (arguments.length == 2) {
 					var content = before,
@@ -1344,46 +1450,40 @@ this.getHTML = (function(){
 				o.align = cell.getAttribute("data-align") || "l"
 				o.content = this.generateForCell(cell, o.align);
 				o.fullHeader = this.convertToHeader(this.getContextualHeader(before, o, after));
-				o.header = this.convertToHeader(this.getComparableHeader(before, o, after));
+				o.getHeader = this.comparableHeader(before, o, after);
+				o.header = o.getHeader(this.actualMainColor);
 				o.span = (cell.rowSpan != 1 || cell.colSpan != 1);
 				o.static = false;
+				o.isInPreambule = false;
 				o.rowSpan = cell.rowSpan;
 				o.colSpan = cell.colSpan;
-				o.leftBorder = cell.getAttribute("data-border-left") || "";
-				if(!o.leftBorder && before){
-					o.leftBorder = (before.refCell||before).cell.getAttribute("data-border-right") || ""
-				}
-				o.rightBorder = cell.getAttribute("data-border-right") || "";
-				if(!o.rightBorder && after){
-					o.rightBorder = (after.refCell||after).cell.getAttribute("data-border-left") || ""
-				}
 				o.fullContent = o.content;
-				if(o.span){
-					if(cell.rowSpan != 1){
-						this.packages["multirow"] = true;
-						if(cell.colSpan != 1){
-							if(blockMultirow){
-								o.fullContent = this.multicolumn(cell.colSpan, o.header, o.content);
-							}
-							else{
-								o.fullContent = this.multicolumn(cell.colSpan, o.header, 
-												this.multirow(cell.rowSpan, o.content)
-												);
-								o.static = true;
-							}
+				var _this = this;
+				o.getFullContent = function(actualColor, forceMulti){
+					var header = "", before = "",
+					content = o.content;
+					actualColor = actualColor || _this.actualColor;
+					if(cell.rowSpan != 1 && !blockMultirow){
+						_this.packages["multirow"] = true;
+						content = _this.multirow(cell.rowSpan, content);
+					}
+					if(cell.colSpan != 1 || forceMulti || !o.isInPreambule){
+						header = o.getHeader(actualColor);
+						if(header.charAt(0) == "@"){
+							header = header.replace(/^@\{[^{]+\{[\s,]*([\d.]+)[\s,]*([\d.]+)[\s,]*([\d.]+)\s*}\s*}/, function(full, r, g, b){
+								var r2 = r*255,
+								g2 = g*255,
+								b2 = b*255,
+								color = "rgb("+r2+","+g2+","+b2+")";
+								_this.actualColor = color;
+								before = "\\arrayrulecolor" + getColor(color);
+								return "";
+							});
 						}
-						else{
-							if(blockMultirow){
-								o.fullContent = o.content;
-							}
-							else{
-								o.fullContent = this.multirow(cell.rowSpan, o.content);
-							}
-						}
+						return before + _this.multicolumn(cell.colSpan, header, content);						
 					}
 					else{
-							o.fullContent = this.multicolumn(cell.colSpan, o.header, o.content);
-							o.static = true;
+						return content;
 					}
 				}
 			}
@@ -1409,13 +1509,15 @@ this.getHTML = (function(){
 							cell.ignore = false;
 							cell.header = refCell.header;
 							cell.fullHeader = refCell.fullHeader;
-							if(refCell.cell.colSpan != 1){
-								cell.fullContent = "\\multicolumn{" + refCell.colSpan + "}{" + refCell.header + "}{}";
-								cell.static = true;
-							}
-							else{
-								cell.fullContent = "";
-								cell.static = false;
+							cell.getHeader = refCell.getHeader;
+							cell.isInPreambule = refCell.isInPreambule;
+							var _this = this;
+							cell.getFullContent = function(actualColor, forceMulti){
+								actualColor = actualColor || _this.actualColor;
+								if(refCell.colSpan != 1 || forceMulti || cell.isInPreambule){
+									return _this.multicolumn(refCell.colSpan, cell.getHeader(actualColor), "")
+								}
+								return "";
 							}
 						}
 						else{
@@ -1465,6 +1567,8 @@ this.getHTML = (function(){
 				var align = middle.align,
 					leftBorder = "",
 					rightBorder = "",
+					leftColor = "",
+					rightColor = "",
 					o = {
 						"": "",
 						"normal": "|",
@@ -1478,11 +1582,18 @@ this.getHTML = (function(){
 				middle = middle.cell || middle.refCell.cell;
 				if (before) {
 					leftBorder = before.getAttribute("data-border-right");
+					leftColor = before.style.borderRightColor;
+				}
+				else{
+					leftColor = middle.style.borderRightColor;
 				}
 				leftBorder = o[leftBorder || (middle.getAttribute("data-border-left") || "")] || "";
+				leftColor = leftColor || "";
 				rightBorder = middle.getAttribute("data-border-right");
+				rightColor = middle.style.borderRightColor;
 				if (after && !rightBorder) {
 					rightBorder = after.getAttribute("data-border-left");
+					rightColor = after.style.borderRightColor;
 				}
 				rightBorder = o[rightBorder || ""] || "";
 				return leftBorder + align + rightBorder;
@@ -1497,7 +1608,185 @@ this.getHTML = (function(){
 						.value
 				}
 			}
+			this.headerBorder = function(type, color, mainColor, preambule, char){
+				char = char || ">";
+				if(color && mainColor){
+					if(areSameColors(color, mainColor)){
+						color = false;
+					}
+				}
+				if(!color){
+					if(type == "normal"){return "|"}
+					else if(type == "double"){return "||"}
+					else if(type == "toprule" || type == "bottomrule"){
+						return "!{\\vrule width \\heavyrulewidth}";
+					}
+					else if(type == "midrule"){
+						return "!{\\vrule width \\lightrulewidth}";
+					}
+					else if(type == "hdashline"){
+						if(this.useTabu){
+							return "|[on 4pt off 4pt]";
+						}
+						else{
+							this.packages["arydshln"] = true;
+							return ":";
+						}
+					}
+					else if(type == "dottedline"){
+						if(this.useTabu){
+							return "|[on 1pt off 1pt]";
+						}
+						else{
+							this.packages["arydshln"] = true;
+							return ";{1pt/1pt}";
+						}
+					}
+				}
+				else{
+					var before = "",
+					colorcomm = "\\color" + getColor(color);
+					if(type == "normal"){return "!{"+colorcomm+"\\vrule}"}
+					else if(type == "double"){return "!{"+colorcomm+"\\vrule}!{"+color+"\\vrule}"}
+					else if(type == "toprule" || type == "bottomrule"){
+						return "!{"+colorcomm+"\\vrule width \\heavyrulewidth}";
+					}
+					else if(type == "midrule"){
+						return "!{"+colorcomm+"\\vrule width \\lightrulewidth}";
+					}
+					else if(type == "hdashline"){
+						before = char + "{\\arrayrulecolor"+getColor(color)+"}"
+						if(this.useTabu){
+							return before + "|[on 4pt off 4pt]";
+						}
+						else{
+							this.packages["arydshln"] = true;
+							return before + ":";
+						}
+					}
+					else if(type == "dottedline"){
+						before = char + "{\\arrayrulecolor"+getColor(color)+"}"
+						if(this.useTabu){
+							return before + "|[on 1pt off 1pt]";
+						}
+						else{
+							this.packages["arydshln"] = true;
+							return before + ";{1pt/1pt}";
+						}
+					}
+				}
+			}
+			this.comparableHeader = function(before, middle, after) {
+				if (before) {
+					before = before.cell || before.refCell.cell;
+				}
+				if (after) {
+					after = after.cell || after.refCell.cell;
+				}
+				var align = middle.align,
+					leftBorder = "",
+					rightBorder = "",
+					leftColor = "",
+					rightColor = "",
+					incorrectLeft = false,
+					o = middle;
+				middle = middle.cell || middle.refCell.cell;
+				if (before) {
+					leftBorder = "";
+				} else {
+					leftBorder = middle.getAttribute("data-border-left");
+					leftColor = middle.style.borderLeftColor || "black";
+				}
+				rightBorder = middle.getAttribute("data-border-right");
+				rightColor = middle.style.borderRightColor;
+				var between = "";
+				if (after && !rightBorder) {
+					rightBorder = after.getAttribute("data-border-left");
+					rightColor = after.style.borderLeftColor;
+				}
+				o.leftBorder = leftBorder || "";
+				o.leftBorderColor = leftColor;
+				o.rightBorder = rightBorder || "";
+				o.rightBorderColor = rightColor;
+				var _this = this;
+				return function(color, isPreambule){
+					var preambule = "",
+					align2 = align,
+					shrinkRatio = o.shrinkRatio;
+					if(leftBorder){
+						leftColor = leftColor || "#000000";
+						preambule += _this.headerBorder(leftBorder, leftColor, color, isPreambule, "@");
+						if(preambule.charAt(0) == "@"){
+							color = leftColor;
+							if(isPreambule){
+								_this.actualColor = rightColor;
+							}
+						}
+					}
+					var before = "";
+					if(shrinkRatio && isPreambule){
+						var blockragged = _this.blacklistPackages["ragged2e"];
+						if(align == "l"){
+							if(blockragged){
+								before += "\\raggedright\\arraybackslash"
+							}
+							else{
+								_this.packages["ragged2e"] = true;
+								before += "\\RaggedRight"
+							}
+						}
+						else if(align == "c"){
+							if(_this.packages["ragged2e"]){
+								before += "\\Centering"
+							}
+							else{
+								before += "\\centering\\arraybackslash"
+							}
+						}
+						else if(align == "r"){
+							if(blockragged){
+								before += "\\raggedleft\\arraybackslash"
+							}
+							else{
+								_this.packages["ragged2e"] = true;
+								before += "\\RaggedLeft"
+							}
+						}
+						_this.packages["array"] = true;
+						align2 = "p{"+shrinkRatio+"\\columnwidth}";
+					}
+					if(rightBorder){
+						rightColor = rightColor || "#000000";
+						if(isPreambule && _this.packages["arydshln"] && !areSameColors(color, _this.actualMainColor) && areSameColors(_this.actualMainColor, rightColor)){
+							_this.actualColor = color = rightColor;
+							before += "\\arrayrulecolor"+getColor(rightColor);
+						}
+						else if(rightBorder == "dottedline" || rightBorder == "hdashline"){
+							if(!areSameColors(rightColor, color)){
+								if(_this.useTabu){
+									this.uniqueLog("Some vertical lines could not be colored correctly with 'tabu' package.", "warning");
+								}
+								else{
+									preambule += "\\arrayrulecolor"+getColor(rightColor);
+									color = rightColor;
+									if(isPreambule){
+										_this.actualColor = rightColor;
+									}
+								}
+							}
+						}
+					}
+					if(before){
+						preambule += ">{"+before+"}";
+					}
+					preambule += align2;
+					if(rightBorder){
+						preambule += _this.headerBorder(rightBorder, rightColor, color, isPreambule, ">")
+					}
+					return preambule;
+				};
 
+			}
 			this.getComparableHeader = function(before, middle, after) {
 				if (before) {
 					before = before.cell || before.refCell.cell;
@@ -1549,31 +1838,6 @@ this.getHTML = (function(){
 					.innerHTML = "<strong>Log</strong> (" + ((new Date())
 						.toLocaleTimeString()) + ")<hr>" + this.log;
 			}
-			this.shrinkHeader = function(value, shrinkRatio){
-					var _this = this;
-					if(shrinkRatio){
-						if(/\\(centering|Ragged|ragged)/.test(value)){return value;}
-						if(value.indexOf("c") >= 0){
-							value = value.replace(/c/, function(){
-								_this.packages["array"] = true;
-								return ">{\\centering\\arraybackslash}p{"+shrinkRatio+"\\linewidth}";				
-							})
-						}
-						else if(value.indexOf("l") >= 0){
-							value = value.replace(/l/, function(){
-								_this.packages["array"] = _this.packages["ragged2e"] = true;
-								return ">{\\RaggedRight\\arraybackslash}p{"+shrinkRatio+"\\linewidth}";				
-							})
-						}
-						else if(value.indexOf("r") >= 0){
-							value = value.replace(/r/, function(){
-								_this.packages["array"] = _this.packages["ragged2e"] = true;
-								return ">{\\RaggedLeft\\arraybackslash}p{"+shrinkRatio+"\\linewidth}";				
-							})
-						}
-					}
-					return value;
-			}
 			this.headers = function(matrix){
 				matrix = matrix || this.matrix();
 				var headers = [], colHeaders = [], widthArray = [], _this = this, table = this.element;
@@ -1601,41 +1865,53 @@ this.getHTML = (function(){
 					}
 					table.removeChild(fakeRow);
 					this.element.style.width = "";
-					console.log(widthArray);
 				}
+
+				var colLength = 0;
 				for(var i=0;i<matrix.length;i++){
-					var row = matrix[i];
-					for(var j=0;j<row.length;j++){
-						var cell = row[j];
+					colLength = Math.max(colLength, matrix[i].length);
+				}
+				var actualColor = this.actualColor;					
+				for(var j=0;j<colLength;j++){
+					actualColor = this.actualColor;
+					var headernow = {},
+					    colorArr = {},
+					    cellsArrays = {}
+					for(var i=0;i<matrix.length;i++){
+						var cell = matrix[i][j];
+						if(!cell.refCell && cell.cell.colSpan > 1){
+							continue;
+						}
 						if(cell && !cell.ignore){
-							var align = (cell.refCell||cell).header;
-							if(this.shrink && widthArray[cell.x] && cell.header){
-								cell.shrinkRatio = widthArray[cell.x]
-								align = this.shrinkHeader(align, cell.shrinkRatio)
-								cell.header = align;
+							if(this.shrink && widthArray[cell.x]){
+								cell.shrinkRatio = widthArray[cell.x];
 							}
-							if (!headers[j]) {
-								headers[j] = {}
-							}
-							var headernow = headers[j];
+							var align = (cell.refCell||cell).getHeader(actualColor, true);
+							colorArr[align] = this.actualColor;
+							this.actualColor = actualColor;
 							if(!headernow[align]){
 								headernow[align] = 0;
 							}
+							if(!cellsArrays[align]){
+								cellsArrays[align] = [];
+							}
 							headernow[align]++;
+							cellsArrays[align].push(cell);
 						}
 					}
-				}
-				for (var i = 0; i < headers.length; i++) {
-					var max = 0,
-						value = "",
-						headernow = headers[i];
-					for (var j in headernow) {
-						if (headernow.hasOwnProperty(j) && headernow[j] > max) {
-							max = headernow[j];
-							value = j;
+					var max = 0, value = "l";
+					for (var k in headernow) {
+						if (headernow.hasOwnProperty(k) && headernow[k] > max) {
+							max = headernow[k];
+							value = k;
 						}
+					}
+					var cellsArray = cellsArrays[value];
+					for(var k=0;k<cellsArray.length;k++){
+						cellsArray[k].isInPreambule = true;
 					}
 					colHeaders.push(value);
+					this.actualColor = colorArr[value]
 				}
 				return colHeaders;
 			}
@@ -1678,63 +1954,92 @@ this.getHTML = (function(){
 			}
 			this.shrink = false;
 			this.generateLaTeX = function(opt) {
-				this.packages = {}
+				
+				this.packages = {};
+				this.actualMainColor = this.mainColor();
+				this.actualColor = this.actualMainColor;
+				this.useTabu = this.shouldUseTabu(); // Must we use "tabu" package ?
+				if(!this.useTabu && (this.hasBorderType("hdashline") || this.hasBorderType("dottedline"))){
+					this.packages["arydshln"] = true;
+				}
 				var table = this.element,
+					firstPart = "",
+					str = "",
 					caption = this.caption(),
 					booktabs = table.hasAttribute("data-booktabs"),
 					rg = this.matrix(),
 					border,
-					useTabu = this.shouldUseTabu(), // Must we use "tabu" package ?
+					useTabu = this.useTabu, // Must we use "tabu" package ?
 					fit = $id("opt-fit-table").value,
 					scale = fit.indexOf("sc") >= 0,
-					shrink = fit.indexOf("sh") >= 0;
-				this.useTabu = useTabu;
+					shrink = fit.indexOf("sh") >= 0,
+					asteriskMultirow = false;
 				if(shrink){
 					this.shrink = true;
 				}
+				noColor = this.blacklistPackages["colortbl"];
 				var colHeaders = this.headers(rg),
 				borderNewLine = $id("opt-latex-border").checked,
-				header = colHeaders.join("");
-				var str = "\\begin{table}\n";
+				header = colHeaders.join(""),
+				startingDshCommand = "",
+				startingColor = this.actualMainColor;
+				if(header.charAt(0) == "@"){
+					header = header.replace(/^@\{(\\array[^\{]+\{[^\}]+\})\}/, function(full, command){
+						startingDshCommand = command;
+						command.replace(/\{[\s,]*([\d.]+)[\s,]*([\d.]+)[\s,]*([\d.]+)[\s,]*\}/, function(full, r, g, b){
+							startingColor = "rgb("+(+r*255)+","+(+g*255)+","+(+b*255)+")";
+						})
+						return "";
+					})
+				}
+				this.actualColor = startingColor;
+				firstPart = "\\begin{table}\n";
 				if(this._id("table-opt-center").checked){
-					str += "\\centering\n"
+					firstPart += "\\centering\n"
 				}
 				if (caption.caption) {
-					str += "\\caption" + (caption.numbered ? "*" : "") + "{" + caption.caption + "}\n";
+					if(caption.numbered){
+						this.packages["caption"] = true;
+						firstPart += "\\captionsetup{labelformat=empty}\n";
+					}
+					firstPart += "\\caption{" + caption.caption + "}\n";
 				}
-				if (!caption.numbered && caption.label) {
-					str += "\\label{" + caption.label + "}\n";
+				if (caption.label) {
+					if(!caption.caption){
+						firstPart += "\\refstepcounter{table}\n";
+					}
+					firstPart += "\\label{" + caption.label + "}\n";
+				}
+				if(!areSameColors(startingColor, "black")){
+					firstPart += "\\arrayrulecolor" + getColor(startingColor) + "\n";
 				}
 				if(scale){
 					this.packages["graphicx"] = true;
-					str += "\\resizebox{\\linewidth}{!}{%\n";
+					str += "\\resizebox{\\columnwidth}{!}{%\n";
 				}
 				if(useTabu){
 					this.packages["tabu"] = true;
-					// Convert header to tabu
-					header = header.replace(/\:/g, "|[\\arrayrulewidth on 4pt off 4pt]")
-						       .replace(/\;\{[^}]*\}/g, "|[\\arrayrulewidth on 1pt off 1pt]");
 				}
 				str += "\\begin{"+(useTabu ? "tabu" : "tabular")+"}{" + header + "}";
-				var rg2 = [];
+				var rg2 = [],
+				multiRows = {};
 				for(var i=0;i<rg.length;i++){
 					var cells = rg[i];
 					var row = []
 					for(var j=0;j<cells.length;j++){
 						var cell = cells[j],
 						header = colHeaders[j] || "l";
+						if(cell.rowSpan > 1){
+							for(var k=i;k<i+cell.rowSpan;k++){
+								multiRows[k] = true;
+							}
+						}
 						if(!cell || cell.ignore){
 							row.push(false);
 						}
-						else if(!cell.static && cell.header != header){
-							row.push({
-								 	text:this.multicolumn(1, cell.header, cell.fullContent),
-								 	colSpan : cell.colSpan
-								 })
-						}
 						else{
 							row.push({
-									text:cell.fullContent, 
+									text: cell.getFullContent(this.actualColor), 
 									colSpan : cell.colSpan || (cell.refCell ? cell.refCell.colSpan : 1) || 1
 								 })
 						}
@@ -1761,7 +2066,11 @@ this.getHTML = (function(){
 						}
 					}
 					if (i !== 0) {
-						str += " \\\\" + border
+						str += " \\\\";
+						if(asteriskMultirow && multiRows[i]){
+							str+= "*";
+						}
+						str += border
 					} else {
 						str += border;
 					}
@@ -1779,21 +2088,25 @@ this.getHTML = (function(){
 				if(scale){
 					str += "}\n";
 				}
-				str +="\\end{table}";
 				// Booktabs
 				if (/\\(bottomrule)|(toprule)|(midrule)|(cmidrule)|(heavyrulewidth)|(lightrulewidth)/.test(str)) {
 					this.packages["booktabs"] = true;
 				}
-				if(useTabu){
-					str = str.replace(/\\hdashline\[[^\]]+\]/g, "\\tabucline[\\arrayrulewidth on 1pt off 1pt]{-}")
-						 .replace(/\\hdashline/g, "\\tabucline[\\arrayrulewidth on 4pt off 4pt]{-}")
-						 .replace(/\\cdashline{([^}]+)}\[[^\]]+\]/g, "\\tabucline[\\arrayrulewidth on 1pt off 1pt]{$1}")
-						 .replace(/\\cdashline{([^}]+)}/g, "\\tabucline[\\arrayrulewidth on 4pt off 4pt]{$1}");
-				}
 				// arydshln
-				else if (/\\(cdashline|hdashline)/.test(str)) {
+				if (/\\(cdashline|hdashline)/.test(str)) {
 					this.packages["arydshln"] = true;
 				}
+
+				if(str.indexOf("\\arrayrulecolor") > -1 || firstPart.indexOf("\\arrayrulecolor") > -1){
+					this.packages["colortbl"] = true;
+					if(!areSameColors(this.actualColor, "#000000")){
+						str += "\\arrayrulecolor"+getColor("#000000")+"\n";
+					}
+					if(this.packages["arydshln"]){
+						firstPart += "\\ADLnullwidehline\n";
+					}
+				}
+				str +="\\end{table}";
 				// Packages
 				var packages = "";
 				for (var i in this.packages) {
@@ -1814,7 +2127,42 @@ this.getHTML = (function(){
 						"If you get an '! FP error: Logarithm of negative value!.' error, the content of the bottom part of one of your cells with two diagonals is too long.", "warning"
 					)
 				}
-				return (packages ? packages + "\n\n" : "") + str;
+				/* Show some information about packages used */
+				this.showPackagesInformation(this.packages);
+				return (packages ? packages + "\n\n" : "") + firstPart + str;
+			}
+			this.showPackagesInformation = function(packages){
+
+				var packs = [],
+				hasSub = false;
+				var _packinfo = function(pack, sub){
+					if(sub && packs[pack]){
+						return;
+					}
+					if(sub){hasSub = true;}
+					packs.push("<span class='package'>"+pack+"</span>" + (sub ? "<sup>*</sup>" : ""));
+					if(packagesDatabase[pack]){
+						for(var j=0;j<packagesDatabase[pack].length;j++){
+							_packinfo(packagesDatabase[pack][j], true);
+						}
+					}
+				}
+				for (var i in this.packages) {
+					if (this.packages.hasOwnProperty(i)) {
+						_packinfo(i, false);
+					}
+				}
+				if(packs.length == 0){return false}
+				if(packs.length == 1){
+					this.message("This table will import one package : " + packs[0] + ".", "info");
+				}
+				else if(packs.length > 1){
+					packs.sort();
+					var last = packs[packs.length-1];
+					packs.pop()
+					this.message("This table will import "+ (packs.length+1) +" packages : "+ packs.join(", ") + ", and "+ last+"." +
+					(hasSub ? "<br><small>* This package is imported by another package.</small>" : ""), "info");
+				}
 			}
 			this.beautifyRows = function(rows){
 				var rows2 = [], n = 0, start = [], max = [];
@@ -1873,17 +2221,18 @@ this.getHTML = (function(){
 					var style = cell.style,
 						css = "",
 						types = {
-							"solid": ["normal", "1px solid black"],
-							"double": ["double", "2px solid black"],
-							"dashed": ["hdashline", "1px dashed black"],
-							"dotted": ["dottedline", "1px dotted black"]
+							"solid": ["normal", "1px solid "],
+							"double": ["double", "2px solid "],
+							"dashed": ["hdashline", "1px dashed "],
+							"dotted": ["dottedline", "1px dotted "]
 						},
 						first = "";
 					["Left", "Right", "Bottom", "Top"].forEach(function(val) {
 						var type = style["border" + val + "Style"];
 						if (type && type != "none") {
 							var valLC = val.toLowerCase(),
-								res = types[type] || ["normal", "1px solid black"];
+								res = types[type] || ["normal", "1px solid "];
+								res[1] += style["border" + val + "Color"] || "black";
 							o.dataset["border" + val] = res[0];
 							css += "border-" + valLC + ":" + res[1] + ";";
 							if (!first) {
@@ -1950,38 +2299,60 @@ this.getHTML = (function(){
 					this.importFromJSON(o);
 				}
 			})()
-			this.hBorder = function(n, callback, matrix) {
-				var row = matrix[Math.max(0, (n || 0) - 1)];
+			this.HBorder = function(n, callback, matrix) {
+				var row = matrix[Math.max(0, (n || 0) - 1)],
+				types = {};
 				if (!row) {
 					return callback.call(this)
 				}
-				var border = "",
+				var border = [],
+					hasColor = false,
 					subBorder = {},
-					always = true;
+					complete = true,
+					actualColor = this.actualColor;
 				if (n == 0) {
 					for (var i = 0; i < row.length; i++) {
 						if (row[i].refCell) {
-							always = false;
 							continue;
 						}
 						var cell = row[i].cell,
-							bd = cell.getAttribute("data-border-top");
+							bd = cell.getAttribute("data-border-top"),
+							color = cell.style.borderTopColor;
 						if (bd) {
-							if (!subBorder[bd]) {
-								subBorder[bd] = []
+							var o = {
+								type : bd,
+								color : color,
+								sameAsBefore : i===0,
+								cellIndex : i
+							}
+							types[bd] = true;
+							if(border[i-1]){
+								var beforeBorder = border[i-1];
+								if(areSameColors(beforeBorder.color, o.color) && o.type == beforeBorder.type){
+									o.sameAsBefore = true;
+								}
+							}
+							if(!o.sameAsBefore){
+								complete = false;
+							}
+							if(!hasColor && !areSameColors("#000000", o.color)){
+								hasColor = true;
 							}
 							for (var j = 0; j < cell.colSpan; j++) {
-								subBorder[bd].push(i);
+								border.push(o);
 								i++;
 							}
 							i--;
-							if (border == "") {
-								border = bd;
-							} else if (border != bd) {
-								always = false;
+						}
+						else {
+							if(border[i-1]){
+								complete = false;
 							}
-						} else {
-							always = false;
+							for (var j = 0; j < cell.colSpan; j++) {
+								border.push(false);
+								i++;
+							}
+							i--;
 						}
 					}
 				} else {
@@ -1990,159 +2361,303 @@ this.getHTML = (function(){
 						var cell = row[i];
 						cell = cell.cell || cell.refCell.cell;
 						if (cell.parentElement.rowIndex + cell.rowSpan != n) {
-							always = false;
+							if(border[i-1]){
+								complete = false;
+							}
 							continue;
 						}
-						var bd = cell.getAttribute("data-border-bottom");
+						var bd = cell.getAttribute("data-border-bottom"),
+						color = cell.style.borderBottomColor;
 						if (!bd && row2[i]) {
 							var cell = row2[i];
-							if (cell.cell || (cell.refCell.cell.rowIndex == n + 1)) {
+							if (cell.cell || (cell.refCell.cell.parentElement.rowIndex == n + 1)) {
 								bd = (cell.cell || cell.refCell.cell)
-									.getAttribute("data-border-top");
+									.getAttribute("data-border-top"),
+								color = (cell.cell || cell.refCell.cell).style.borderTopColor;
 							}
 						}
 						if (bd) {
-							if (!subBorder[bd]) {
-								subBorder[bd] = []
+							var o = {
+								type : bd,
+								color : color,
+								sameAsBefore : i===0,
+								cellIndex : i
 							}
-							subBorder[bd].push(i);
-							if (border == "") {
-								border = bd;
-							} else if (border != bd) {
-								always = false;
+							types[bd] = true;
+							if(border[i-1]){
+								var beforeBorder = border[i-1];
+								if(areSameColors(beforeBorder.color, o.color) && o.type == beforeBorder.type){
+									o.sameAsBefore = true;
+								}
 							}
+							if(!o.sameAsBefore){
+								complete = false;
+							}
+							if(!hasColor && !areSameColors("#000000", o.color)){
+								hasColor = true;
+							}
+							for (var j = 0; j < cell.colSpan; j++) {
+								border.push(o);
+								i++;
+							}
+							i--;
 						} else {
-							always = false;
+							if(border[i-1]){
+								complete = false;
+							}
+							for (var j = 0; j < cell.colSpan; j++) {
+								border.push(false);
+								i++;
+							}
+							i--;
 						}
 					}
 				}
-				return callback.call(this, always, border, subBorder);
+				return callback.call(this, {
+					complete: complete,
+					color : hasColor,
+					borders : border,
+					types : types
+				});
+			}
+			this.actualMainColor = "black";
+			this.actualColor = "black";
+			this.mainColor = function(){
+				var rows = this.element.rows,
+				colors = {};
+				for(var i=0;i<rows.length;i++){
+					var cells = rows[i].cells;
+					for(var j=0;j<cells.length;j++){
+						var cell = cells[j];
+						["Top","Bottom","Right","Left"].forEach(function(Side){
+							var side = Side.toLowerCase();
+							if(cell.getAttribute("data-border-"+side)){
+								var color = cell.style["border"+Side+"Color"];
+								if(!colors[color]){colors[color]=0};
+								colors[color]++;
+							}
+						});
+					}
+				}
+				var max = 0, actual = "black";
+				for(var i in colors){
+					if(colors.hasOwnProperty(i)){
+						if(colors[i]>max){
+							max = colors[i];
+							actual = i;
+						}
+					}
+				}
+				return actual;
 			}
 			this.prepareDownload = function() {
 				var latex = this.generateLaTeX();
-				latex = latex.replace(/^%\s*usePack/mg, "usePack");
+				latex = latex.replace(/^%\s*\\usepack/mg, "\\usepack");
 				latex = "\\documentclass{article}\n" + latex;
 				latex = latex.replace(/\\begin{tabl/, "\\begin{document}\n\\begin{tabl") + "\n\\end{document}";
-				var link = "data:application/x-tex;base64," + btoa(latex);
+				var blob = new Blob([latex],{type : 'application/x-tex'}); 
+				var fileReader = new FileReader();
+				fileReader.onload = function(e) {
+				     $id("link-download").href = e.target.result;
+				     $('#download').modal('show');
+				};
+				fileReader.readAsDataURL(blob);
 				$id("link-download")
-					.href = link;
-				$('#download')
-					.modal('show');
+					.href = "";
 			}
 			this.getBorder = function(n, matrix) {
-				return this.hBorder(n, function(always, border, subBorder) {
+				return this.HBorder(n, function(o) {
 					if (arguments.length == 0) {
 						return ""
 					}
-					if (always) {
-						if(border == "trimfull"){
-							var border = "";
-							for(var i=0;i<matrix[Math.max(0,n-1)].length;i++){
-								border+="\\cmidrule(lr){"+i+"-"+i+"}";
-							}
+					var complete = o.complete,
+					hasColor = o.color,
+					borders = o.borders,
+					border = "";
+					if(complete){
+						if(!borders[0]){
+							return "";
 						}
-						else{
-							return {
+						var firstBorder = borders[0];
+						if(hasColor){
+							border += "\\arrayrulecolor"+getColor(firstBorder.color);
+							this.actualColor = firstBorder.color;
+						}
+						border += {
 								normal: "\\hline",
 								double: "\\hline\\hline",
 								toprule: "\\toprule",
 								midrule: "\\midrule",
 								bottomrule: "\\bottomrule",
-								hdashline: "\\hdashline",
-								dottedline: "\\hdashline[1pt/1pt]"
-							}[border];
-						}
-					} else {
-						border = ""
-						var o = {
-							normal: "\\cline",
-							toprule: "\\cmidrule[\\heavyrulewidth]",
-							midrule: "\\cmidrule",
-							bottomrule: "\\cmidrule[\\heavyrulewidth]",
-							hdashline: "\\cdashline",
-							dottedline: "\\cdashline"
-						}
-						if(subBorder.trimfull){
-							var bd = subBorder.trimfull;
-							for(var i=0;i<bd.length;i++){
-								border += "\\cmidrule(lr){"+bd[i]+"-"+bd[i]+"}";
-							}
-						}
-						if (!subBorder["double"] || subBorder.toprule || subBorder.midrule || subBorder.bottomrule) {
-							for (var i in subBorder) {
-								if (subBorder.hasOwnProperty(i)) {
-									var bd = subBorder[i],
-										actu = -2,
-										start = -2;
-									for (var j = 0; j < bd.length + 1; j++) {
-										var nb = (j < bd.length) ? bd[j] : -7;
-										if (actu + 1 != nb) {
-											if (start >= 0) {
-												if (i == "double") {
-													// Rare case
-													var part = "\\cmidrule{" + (start + 1) + "-" + (actu + 1) + "}";
-													border += part + "\\morecmidrule" + part;
-												} else if(i != "trimfull"){
-													border += o[i] + "{" + (start + 1) + "-" + (actu + 1) + "}";
-													if (i == "dottedline") {
-														border += "[1pt/1pt]";
-													}
-												}
-											}
-											start = nb;
-										}
-										actu = nb
+								hdashline: this.useTabu ? "\\tabucline[on 4pt off 4pt]{-}" : "\\hdashline",
+								dottedline: this.useTabu ? "\\tabucline[on 1pt off 1pt]{-}" : "\\hdashline[1pt/1pt]"
+							}[firstBorder.type]
+						return border;
+					}
+					else if((hasColor 							// If there's color
+						|| (o.types.double && 						// or a double border but
+						   !(o.types.toprule || o.types.midrule || o.types.bottomrule))	// without booktab borders
+						) && (!this.packages["arydshln"] || this.useTabu)		// And we don't use arydshln package
+					){
+						// oh oh... We must use a hhline
+						var insideColor = this.actualColor,
+						metAry = false,
+						row = matrix[n-1] || matrix[n],
+						border = "\\hhline{";
+						this.packages["hhline"] = true;
+						for(var i=0;i<borders.length;i++){
+							if(i===0){
+							// Must check for left border
+								var borderLeft = (row[i].refCell||row[i]).leftBorder,
+								    borderLeftColor = (row[i].refCell||row[i]).leftBorderColor;
+								if(borderLeft == "normal" || borderLeft == "double"){
+									if(!areSameColors(insideColor, borderLeftColor)){
+										insideColor = borderLeftColor;
+										border += ">{\\arrayrulecolor"+getColor(borderLeftColor)+"}";
 									}
-								}
-							}
-						} else {
-							// Another rare case when there's Double subrules. We'll use hhline for this.
-							// TODO
-							var length = matrix[n].length;
-							var arrBorder = [];
-							var row = matrix[n-1] || matrix[n]
-							for(var i in subBorder){
-								if(subBorder.hasOwnProperty(i)){
-									var sb = subBorder[i];
-									for(var j=0;j<sb.length;j++){
-										arrBorder[+sb[j]] = i;
-									}
-								}
-							}
-							this.packages["hhline"] = true;
-							border = "\\hhline{";
-							for(var i=0;i<length;i++){
-								sb = arrBorder[i];
-								if(i == 0){
-									var borderLeft = (row[i].refCell||row[i]).leftBorder;
 									if(borderLeft == "normal"){
 										border += "|";
 									}
-									else if(borderLeft == "double"){
+									else{
 										border += "||";
 									}
 								}
-								if(!sb){
-									border += "~";
+							}
+							// Now the horizontal border
+							var type = borders[i].type,
+							color = borders[i].color;
+							if(type == "normal" || type == "toprule" || type == "bottomrule" || type == "midrule"){
+								if(!areSameColors(insideColor, color)){
+									insideColor = color;
+									border += ">{\\arrayrulecolor"+getColor(color)+"}";
 								}
-								else if(sb == "double"){
-									border+="="; 
+								border += "-";
+							}
+							else if(type == "double"){
+								if(!areSameColors(insideColor, color)){
+									border += ">{\\arrayrulecolor"+getColor(color)+"}";
 								}
-								else{
-									border += "-";
+								border += "=";
+							}
+							else if(type == "dottedline" || type == "hdashline"){
+								metAry = true;
+								border += "~";
+							}
+							else{
+								border += "~";
+							}
+							// Check for right border;
+							var borderRight = (row[i].refCell||row[i]).rightBorder,
+							    borderRightColor = (row[i].refCell||row[i]).rightBorderColor;
+							if(borderRight == "normal" || borderLeft == "double"){
+								if(!areSameColors(insideColor, borderRightColor)){
+									insideColor = borderRightColor;
+									border += ">{\\arrayrulecolor"+getColor(borderRightColor)+"}";
 								}
-								var borderRight = (row[i].refCell||row[i]).rightBorder;
 								if(borderRight == "normal"){
 									border += "|";
 								}
-								else if(borderRight == "double"){
+								else{
 									border += "||";
 								}
 							}
-							border += "}";
 						}
+						border += "}";
+						if(metAry){
+							for(var i=0;i<borders.length;i++){
+								if(borders[i]){
+									var type = borders[i].type,
+									color = borders[i].color;
+									if(type == "hdashline" || type == "dottedline"){
+										if(!areSameColors(this.actualColor, color)){
+											this.actualColor = color;
+											border+="\\arrayrulecolor"+getColor(color);
+										}
+										if(type == "hdashline"){
+											border+="\\tabucline[on 4pt off 4pt]{"+(i+1);
+										}
+										else{
+											border+="\\tabucline[on 1pt off 1pt]{"+(i+1);
+										}
+										while(true){	// We know what we are doing
+											i++;
+											var borderN = borders[i];
+											if(!borderN || !borderN.sameAsBefore){
+												border += "-" + i + "}";
+												i--;
+												break;
+											}
+										}
+									}
+								}
+							}
+						}
+						return border;
 					}
-					return border;
+					else{
+						var doubleBorder = false;
+						for(var i=0;i<borders.length;i++){
+							var borderO = borders[i];
+							if(!borderO){
+								continue;
+							}
+							if(!areSameColors(this.actualColor, borderO.color)){
+								this.actualColor = borderO.color;
+								border+= "\\arrayrulecolor"+getColor(borderO.color);
+							}
+							border += {
+								normal: "\\cline",
+								toprule: "\\cmidrule[\\heavyrulewidth]",
+								midrule: "\\cmidrule",
+								bottomrule: "\\cmidrule[\\heavyrulewidth]",
+								hdashline: this.useTabu ? "\\tabucline[on 4pt off 4pt]" : "\\cdashline",
+								dottedline: this.useTabu ? "\\tabucline[on 1pt off 1pt]" : "\\cdashline",
+								double: "\\cmidrule"
+							}[borderO.type] + "{" + (i+1);
+							if(borderO.type == "double"){doubleBorder = true;}
+							while(true){	// We know what we are doing
+								i++;
+								var borderN = borders[i];
+								if(!borderN || !borderN.sameAsBefore){
+									border += "-" + i + "}";
+									i--;
+									if(borderO.type == "dottedline" && !this.useTabu){
+										border += "[1pt/1pt]";
+									}
+									break;
+								}
+							}
+						}
+						if(doubleBorder){
+							border += "\\morecmidrule";
+						}
+						for(var i=0;i<borders.length;i++){
+							// We repeat the same process as before but only for double borders. Why not just copy the
+							// "double border" part ? In case the double border has color and the actual color changed
+							// after.
+							var borderO = borders[i];
+							if(!borderO || borderO.type != "double"){
+								continue;
+							}
+							if(!areSameColors(this.actualColor, borderO.color)){
+								this.actualColor = borderO.color;
+								border+= "\\arrayrulecolor"+getColor(borderO.color);
+							}
+							border += "\\cmidrule{"+ (i+1);
+							while(true){	// We know what we are doing
+								i++;
+								var borderN = borders[i];
+								if(!borderN || !borderN.sameAsBefore){
+									border += "-" + i + "}";
+									i--;
+									break;
+								}
+							}
+						}
+						return border;
+				
+					}
+					return "";
 				}, matrix);
 			}
 		})()
@@ -2186,11 +2701,15 @@ window.addEventListener("beforeunload", function() {
 			element = document.getElementById('line');
 		}
 		if(document.body.hasAttribute("data-border-editor") && element){
-			element.style.display="block";
-			initialX = e.pageX;
-			initialY = e.pageY;
-			calculate(initialX, initialY);
-			start = true;
+			var overElement = e.target;
+			if(!overElement || (overElement.tagName != "TEXTAREA" && overElement.tagName != "INPUT"
+					    && overElement.tagName != "BUTTON" && overElement.tagName != "SELECT")){
+				element.style.display="block";
+				initialX = e.pageX;
+				initialY = e.pageY;
+				calculate(initialX, initialY);
+				start = true;
+			}
 		}
 	});
 	window.addEventListener("mousemove", function(e){
@@ -2272,6 +2791,6 @@ window.addEventListener("beforeunload", function() {
 			start = false;
 			should = null;
 			initialY = initialX = 0;
-		}
+		};
 	});
 })();

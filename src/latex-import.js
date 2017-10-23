@@ -301,7 +301,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				continue;
 			}
 			var com = command(sub), name = com.name;
-			if(name == "\\" || name == "cr"){
+			if(name == "\\" || name == "cr" || name == "tabularnewline"){
 				row.push(cell);
 				cell = "";
 				table.push([]);
@@ -317,7 +317,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				i+= reg[0].length-1;				
 			}
 			else if(name == "noalign"){
-				if(name.args[0].lastIndexOf("\\hrule",0)===0){
+				if(name.args[0].indexOf("\\hrule",0)>-1){
 					actuBorder = "normal";
 				}
 				i+=com.full.length-1;				
@@ -547,7 +547,7 @@ setCellO = function(table, x, y, code, head){
 	if(span){
 		span = command(code.substring(span.index));
 		head = header(span.args[1])[0];
-		o.colSpan = parseInt(span[0], 10);
+		o.colSpan = parseInt(span.args[0], 10);
 	}
 	span = /\\multirow(?:cell|thead|)(?:[ ]*\[[^\]]*\]|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
@@ -807,9 +807,12 @@ header = function(head){
 			}
 			actu += ":";
 		}
-		else if(c == "!" && info.args.length > 0){
+		else if((c == "!" || c == "@") && info.args.length > 0){
 			if(info.args[0].indexOf("\\vrule") != -1){
 				actu += "|";
+			}
+			else if(info.args[0].indexOf("\\vdashline") != -1){
+				actu += ":";
 			}
 		}
 	}

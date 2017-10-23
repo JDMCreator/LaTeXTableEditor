@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8"> 
 
-<meta name="description" content="A powerful and robust LaTeX, Plain TeX, Markdown, CSV and HTML Table Editor. Also convert LaTeX tables to Plain TeX, Markdown, CSV or HTML.">
+<meta name="description" content="A powerful and robust LaTeX, Plain TeX, Markdown, CSV and HTML Table Editor and Generator. Also convert LaTeX tables to Plain TeX, Markdown, CSV or HTML.">
 	<title>LaTeX Tables Editor</title>
 	<link href="css.css" rel="stylesheet">
 	<link href="css/bootstrap.min.css" rel="stylesheet">
@@ -16,6 +16,8 @@
 	</script>
 	<script type="text/javascript" src="table.js">
 	</script>
+	<script type="text/javascript" src="color.js">
+	</script>
 	<script type="text/javascript" src="js.js"></script>
 	<script type="text/javascript" src="toMarkdown.js">
 	</script>
@@ -25,7 +27,6 @@
 	</script>
 	<script type="text/javascript" src="toCSV.js">
 	</script>
-
 	<script type="text/javascript" src="latex-import.js">
 	</script>
 </head>
@@ -89,8 +90,8 @@
 							<button type="button" data-toggle="tooltip" title="Border editor mode" class="btn btn-default" id="button-mode-border" onclick="table.mode(2)"><span class="glyphicon glyphicon-unchecked"></span></button>
 						</div>
 						<div class="btn-group" role="group" aria-label="...">
-							<button type="button" data-toggle="tooltip" title="Bold" class="btn btn-default" onmousedown="event.preventDefault()" onclick="document.execCommand('bold',false,null);return false;"><span class="glyphicon glyphicon-bold"></span></button>
-							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Italic" onmousedown="event.preventDefault()" onclick="document.execCommand('italic',false,null);return false;"><span class="glyphicon glyphicon-italic"></span></button>
+							<button type="button" data-toggle="tooltip" title="Bold" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('bold');return false;"><span class="glyphicon glyphicon-bold"></span></button>
+							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Italic" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('italic');return false;"><span class="glyphicon glyphicon-italic"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Equation" onmousedown="event.preventDefault()" onclick="table.insertEquation();return false;"><span class="glyphicon glyphicon-usd"></span></button>
 						</div>
 					</div>
@@ -152,14 +153,15 @@
 									<input type="checkbox" class="input-control" id="blacklist-array" value="array" checked disabled> <label for="blacklist-array">Array</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-arydshln" value="arydshln" checked> <label for="blacklist-arydshln">Arydshln</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-booktabs" value="booktabs" checked disabled> <label for="blacklist-booktabs">Booktabs</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-colortbl" value="colortbl" checked> <label for="blacklist-colortbl">Colortbl</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
 <input type="checkbox" class="input-control" id="blacklist-graphicx" value="graphicx" checked disabled> <label for="blacklist-graphicx">Graphicx</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked disabled> <label for="blacklist-hhline">Hhline</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
 								</div>
 								<div class="col-md-6">
+									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-multirow" value="multirow" checked> <label for="blacklist-multirow">Multirow</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-ragged2e" value="ragged2e" checked disabled> <label for="blacklist-ragged2e">Ragged2e</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-ragged2e" value="ragged2e" checked> <label for="blacklist-ragged2e">Ragged2e</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
@@ -256,7 +258,8 @@
     </div>
     <div id="right_border" class="panel-collapse collapse" role="tabpanel">
       <div class="panel-body">
-				Type of border : <select id="border" class="form-control">
+				Type of border :
+<select id="border" class="form-control">
 <option value="normal">[\hline] Default</option>
 <option value="double">[\hline\hline] Double line</option>
 <optgroup label="Booktabs">
@@ -271,7 +274,11 @@
 <option value="hdashline">[\hdashline] Dashed line</option>
 <option value="dottedline">[\hdashline[1pt/1pt]] Dotted line</option>
 </optgroup>
-</select>      </div>
+</select>
+Color of border : 
+<input type="color" class="form-control" value="#000000" id="border-color">
+
+      </div>
     </div>
   </div>
   <div class="panel panel-default">

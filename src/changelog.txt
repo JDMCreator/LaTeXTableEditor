@@ -7,6 +7,68 @@ Legend
 Dates use a YYYY/MM/DD format.
 
 
+Version 0.6 BETA (2017/10/23)
+===========
+
+| Note on this release :
+|     This release bring coloured rules and fix multiples issues with core functionalities
+|     This release bring the generator closer to a stable version
+
+CORE
+
+[+] New package option for "colortbl"¸
+[+] Informations about LaTeX packages are now shown
+[#] Support for pasting data
+[#] Bold and italic elements that follows each other are now merged
+[#] \usepackage[]{} commands are no longer commented when you download the .tex file
+[#] Fix bug with bold and italic buttons when there were multiple cells selected
+[#] Fatal issue when trying to download a .tex file with UTF-8 characters
+
+BORDER EDITOR MODULE
+
+[+] Support for coloured rules with 'colortbl' package.
+[#] The line for drawing borders no longer shows when you click/select in the textbox, on an input, a button or a dropdown menu.
+
+PASTE IMPORT MODULE
+
+[+] Support for coloured rules
+
+LATEX IMPORT MODULE
+
+[+] Support for \tabularnewline command
+[+] Support for \vdashline from 'hvdashln' package
+[/] Support for more complex construction with \noalign, like "\noalign{\color{red}\hline}" (the color won't be imported, tho, but the rule yes)
+[#] Fix a bug introduced in the last version that prevented the importation of cells spanning multiple columns
+
+TEX EXPORT MODULE
+
+[/] It now uses the new horizontal borders generator functions
+
+LATEX EXPORT MODULE
+
+[+] Now possible to disable "ragged2e" package
+[+] More flexible functions for horizontal borders
+[/] Caption without numbers now use "\captionsetup" from "caption" package
+[/] Tabu dashed/dotted line no longer has "\arrayrulewidth" included, because it was the default value
+[/] Left-aligned and right-aligned cells don't longer use "\\arraybackslash" with "shrink ratio" option and "ragged2e" package
+[#] "usepackage" when Arydshln and booktab were used together didn't produce the good result
+[#] Horizontal borders were not aligned when there was a double horizontal border and a horizontal border from booktab on the same line
+[#] Fixed issue with cells spanning multiple columns with the "shrink column" option
+[#] Table with label but without caption didn't work
+[#] Forgot to load "caption" package for caption without numbers
+[#] Label from tables with caption without numbers didn't show up
+[#] There was still arydshln code within \multicolumn when the package was disabled
+
+Version 0.5.2 BETA (2017/10/10)
+===========
+
+| Note on this release :
+|     This release fixes a bug
+
+CORE
+
+[#] Fix an issue with the "Add all borders" button
+
 Version 0.5.1 BETA (2017/10/08)
 ===========
 
