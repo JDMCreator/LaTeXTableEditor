@@ -1,24 +1,35 @@
 (function(){
+	var indent = "tab";
 	function beautify(html){
 		var str = ""
-		return html.replace(/<\s*(\/?)\s*([a-z]+)[^>]*>/gi,function(full,close,name){
+		html = html.replace(/<\s*(\/?)\s*([a-z]+)[^>]*>/gi,function(full,close,name){
+			var beforestr = str;
 			name = name.toLowerCase();
 			if(name == "table" || name == "tr" || name == "td" || name == "th" || name == "caption" || name == "tbody" || name == "thead" || name == "tfooter" || name == "p" || name == "div"){
 				if(close != "/"){
 					str+="\t";
+					return "\n"+beforestr+full+"\n"+str;
 				}
 				else{
 					str = str.slice(0, -1);
+					return "\n"+str+full+"\n"+str;
 				}
-				return "\n"+str+full+"\n"+str;
 			}
 			else if(name == "br" || name == "hr"){
 				return "\n"+str+full+"\n"+str;
 			}
 			return full;
 		}).replace(/[ \t]+\n/g,"\n").replace(/[\n\r]{2,}/g,"\n").trim();
+		if(indent == "two"){
+			html = html.replace(/\t/g, "  ");
+		}
+		else if(indent == "four"){
+			html = html.replace(/\t/g, "    ");
+		}
+		return html;
 	}
 	table.createInterpreter("html", function(){
+		indent = this._id("opt-html-indent").value;
 		var table = this.element,
 		caption = this.caption(),
 		booktabs = table.hasAttribute("data-booktabs"),
@@ -51,8 +62,15 @@
 				}
 				ocell.style.paddingLeft = ocell.style.paddingRight = "3cm";
 				if(cell.rowSpan != 1){ocell.rowSpan=cell.rowSpan}
-				if(cell.colSpan != 1){ocell.colSpan=cell.rowSpan}
-				ocell.innerHTML = this.getHTML(cell);
+				if(cell.colSpan != 1){ocell.colSpan=cell.colSpan}
+				if(cell.hasAttribute("data-diagonal")){
+					ocell.innerHTML = '<div style="padding-left: 50px;word-break: keep-all;white-space: nowrap;">'+this.getHTML(cell)+'</div>'+
+							 '<div style="padding-right:50px;word-break: keep-all;white-space: nowrap;">'+this.getHTML(cell, 1)+'</div>';
+					ocell.style.cssText += "background-image:linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, #000000 50%, #000000 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);";
+				}
+				else{
+					ocell.innerHTML = this.getHTML(cell);
+				}
 				orow.appendChild(ocell);
 			}
 			otable.appendChild(orow);

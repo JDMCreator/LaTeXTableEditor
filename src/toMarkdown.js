@@ -2,13 +2,13 @@
 	var getMdFromCell = function(cell){
 		if(!cell || !cell.cell){return "";}
 		if(cell.cell.rowSpan>1 || cell.cell.colSpan>1){
-			this.message("Merged cells unsupported in Markdown.");
+			this.message("Merged cells unsupported in Markdown.", "warning");
 		}
 		if(cell.cell.hasAttribute("data-rotated")){
-			this.message("Rotated cells unsupported in Markdown.");
+			this.message("Rotated cells unsupported in Markdown.", "warning");
 		}
 		if(cell.cell.hasAttribute("data-diagonal") || cell.cell.hasAttribute("data-two-diagonals")){
-			this.message("Cells with diagonal slashes are unsupported in Markdown.");
+			this.message("Cells with diagonal slashes are unsupported in Markdown.", "warning");
 		}
 		var html = table.getHTML(cell.cell);
 		if(document.getElementById('md-html').checked){
@@ -51,9 +51,58 @@
 					max = headernow[j];value = j;
 				}
 			}
-			colHeaders.push(convert[value]||"---");
+			colHeaders.push(value||"l");
 		}
-		return "|"+colHeaders.join("|")+"|";
+		return colHeaders;
+	},
+	beautify = function(rows, headerN, headers){
+		var cols = 0,
+		rg = [],
+		header = "";
+		for(var i=0;i<rows.length;i++){
+			cols = Math.max(cols, rows[i].length);
+			rg[i] = "";
+		}
+		for(var i=0;i<cols;i++){
+			var maxChar = 3;
+			for(var j=0;j<rows.length;j++){
+				maxChar = Math.max(maxChar, rows[j][i].length);
+			}
+			for(var j=0;j<rows.length;j++){
+				var content = rows[j][i]
+				rg[j] += content;
+				for(var h = content.length;h<maxChar;h++){
+					rg[j] += " ";
+				}
+				if(i+1<cols){
+					rg[j] += " | ";
+				}
+			}
+			var actualHeader = headers[i];
+			if(actualHeader == "r"){
+				for(var h=0;h<maxChar-1;h++){
+					header += "-";
+				}
+				header += ":";
+			}
+			else {
+				header += ":";
+				for(var h=1;h<maxChar-1;h++){
+					header += "-";
+				}
+				if(actualHeader == "c"){
+					header += ":";
+				}
+				else{
+					header += "-";
+				}
+			}
+			if(i+1<cols){
+				header += " | ";
+			}	
+		}
+		rg.splice(headerN, 0, header);
+		return rg;
 	}
 	table.createInterpreter("md", function(){
 
@@ -61,25 +110,26 @@
 		headersNb = parseInt(document.getElementById('md-header').value,10)||0,
 		str = ""
 		isHeader = true,
-		header = generateHeaderFromMatrix(matrix);
+		headers = generateHeaderFromMatrix(matrix);
 		headersNb = Math.max(isNaN(headersNb) ? 0 : headersNb,0);
 		if(headersNb>=matrix.length){
 			headersNb=0;
 			this.message("The number of header rows requested is too high. Set to 0 by default.", 1)
 		}
+		var rows=[];
 		for(var i=0;i<matrix.length;i++){
-			var row = matrix[i];
-			if(i!==0){
-				str += "\n";
-			}
-			if(i==headersNb && isHeader){
-				str += header + "\n";
-			}
-			str += "|";
+			var row = matrix[i],
+			cells = [];
 			for(var j=0;j<row.length;j++){
 				var cell = row[j];
-				str += getMdFromCell.call(this, cell) + "|";
+				cells.push(getMdFromCell.call(this, cell));
 			}
+			rows.push(cells);
+		}
+		rows = beautify(rows, headersNb, headers);
+		for(var i=0;i<rows.length;i++){
+			if(i>0){str += "\n";}
+			str += "| " + rows[i] + " |";
 		}
 		return str;
 	})

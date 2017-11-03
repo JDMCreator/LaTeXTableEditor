@@ -49,7 +49,7 @@ function $id(id) {
 			return "[rgb]{"+arr.join(",")+"}";
 		},
 		table = new(function() {
-			this.version = "0.6";
+			this.version = "0.6.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -133,6 +133,12 @@ function $id(id) {
 						alert("Your CSV file could not be loaded");
 					}
 				}
+			}
+			this.selectFormat = function(format){
+				$("div[data-option-group]").hide();
+				$("div[data-option-group=\""+format+"\"]").show();
+				$id("format").value = format;
+				$id("format-in").value = format;
 			}
 			this.removeAllSelection = function() {
 				this.selectedCell = null;
@@ -2364,6 +2370,11 @@ this.getHTML = (function(){
 							if(border[i-1]){
 								complete = false;
 							}
+							for (var j = 0; j < cell.colSpan; j++) {
+								border.push(false);
+								i++;
+							}
+							i--;
 							continue;
 						}
 						var bd = cell.getAttribute("data-border-bottom"),

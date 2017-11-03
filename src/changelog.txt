@@ -7,6 +7,27 @@ Legend
 Dates use a YYYY/MM/DD format.
 
 
+Version 0.6.1 BETA
+
+CORE
+
+LATEX EXPORT MODULE
+
+[/] Advanced export settings moved to a modal dialog for improved clarity
+
+MARKDOWN MODULE
+
+[+] The generated code is now beautified
+
+HTML MODULE
+
+[+] Cells with a diagonal lines are now supported
+[+] Option for two spaces and four spaces for indentation
+[#] "Colspan" attribute was wrong
+[#] Indentation had major issues
+
+
+
 Version 0.6 BETA (2017/10/23)
 ===========
 

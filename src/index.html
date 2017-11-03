@@ -129,66 +129,17 @@
 					<div style="max-width:500px">
 						<div class="form-group">
 							<label for="format">Output format</label>
-							<select class="form-control" id="format" onchange='$("div[data-option-group]").hide();$("div[data-option-group=\""+this.value+"\"]").show()'>
+							<select class="form-control" id="format" onchange="table.selectFormat(this.value)">
 	<option value="latex">LaTeX</option>
 	<option value="plain">Plain TeX</option>
 	<option value="md">Markdown</option>
 	<option value="html">HTML</option>
 	<option value="csv">CSV</option>
 	</select>
-						</div>
-						<div class="form-group" data-option-group="latex">
-							<h4>LaTeX options</h4>
+<div><a data-target="#format-settings" data-toggle="modal" href="#">Advanced settings</a></div>
 
-							<div><label><input type="checkbox" id="opt-latex-whitespace"> Remove whitespace</label></div>
-							<div><label><input type="checkbox" id="opt-latex-border" checked> Border commands are on separated lines</label></div>
-<h4>Packages</h4>
-<label die-"opt-fit-table">Fit table to page method :</label> <select id="opt-fit-table" class="form-control"><option value="none">None</option>
-<option value="sc">Scale</option>
-<option value="sh">Shrink columns (BETA)</option>
-<option value="sc-sh">Shrink (BETA) & scale</option></select>
-							<h5>Packages</h5>
-							<div class="row">
-								<div class="col-md-6">
-									<input type="checkbox" class="input-control" id="blacklist-array" value="array" checked disabled> <label for="blacklist-array">Array</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-arydshln" value="arydshln" checked> <label for="blacklist-arydshln">Arydshln</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-booktabs" value="booktabs" checked disabled> <label for="blacklist-booktabs">Booktabs</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-colortbl" value="colortbl" checked> <label for="blacklist-colortbl">Colortbl</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
-<input type="checkbox" class="input-control" id="blacklist-graphicx" value="graphicx" checked disabled> <label for="blacklist-graphicx">Graphicx</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked disabled> <label for="blacklist-hhline">Hhline</label><br>
-								</div>
-								<div class="col-md-6">
-									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-multirow" value="multirow" checked> <label for="blacklist-multirow">Multirow</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-ragged2e" value="ragged2e" checked> <label for="blacklist-ragged2e">Ragged2e</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label>
-								</div>
-							</div>
 						</div>
-						<div class="form-group" data-option-group="md" style="display:none;">
-							<h4>Markdown options</h4>
-							<div class="form-group">
-							<label for="md-header">Number of headers' rows</label>
-							<input type="number" value="1" min="0" class="form-control" id="md-header">
-						</div> <div class="form-group">
-							<label><input type="checkbox" id="md-html" checked> Use HTML when needed</label>
-						</div>
-						</div>
-						<div class="form-group" data-option-group="plain" style="display:none;">
-							<h4>Plain TeX options</h4>
-							<label><input type="checkbox" id="opt-tex-escape" checked> Escape accented characters</label><br>
-							<label><input type="checkbox" id="opt-tex-macro" checked> Use macros when needed</label>
-						</div>
-						<div class="form-group" data-option-group="html" style="display:none;">
-							<h4>HTML options</h4>
-						</div>
-						<div class="form-group" data-option-group="csv" style="display:none;">
-							<h4>CSV options</h4>
-						</div>
+						
 					</div>
 
 				</div>
@@ -428,6 +379,95 @@ Color of border :
   </div>
 </div>
 
+
+<div class="modal fade" id="format-settings" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Advanced export settings</h4>
+      </div>
+      <div class="modal-body">
+
+<select class="form-control" id="format-in" onchange="table.selectFormat(this.value)">
+	<option value="latex">LaTeX</option>
+	<option value="plain">Plain TeX</option>
+	<option value="md">Markdown</option>
+	<option value="html">HTML</option>
+	<option value="csv">CSV</option>
+	</select>
+<div class="form-group" data-option-group="latex">
+							<h4>LaTeX options</h4>
+
+							<div><label><input type="checkbox" id="opt-latex-whitespace"> Remove whitespace</label></div>
+							<div><label><input type="checkbox" id="opt-latex-border" checked> Border commands are on separated lines</label></div>
+<h5>Fit table to page method</h5>
+<select id="opt-fit-table" class="form-control"><option value="none">None</option>
+<option value="sc">Scale</option>
+<option value="sh">Shrink columns (BETA)</option>
+<option value="sc-sh">Shrink (BETA) & scale</option></select>
+<!--
+<h5>Table's caracteristics</h5>
+							<div><label><input type="checkbox" id="opt-latex-whitespace"> Split table in multiple page</label></div>
+							<div><label><input type="checkbox" id="opt-latex-whitespace"> Table spans multiple columns</label></div>
+							<div><label><input type="checkbox" id="opt-latex-whitespace"> Display table in landscape mode</label></div>
+-->
+							<h5>Packages</h5>
+							<div class="row">
+								<div class="col-md-6">
+									<input type="checkbox" class="input-control" id="blacklist-array" value="array" checked disabled> <label for="blacklist-array">Array</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-arydshln" value="arydshln" checked> <label for="blacklist-arydshln">Arydshln</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-booktabs" value="booktabs" checked disabled> <label for="blacklist-booktabs">Booktabs</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-colortbl" value="colortbl" checked> <label for="blacklist-colortbl">Colortbl</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
+<input type="checkbox" class="input-control" id="blacklist-graphicx" value="graphicx" checked disabled> <label for="blacklist-graphicx">Graphicx</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked disabled> <label for="blacklist-hhline">Hhline</label><br>
+								</div>
+								<div class="col-md-6">
+									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-multirow" value="multirow" checked> <label for="blacklist-multirow">Multirow</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-ragged2e" value="ragged2e" checked> <label for="blacklist-ragged2e">Ragged2e</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label>
+								</div>
+							</div>
+<!--
+<h5>Colors</h5>
+<select id="opt-color" class="form-control"><option value="rgb">RGB</option>
+<option value="cmyk">CYMK</option></select>
+-->
+						</div>
+						<div class="form-group" data-option-group="md" style="display:none;">
+							<h4>Markdown options</h4>
+							<div class="form-group">
+							<label for="md-header">Number of headers' rows</label>
+							<input type="number" value="1" min="0" class="form-control" id="md-header">
+						</div> <div class="form-group">
+							<label><input type="checkbox" id="md-html" checked> Use HTML when needed</label>
+						</div>
+						</div>
+						<div class="form-group" data-option-group="plain" style="display:none;">
+							<h4>Plain TeX options</h4>
+							<label><input type="checkbox" id="opt-tex-escape" checked> Escape accented characters</label><br>
+							<label><input type="checkbox" id="opt-tex-macro" checked> Use macros when needed</label>
+						</div>
+						<div class="form-group" data-option-group="html" style="display:none;">
+							<h4>HTML options</h4>
+<h5>Indentation</h5>
+<select id="opt-html-indent" class="form-control"><option value="tab">Tab</option>
+<option value="two">Two spaces</option>
+<option value="four">Four spaces</option></select>
+						</div>
+						<div class="form-group" data-option-group="csv" style="display:none;">
+							<h4>CSV options</h4>
+						</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 		<script type="text/javascript">
 		$(function(){
 			var isIE = /*@cc_on!@*/false || !!document.documentMode;
@@ -458,8 +498,7 @@ Color of border :
 			}
 			var format = localStorage.getItem("table_format")
 			if(format){
-				$id("format").value = format;
-				$("div[data-option-group]").hide();$("div[data-option-group=\""+format+"\"]").show()
+				table.selectFormat(format);
 			}
 			function createTableCreater(){
 				var table = $id("create_table"),
@@ -506,7 +545,7 @@ Color of border :
 				e.preventDefault();
 			}
 		}, true);
-
+/*
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -514,7 +553,7 @@ Color of border :
 
   ga('create', 'UA-102898458-1', 'auto');
   ga('send', 'pageview');
-
+*/
 		</script>
 </body>
 

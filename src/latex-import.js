@@ -104,19 +104,25 @@ specialSeparators = {
 		}
 		return false;
 	}
+	else if(realname == "\\"){
+		o.asterisk = nextchar == "*";
+		o.name = realname;
+		o.full = "\\\\"+(o.asterisk ? "*" : "");
+		return o;
+	}
 	else if(nextchar == "*"){
 		o.asterisk = true;
 		nextchar = code.charAt(name.length+1);
 	}
 	if(nextchar == "]" || nextchar == "}" || nextchar == "\\"){
 		o.name = realname;
-		o.full = "\\" + realname;
+		o.full = "\\" + realname +(o.asterisk ? "*" : "");
 		return o;
 	}
 	if(nextchar!="[" && nextchar!="{" && !/^\s$/.test(nextchar) && !commandNumbers[realname]){
 		o.name = realname;
 		o.args.push(nextchar);
-		o.full="\\"+realname+""+nextchar;
+		o.full="\\"+realname+""+(o.asterisk ? "*" : "")+nextchar;
 		return o;
 	}
 	code = code.substring(name.length) + " ";
