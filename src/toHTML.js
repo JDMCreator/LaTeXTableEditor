@@ -5,7 +5,7 @@
 		html = html.replace(/<\s*(\/?)\s*([a-z]+)[^>]*>/gi,function(full,close,name){
 			var beforestr = str;
 			name = name.toLowerCase();
-			if(name == "table" || name == "tr" || name == "td" || name == "th" || name == "caption" || name == "tbody" || name == "thead" || name == "tfooter" || name == "p" || name == "div"){
+			if(name == "table" || name == "tr" || name == "td" || name == "th" || name == "caption" || name == "tbody" || name == "thead" || name == "tfooter" || name == "p" || name == "div" || name == "ul" || name == "li"){
 				if(close != "/"){
 					str+="\t";
 					return "\n"+beforestr+full+"\n"+str;
@@ -40,6 +40,12 @@
 		otable.style.borderCollapse = "collapse";
 		otable.style.border = "none";
 		otable.style.borderSpacing = "0";
+		var fulltable = otable;
+		if(document.getElementById("opt-html-tbody").checked){
+			var tbody = document.createElement("tbody");
+			otable.appendChild(tbody);
+			otable = tbody;
+		}
 		for(var i=0;i<table.rows.length;i++){
 			var cells = table.rows[i].cells,
 			orow = document.createElement("tr");
@@ -78,7 +84,7 @@
 
 		otable.appendChild(orow);
 		var container = document.createElement("div");
-		container.appendChild(otable);
+		container.appendChild(fulltable);
 		var equations = container.querySelectorAll("span.latex-equation");
 		// TODO : SPACE PROBLEMS!!!
 		for(var i=0,eq;i<equations.length;i++){
@@ -86,6 +92,11 @@
 			var text = document.createTextNode("$$"+(eq.textContent || eq.innerText)+"$$");
 			eq.parentNode.replaceChild(text, eq);
 		}
-		return beautify(container.innerHTML);
+		var html = beautify(container.innerHTML);
+		if(document.getElementById("opt-html-remove-tag").checked){
+			html = html.replace(/\s+<\s*\/\s*(?:p|dt|dd|li|option|thead|th|tbody|tr|td|tfoot|colgroup)\s*>/gm, "")
+				   .replace(/[\n\r]{2,}/g, "\n");
+		}
+		return html;
 	})
 })();

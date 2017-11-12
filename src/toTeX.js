@@ -2,16 +2,99 @@
 	"use strict";
 	var getTexFromCell = function(cell){
 		if(!cell || !cell.cell){return "";}
-		var latex = this.generateFromHTML(this.getHTML(cell.cell), true);
-		latex = latex.replace(/\\textbf\{/g, "{\\bf ").replace(/\\textit\{/g, "{\\it ");
+		var latex = generateFromHTML(this.getHTML(cell.cell));
 		if(latex.indexOf("\\\\") >= 0){
-			latex = "\\vtop{\\hbox{\\strut " + latex.replace(/\s*\\{2,}\s*/g, "}\\hbox{\\strut ") + "}}";
+			latex = "\\vtop{\\hbox{\\strut " + latex.replace(/\s*\\{2}\s*/g, "}\\hbox{\\strut ") + "}}";
 		}
 		if(cell.cell.hasAttribute("data-rotated") && document.getElementById('opt-tex-macro').checked){
 			useRotate = true;
 			latex = "\\rotatecell{"+latex+"}";
 		}
 		return latex;
+	},
+	generateFromHTML = function(html, ignoreMultiline, align) {
+		align = align || "l";
+		var div = document.createElement("div"), hasMultiline;
+		div.innerHTML = html;
+		var el = div.querySelectorAll("span.latex-equation");
+		var eq = []
+		for (var i = 0; i < el.length; i++) {
+			var kbd = document.createElement("kbd");
+			eq.push("$" + (el[i].innerText || el[i].textContent) + "$");
+			el[i].parentNode.replaceChild(kbd, el[i]);
+		}
+		html = div.innerHTML;
+		var str = "", kbdcount = 0, ulcount = 0, lastcrcr = -1;
+		for(var i=0,c;i<html.length;i++){
+			c = html.charAt(i);
+			if(c == "<"){
+				var inside = html.substring(i, html.indexOf(">", i+1)+1),
+				tagname = /^<?\s*\/?\s*([a-z]+)/i.exec(inside)[1].toLowerCase();
+				if(/^<?\s*\//.test(inside)){tagname="/"+tagname;}
+				if(tagname == "br"){
+					hasMultiline = true;
+					str += "\\\\";
+				}
+				else if(tagname == "kbd"){
+					str += eq[kbdcount];
+					kbdcount++;
+				}
+				else if(tagname == "b"){
+					str += "{\\bf ";
+				}
+				else if(tagname == "i"){
+					str += "{\\it ";
+				}
+				else if(tagname == "/b" || tagname == "/i"){
+					str += "}";
+				}
+				i += inside.length-1;
+				continue;
+			}
+			else if(c == "&"){
+				var inside = html.substring(i, html.indexOf(";", i+1)+1);
+				if(inside == "&nbsp;"){
+					str += "~";
+				}
+				else if(inside == "&lt;"){
+					str += "$<$";
+				}
+				else if(inside == "&amp;"){
+					str += "\\&";
+				}
+				else if(inside == "&quot;"){
+					str += '"';
+				}
+				i += inside.length-1;
+			}
+			else if(c == "\\"){
+				str += "\\textbackslash{}";
+			}
+			else if(c == ">"){
+				str += "$>$";
+			}
+			else if(c == "$" || c == "%" || c == "^" || c == "_" || c == "{" || c == "}" || c == "#"){
+				str += "\\" + c;
+			}
+			else if(c == "|"){
+				str += "$|$";
+			}
+			else if(c.charCodeAt(0)==182){
+				str += "\\P{}";
+			}
+			else if(c == "~"){
+				str += "\\textasciitilde{}";
+			}
+			else{
+				str+= c;
+			}
+		}
+		if(str.length == lastcrcr){
+			str = str.slice(0,-2);
+		}
+		str = str.replace(/[ ]{2,}/g, " ")
+			.replace(/[\n\r]+/g, "");
+		return str
 	},
 	nonASCII = false,
 	escapeStr = function(str) {
@@ -247,11 +330,25 @@
 							"toprule" : "\\leavevmode\\leaders\\hrule height 0.8pt\\hfill\\kern 0pt",
 							"bottomrule" : "\\leavevmode\\leaders\\hrule height 0.8pt\\hfill\\kern 0pt",
 							"midrule" : "\\leavevmode\\leaders\\hrule height 0.5pt\\hfill\\kern 0pt",
-							"double" : "\\hrulefill" // TODO : SUPPORT DOUBLE
+							"double" : "\\hrulefill"
 						}[borderO.type] || "\\hrulefill") 
 				}
 			}
-			return border+"\n\\cr";
+			if(o.types["double"]){
+				border += "\\cr\n\\noalign{\\kern1pt}\n"
+				for(var i=-1;i<borders.length;i++){
+					var borderO = borders[i];
+					if(i!=-1){border+= "&"}
+					else{border+="\\omit"}
+					if(borderO){
+						border += "\\omit";
+						if(borderO.type == "double"){
+							border += "\\hrulefill";
+						}
+					}
+				}
+			}
+			return border+"\\cr";
 		}
 	}
 	table.createInterpreter("plain", function(){

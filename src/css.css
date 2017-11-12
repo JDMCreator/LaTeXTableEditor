@@ -41,6 +41,9 @@
 			margin-left:3px;
 			margin-right:3px;
 		}
+		#table ul {
+ 		   padding-left:1.2em;
+		}
 		#create_table{
 			border-collapse:separate;
 			border-spacing:2px;

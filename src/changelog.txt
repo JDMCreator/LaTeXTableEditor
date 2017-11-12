@@ -6,14 +6,69 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 0.7 BETA (2017/11/12)
+===========
 
-Version 0.6.1 BETA
+| Note on this release :
+|     This release introduces unordered list, BBCode and Eplain as export formats, and fixes issues with the "Shrink column" algorithm
 
 CORE
 
+[+] Unordered list
+[/] Changed the way the format list was formatted
+
+BBCODE EXPORT MODULE
+
+[+] New BBCode export module
+
+EPLAIN EXPORT MODULE
+
+[+] New Eplain export module
+
+TEX EXPORT MODULE
+
+[+] Support for partial horizontal borders
+[/] The TeX export module now uses its own functions to generate the TeX code inside each cell
+[#] Issue with "less than" (<), "greater than" (>) and "pipe" (|) characters
+
+HTML EXPORT MODULE
+
+[+] Support for indentation for unordered list
+[+] Option to add a <TBODY>
+[+] Option to remove optional closing tags (p, li, tbody, tr, th, td...)
+
 LATEX EXPORT MODULE
 
+[+] Paragraph symbol (Pilcrow) is now converted to \P{}
+[/] Default page size is now "390pt" and not "8.5in" like before with 'shrink column' option (doesn't change much)
+[#] "Less than" character (<) was not printed
+[#] "Pipe" character (|) resulted in an error. Changed to \textbar.
+[#] Fixed issue where you had to reload if you stopped using the "shrink" option
+[#] Fixed rare issue where you could have "array" package when you don't need it with 'shrink column' option
+[#] Fixed multicolumn width with 'shrink column' option
+[#] Fixed multirow width with 'shrink column' option
+[#] Fixed makecell width with 'shrink column' option
+[#] Fixed text alignment in cells that spans multiple rows
+[-] Removed \RaggedRight and \raggedright\arraybackslash with 'shrink column' option because the result was not justified
+
+
+Version 0.6.1 BETA (2017/11/03)
+===========
+
+| Note on this release :
+|     This release fixes an issue with borders introduced in the last version and move export settings to a modal dialog
+
+CORE
+
 [/] Advanced export settings moved to a modal dialog for improved clarity
+
+LATEX EXPORT MODULE
+
+[#] Issue with borders when there's a cell that spans multiple rows
+
+LATEX IMPORT MODULE
+
+[#] The asterisk in '\\*' was interpreted as text
 
 MARKDOWN MODULE
 

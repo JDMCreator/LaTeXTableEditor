@@ -27,6 +27,10 @@
 	</script>
 	<script type="text/javascript" src="toCSV.js">
 	</script>
+	<script type="text/javascript" src="toBBCode.js">
+	</script>
+	<script type="text/javascript" src="toEplain.js">
+	</script>
 	<script type="text/javascript" src="latex-import.js">
 	</script>
 </head>
@@ -46,7 +50,7 @@
 
 
 <p class="text-right hide-on-full" style="margin:0"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="help.html" target="_blank">Help</a></p>
-<div style="height:50px;margin-bottom:10px;" class="hide-on-full"><img src="logo.png" height="50"><span style="
+<div style="height:50px;margin-bottom:10px;" class="hide-on-full"><img src="logo.png" alt="Logo." height="50"><span style="
 	font-size:30px;
 	vertical-align:top;
 	display:inline-block;
@@ -89,6 +93,9 @@
 							<button type="button" data-toggle="tooltip" title="View mode" class="btn btn-default" id="button-mode-view" onclick="table.mode(1)"><span class="glyphicon glyphicon-eye-open"></span></button>
 							<button type="button" data-toggle="tooltip" title="Border editor mode" class="btn btn-default" id="button-mode-border" onclick="table.mode(2)"><span class="glyphicon glyphicon-unchecked"></span></button>
 						</div>
+<div class="btn-group" role="group" aria-label="...">
+							<button type="button" data-toggle="tooltip" title="Unordered List" class="btn btn-default" onmousedown="event.preventDefault()" onclick="document.execCommand('insertunorderedlist', false, false);return false;"><span class="glyphicon glyphicon-list"></span></button>
+</div>
 						<div class="btn-group" role="group" aria-label="...">
 							<button type="button" data-toggle="tooltip" title="Bold" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('bold');return false;"><span class="glyphicon glyphicon-bold"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Italic" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('italic');return false;"><span class="glyphicon glyphicon-italic"></span></button>
@@ -130,11 +137,21 @@
 						<div class="form-group">
 							<label for="format">Output format</label>
 							<select class="form-control" id="format" onchange="table.selectFormat(this.value)">
+<optgroup label="TeX">
 	<option value="latex">LaTeX</option>
 	<option value="plain">Plain TeX</option>
+	<option value="eplain">Eplain</option>
+</optgroup>
+<optgroup label="Markup">
 	<option value="md">Markdown</option>
+</optgroup>
+<optgroup label="Web">
 	<option value="html">HTML</option>
+	<option value="bbcode">BBCode</option>
+</optgroup>
+<optgroup label="Data">
 	<option value="csv">CSV</option>
+</optgroup>
 	</select>
 <div><a data-target="#format-settings" data-toggle="modal" href="#">Advanced settings</a></div>
 
@@ -394,7 +411,9 @@ Color of border :
 	<option value="plain">Plain TeX</option>
 	<option value="md">Markdown</option>
 	<option value="html">HTML</option>
+	<option value="bbcode">BBCode</option>
 	<option value="csv">CSV</option>
+	<option value="eplain">Eplain</option>
 	</select>
 <div class="form-group" data-option-group="latex">
 							<h4>LaTeX options</h4>
@@ -459,9 +478,21 @@ Color of border :
 <select id="opt-html-indent" class="form-control"><option value="tab">Tab</option>
 <option value="two">Two spaces</option>
 <option value="four">Four spaces</option></select>
+<h5>Advanced settings</h5>
+<label><input type="checkbox" id="opt-html-tbody"> Use a <code>TBODY</code tag</label><br>
+<label><input type="checkbox" id="opt-html-remove-tag"> Remove optional closing tags</label>
 						</div>
 						<div class="form-group" data-option-group="csv" style="display:none;">
 							<h4>CSV options</h4>
+						</div>
+						<div class="form-group" data-option-group="bbcode" style="display:none;">
+							<h4>BBCode options</h4>
+							<div class="form-group">
+							<label for="opt-bbcode-header">Number of headers' rows</label>
+							<input type="number" value="1" min="0" class="form-control" id="opt-bbcode-header">
+						</div> 
+						<div class="form-group" data-option-group="eplain" style="display:none;">
+							<h4>Eplain options</h4>
 						</div>
       </div>
     </div>
@@ -545,15 +576,19 @@ Color of border :
 				e.preventDefault();
 			}
 		}, true);
-/*
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-102898458-1', 'auto');
-  ga('send', 'pageview');
-*/
+		window.isProduction = (function(){
+			return /\b(github|latex-tables)\b/.test(location.hostname||"");
+		})();
+		if(isProduction){
+		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+		  ga('create', 'UA-102898458-1', 'auto');
+ 		  ga('send', 'pageview');
+		}
 		</script>
 </body>
 
