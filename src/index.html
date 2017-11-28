@@ -99,8 +99,23 @@
 						<div class="btn-group" role="group" aria-label="...">
 							<button type="button" data-toggle="tooltip" title="Bold" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('bold');return false;"><span class="glyphicon glyphicon-bold"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Italic" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('italic');return false;"><span class="glyphicon glyphicon-italic"></span></button>
+							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Underline" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('underline');return false;"><span class="icon-underline"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Equation" onmousedown="event.preventDefault()" onclick="table.insertEquation();return false;"><span class="glyphicon glyphicon-usd"></span></button>
 						</div>
+<div class="btn-group" role="group" aria-label="...">
+							<button type="button" data-toggle="tooltip" title="Text color" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('foreColor', this.getAttribute('data-color')||'#000000');return false;" id="text-color-button"><span class="glyphicon glyphicon-font" style="text-shadow:0 0 1px #000;" id="text-color-span"></span></button>
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <span class="caret"></span>
+    </button>
+    <div class="dropdown-menu" style="padding:3px;">
+   <div class="input-group">
+          <input type="color" class="form-control" oninput="table.textColor(this.value)" id="text-color-input">
+      <span class="input-group-btn">
+<button type="button" data-toggle="tooltip" title="Remove text color" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('foreColor', '#000000');return false;" id="text-color-button"><span class="glyphicon glyphicon-ban-circle"></span></button>
+      </span>
+    </div>
+    </div>
+</div>
 					</div>
 				</div>
 				<div role="tabpanel" class="tab-pane" id="profile">
@@ -123,6 +138,10 @@
 				</div>
 				<div role="tabpanel" class="tab-pane" id="messages">
 					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="...">
+
+						<div class="btn-group" role="group" aria-label="...">
+							<button type="button" class="btn btn-default" onclick="table.mode(table.mode() == 2 ? 0 : 2)" data-toggle="tooltip" title="Draw borders" id="button-border-draw"><span class="glyphicon glyphicon-pencil"></span></button>
+						</div>
 						<div class="btn-group" role="group" aria-label="...">
 							<button type="button" class="btn btn-default" onclick="table.setAllBorders()" data-toggle="tooltip" title="Add all borders"><span class="glyphicon glyphicon-unchecked"></span></button>
 							<button type="button" class="btn btn-default" onclick="table.removeBorders()" data-toggle="tooltip" title="Remove all borders"><span class="glyphicon glyphicon-remove"></span></button>
@@ -227,6 +246,7 @@
     <div id="right_border" class="panel-collapse collapse" role="tabpanel">
       <div class="panel-body">
 				Type of border :
+    <div class="input-group">
 <select id="border" class="form-control">
 <option value="normal">[\hline] Default</option>
 <option value="double">[\hline\hline] Double line</option>
@@ -243,6 +263,11 @@
 <option value="dottedline">[\hdashline[1pt/1pt]] Dotted line</option>
 </optgroup>
 </select>
+      <span class="input-group-btn">
+       <button type="button" class="btn btn-default" id="panel-draw-border" onclick="table.mode(table.mode() == 2 ? 0 : 2)" data-toggle="tooltip" title="Draw borders"><span class="glyphicon glyphicon-pencil"></span></button>
+      </span>
+    </div>
+
 Color of border : 
 <input type="color" class="form-control" value="#000000" id="border-color">
 
@@ -276,6 +301,14 @@ Color of border :
 							<button type="button" class="btn btn-default" id="info-rotated" onclick="table.rotate(true)"><span class="glyphicon glyphicon-font" style="transform: rotate(-90deg);margin-left: -4px;"></span></button>
 						</div>
 					</div>
+					<h6>Background</h6>
+    <div class="input-group">
+      <input type="color" class="form-control" id="info-background-color" style="display:inline-block;" value="#FFFFFF" oninput="table.backgroundColor(this.value)">
+      <span class="input-group-btn">
+       <button type="button" class="btn btn-default" onclick="table.removeBackgroundColor()" data-toggle="tooltip" title="Remove background color"><span class="glyphicon glyphicon-ban-circle"></span></button>
+      </span>
+    </div>
+
 					<h6>LaTeX Content</h6>
 					<textarea id="latex_content" class="form-control"></textarea>
      </div>
@@ -420,6 +453,7 @@ Color of border :
 
 							<div><label><input type="checkbox" id="opt-latex-whitespace"> Remove whitespace</label></div>
 							<div><label><input type="checkbox" id="opt-latex-border" checked> Border commands are on separated lines</label></div>
+<div><label><input type="checkbox" id="opt-latex-float" checked> Use table as a float</label></div>
 <h5>Fit table to page method</h5>
 <select id="opt-fit-table" class="form-control"><option value="none">None</option>
 <option value="sc">Scale</option>
@@ -427,9 +461,9 @@ Color of border :
 <option value="sc-sh">Shrink (BETA) & scale</option></select>
 <!--
 <h5>Table's caracteristics</h5>
-							<div><label><input type="checkbox" id="opt-latex-whitespace"> Split table in multiple page</label></div>
-							<div><label><input type="checkbox" id="opt-latex-whitespace"> Table spans multiple columns</label></div>
-							<div><label><input type="checkbox" id="opt-latex-whitespace"> Display table in landscape mode</label></div>
+							<div><label><input type="checkbox" id="opt-latex-split"> Split table in multiple page</label></div>
+							<div><label><input type="checkbox" id="opt-latex-columns"> Table spans multiple columns</label></div>
+							<div><label><input type="checkbox" id="opt-latex-landscape"> Display table in landscape mode</label></div>
 -->
 							<h5>Packages</h5>
 							<div class="row">
@@ -437,6 +471,7 @@ Color of border :
 									<input type="checkbox" class="input-control" id="blacklist-array" value="array" checked disabled> <label for="blacklist-array">Array</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-arydshln" value="arydshln" checked> <label for="blacklist-arydshln">Arydshln</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-booktabs" value="booktabs" checked disabled> <label for="blacklist-booktabs">Booktabs</label><br>
+<input type="checkbox" class="input-control" id="blacklist-color" value="color" checked disabled> <label for="blacklist-color">Color</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-colortbl" value="colortbl" checked> <label for="blacklist-colortbl">Colortbl</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
 <input type="checkbox" class="input-control" id="blacklist-graphicx" value="graphicx" checked disabled> <label for="blacklist-graphicx">Graphicx</label><br>
@@ -449,9 +484,12 @@ Color of border :
 									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label>
+									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-ulem" value="ulem" checked> <label for="blacklist-ulem">Ulem</label>
 								</div>
 							</div>
+<h5>Advanced options</h5>
+<label><input type="checkbox" id="opt-latex-hhline"> Enhance double borders with <code>hhline</code> when possible <span class="label label-warning">BETA</span></label> 
 <!--
 <h5>Colors</h5>
 <select id="opt-color" class="form-control"><option value="rgb">RGB</option>
@@ -570,7 +608,7 @@ Color of border :
 			createTableCreater();
 		});
 		document.addEventListener("keydown", function(e){
-			e = event || e;
+			e = window.event || e;
 			if(e.keyCode == 90 && (e.ctrlKey || e.metaKey) && table.statesManager && table.statesManager.undo){
 				table.statesManager.undo();
 				e.preventDefault();

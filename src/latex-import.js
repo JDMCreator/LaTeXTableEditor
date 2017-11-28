@@ -884,6 +884,9 @@ treatCom = function(code){
 	else if(name == "emph"){
 		html+="<i>" + getHTML(com.args[0]) + "</i>";
 	}
+	else if(name == "uline" || name == "underline"){
+		html+="<u>" + getHTML(com.args[0]) + "</u>";
+	}
 	else if(name == "url" || name == "underline" || name == "part" || name == "chapter" || name == "subsection" || name == "section" ||
 		name == "caption"){
 		html+= getHTML(com.args[0]);
@@ -891,7 +894,7 @@ treatCom = function(code){
 	else if(name == "TeX" || name == "LaTeX" || name == "%" || name == "}" || name == "{" || name == "_" || name == "#" || name == " " || name == "$" || name == "i" || name == "j"){
 		html += name;
 	}
-	else if(name == "\\" || name == "newline" || name == "linebreak"){
+	else if(name == "\\" || name == "newline" || name == "linebreak" || name == "par"){
 		html += "<br>"
 	}
 	else if(name == "P"){

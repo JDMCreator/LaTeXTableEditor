@@ -6,6 +6,39 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 0.8 BETA
+===========
+
+| Note on this release :
+|     This release introduces underlined text, colored text, 
+|     background color for cells, enhanced double borders
+|     and possibility to remove "table" environment.
+
+CORE
+
+[+] Underline text
+[+] Color of text
+[+] Background color of cells
+[+] New button next to the list of border type to toggle "Draw borders" mode
+[+] New button in the "Borders" tab to toggle "Draw borders" mode
+[+] New "color" (disabled) and "ulem" package options
+[#] Issue with line wrapping in Firefox
+[#] Support pasting of elements styled with multiple CSS styles
+[#] Rotated cells are not longer cutted
+[#] Issue with undo in Firefox
+
+LATEX EXPORT
+
+[+] New option to enhance double borders with hhline
+[+] New option to remove the "table" float environment
+[#] All cells that spanned multiple rows had \multicolumn
+[#] Some packages were counted twice
+
+LATEX IMPORT
+
+[+] Support for \uline and \underline
+[+] Support for \par
+
 Version 0.7 BETA (2017/11/12)
 ===========
 

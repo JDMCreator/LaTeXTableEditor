@@ -1,6 +1,6 @@
 ## LaTeX Table Editor ##
 
-**Version 0.7**
+**Version 0.8**
 
 This is the GitHub page of an Open Source WYSIWYG table editor that exports to multiples languages including LaTeX, Plain TeX, CSV, HTML, BBCode, Eplain and Markdown.
 

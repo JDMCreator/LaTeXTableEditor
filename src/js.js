@@ -19,6 +19,7 @@ function $id(id) {
 			"array" : [],
 			"arydshln" : [],
 			"booktabs" : [],
+			"color" : [],
 			"colortbl" : ["array", "color"],
 			"diagbox" : ["keyval","pict2e","fp"],
 			"fp" : ["defpattern","fp-basic","fp-addons","fp-snap","fp-exp",
@@ -32,13 +33,28 @@ function $id(id) {
 			"rotating" : ["graphicx", "ifthen"],
 			"slashbox" : [],
 			"tabu" : ["array","varwidth"],
-			"tabularx" : ["array"]
+			"tabularx" : ["array"],
+			"ulem" : []
+		},
+		rgb2cymk = function(r,g,b){
+			var c = 1 - r/255,
+			y = 1 - g/255,
+			m = 1 - b/255,
+			k = Math.min(c,y,m,k);
+			c = Math.min(1, Math.max(0, c-k));
+			y = Math.min(1, Math.max(0, y-k));
+			m = Math.min(1, Math.max(0, m-k));
+			return [c,y,m,k]
 		},
 		noColor = false,
 		areSameColors = function(color1, color2){
 			if(noColor){return true;}
-			color1 = toRGBA(color1);
-			color2 = toRGBA(color2);
+			if(typeof color1 == "string"){
+				color1 = toRGBA(color1);
+			}
+			if(typeof color2 == "string"){
+				color2 = toRGBA(color2);
+			}
 			for(var i=0;i<3;i++){
 				if(color1[i] !== color2[i]){
 					return false;
@@ -48,14 +64,16 @@ function $id(id) {
 		},
 		getColor = function(color){
 			var arr = []
-			color = toRGBA(color);
+			if(typeof color == "string"){
+				color = toRGBA(color);
+			}
 			for(var i=0;i<3;i++){
 				arr.push(Math.round((+color[i]||0)/255*1000)/1000);
 			}
 			return "[rgb]{"+arr.join(",")+"}";
 		},
 		table = new(function() {
-			this.version = "0.7";
+			this.version = "0.8";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -290,6 +308,16 @@ function $id(id) {
 				td.removeAttribute("data-selected");
 				return td;
 			}
+			this.textColor = function(color){
+				if(color){
+					this._id("text-color-input").value = color;
+					this._id("text-color-span").style.color = color;
+					this._id("text-color-button").setAttribute("data-color", color);
+				}
+				else{
+					return this._id("text-color-button").getAttribute("data-color") || "#000000";
+				}
+			}
 			this.diagonal = function() {
 				this.statesManager.registerState();
 				this.updateLaTeXInfoCell();
@@ -329,11 +357,18 @@ function $id(id) {
 				});
 			}
 			this.rotate = function(state) {
+				var _this = this;
 				this.statesManager.registerState();
 				this.forEachSelectedCell(function(cell) {
 					if (state) {
+						_this.refreshRotatedCellSize(cell);
 						cell.setAttribute("data-rotated", "data-rotated");
 					} else {
+						cell.style.width = cell.style.height = "";
+						if(cell.style.removeProperty){
+							cell.style.removeProperty("width");
+							cell.style.removeProperty("height");
+						}
 						cell.removeAttribute("data-rotated");
 					}
 				});
@@ -438,6 +473,21 @@ function $id(id) {
 					}
 				});
 			}
+			this.backgroundColor = function(color) {
+				this.statesManager.registerState();
+				this.forEachSelectedCell(function(cell) {
+					cell.style.backgroundColor = color;
+				});
+			}
+			this.removeBackgroundColor = function(color) {
+				this.statesManager.registerState();
+				this.forEachSelectedCell(function(cell) {
+					cell.style.backgroundColor = "";
+					if(cell.style.removeProperty){
+						cell.style.removeProperty("background-color");
+					}
+				});
+			}
 			this.setAlign = function(value) {
 				this.statesManager.registerState();
 				if (value != "l" && value != "r" && value != "c") {
@@ -478,9 +528,30 @@ this.getHTML = (function(){
 		}
 		else if(node.nodeType == 1){
 			var tagName = node.tagName, newnode;
-			if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "LI"){
+			if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "LI" || tagName == "U"){
 				newnode = document.createElement(tagName);
 				cont.appendChild(newnode);
+			}
+			else if(tagName == "FONT" && node.hasAttribute("color")){
+				var ok = true;
+				if(node.color == "#000000"){
+					ok = false;
+					// black is the default color. Let's check if there's another font tag, however this will pollute the DOM
+						ok = false;
+						var trav = cont;
+						do{
+							if(trav.tagName == "FONT"){
+								ok = true;
+								break;
+							}
+						}
+						while(trav = trav.parentNode)
+				}
+				if(ok){
+					newnode = document.createElement(tagName);
+					newnode.color = node.color;
+					cont.appendChild(newnode);
+				}
 			}
 			else if(tagName == "STRONG"){
 				newnode = document.createElement("B");
@@ -514,13 +585,54 @@ this.getHTML = (function(){
 				cont.appendChild(newnode);
 				
 			}
-			else if(node.style.fontWeight == "bold" || node.style.fontWeight == "bolder" || (+node.style.fontWeight)>= 700){
-				newnode = document.createElement("B");
-				cont.appendChild(newnode);
-			}
-			else if(node.style.fontStyle == "italic" || node.style.fontStyle == "oblique"){
-				newnode = document.createElement("I");
-				cont.appendChild(newnode);
+			else{
+				var frag = document.createDocumentFragment(), lastnode;
+				newnode = frag;
+				cont.appendChild(frag);
+				if(node.style.color){
+					var color = toRGBA(node.style.color);
+					if(color){
+						// We need the HEX value of the color. However, HTML doesn't support alpha channel yet
+						color = "#" + ((1 << 24) + (color[0] << 16) + (color[1] << 8) + color[2]).toString(16).slice(1);
+						var ok = true;
+						if(color == "#000000"){
+							// black is the default color. Let's check if there's another font tag, however this will pollute the DOM
+							ok = false;
+							var trav = newnode;
+							do{
+								if(trav.tagName == "FONT"){
+									ok = true;
+									break;
+								}
+							}
+							while(trav = trav.parentNode)
+						}
+						if(ok){
+							lastnode = document.createElement("font");
+							lastnode.color = color;
+							newnode.appendChild(lastnode);
+							newnode = lastnode;
+						}
+					}
+				}
+				if(node.style.fontWeight == "bold" || node.style.fontWeight == "bolder" || (+node.style.fontWeight)>= 700){
+					lastnode = document.createElement("B");
+					newnode.appendChild(lastnode);
+					newnode = lastnode;
+				}
+				if(node.style.fontStyle == "italic" || node.style.fontStyle == "oblique"){
+					lastnode = document.createElement("I");
+					newnode.appendChild(lastnode);
+					newnode = lastnode;
+				}
+				if(node.style.textDecoration && node.style.textDecoration.indexOf("underline")){
+					lastnode = document.createElement("U");
+					newnode.appendChild(lastnode);
+					newnode = lastnode;
+				}
+				if(frag === newnode){
+					newnode = null;
+				}
 			}
 			for(var i=0;i<node.childNodes.length;i++){
 				_eqHTML(node.childNodes[i], newnode || cont)
@@ -616,7 +728,7 @@ this.getHTML = (function(){
 			this.showInfo = function(element) {
 				document.querySelector("#latex_content")
 					.value = this.generateForCell(element);
-
+				// Diagonal
 				$id("info_diag_zero")
 					.classList.remove("active");
 				$id("info_diag_one")
@@ -633,6 +745,7 @@ this.getHTML = (function(){
 					$id("info_diag_zero")
 						.classList.add("active");
 				}
+				// Align
 				this._id("info_align_left")
 					.classList.remove("active");
 				this._id("info_align_center")
@@ -650,6 +763,7 @@ this.getHTML = (function(){
 					this._id("info_align_left")
 						.classList.add("active");
 				}
+				// Rotated ?
 				if(element.hasAttribute("data-rotated")){
 					this._id("info-rotated")
 					.classList.add("active");
@@ -659,6 +773,12 @@ this.getHTML = (function(){
 					this._id("info-unrotated").classList.add("active");
 					this._id("info-rotated").classList.remove("active")
 				}
+				// Background color
+				var color = element.style.backgroundColor || "#FFFFFF";
+				color = toRGBA(color);
+				color = "#" + ((1 << 24) + (color[0] << 16) + (color[1] << 8) + color[2]).toString(16).slice(1);
+				this._id('info-background-color').value = color;
+				
 			}
 			this.applyToCell = function(td) {
 
@@ -725,6 +845,10 @@ this.getHTML = (function(){
 						.classList.remove("active");
 					$id("button-mode-view")
 						.classList.remove("active");
+					$id("panel-draw-border")
+						.classList.remove("active");
+					$id("button-border-draw")
+						.classList.remove("active");
 					// Set
 					if (n == 1 || n == 2) {
 						var l = this.element.querySelectorAll("div[contenteditable]");
@@ -750,6 +874,10 @@ this.getHTML = (function(){
 							document.body.removeAttribute("data-view-editor");
 							document.body.setAttribute("data-border-editor", "data-border-editor");
 							$id("button-mode-border")
+								.classList.add("active");
+							$id("panel-draw-border")
+								.classList.add("active");
+							$id("button-border-draw")
 								.classList.add("active");
 						}
 					} else {
@@ -1196,6 +1324,10 @@ this.getHTML = (function(){
 						.parentElement) {
 						_this.updateLaTeXInfoCell();
 					}
+					var td = (target.parentElement || {}).parentElement;
+					if(td.hasAttribute("data-rotated")){
+						_this.refreshRotatedCellSize(td)
+					}
 				}, false);
 				table.addEventListener("click", function(e) {
 					var target = e.currentTarget;
@@ -1209,6 +1341,17 @@ this.getHTML = (function(){
 				document.execCommand("styleWithCSS", false, false);
 				document.execCommand("insertBrOnReturn", false, false);
 				this.Table = new Table(table);
+			}
+			this.refreshRotatedCellSize = function(td){
+				// - Get the width and set it as the height
+				// - To get the width, we are gonna set a range around its content
+				//   and get its size
+				var range = document.createRange();
+				range.selectNodeContents(td.querySelector("div[contenteditable]"));
+				var size = range.getBoundingClientRect();
+				range.detach() // We don't need the range anymore
+				td.style.height=(size.width+6)+"px";
+				td.style.width=(size.height+6)+"px";
 			}
 			this.generateFromHTML = function(html, ignoreMultiline, align) {
 				align = align || "l";
@@ -1256,7 +1399,9 @@ this.getHTML = (function(){
 					}
 				}
 				html = div.innerHTML;
-				var str = "", kbdcount = 0, ulcount = 0, lastcrcr = -1;
+				var str = "", kbdcount = 0, ulcount = 0, lastcrcr = -1,
+				useColor = !this.blacklistPackages["color"],
+				useU = !this.blacklistPackages["ulem"];
 				for(var i=0,c;i<html.length;i++){
 					c = html.charAt(i);
 					if(c == "<"){
@@ -1287,7 +1432,28 @@ this.getHTML = (function(){
 						else if(tagname == "i"){
 							str += "\\textit{";
 						}
-						else if(tagname == "/b" || tagname == "/i"){
+						else if(tagname == "u" && useU){
+							this.packages["ulem"] = true;
+							str+="\\uline{";
+						}
+						else if(tagname == "font" && useColor){
+							var color = /color\s*=\s*["']?(#?[a-f0-9]+)/i.exec(inside);
+							if(color){
+								color = color[1];
+								if(color){
+									this.packages["color"] = true;
+									str += "\\textcolor"+getColor(color)+"{"
+								}
+								else{
+									str += "{";
+								}
+							}
+							else{str += "{"}
+						}
+						else if(tagname == "/b" || tagname == "/i" || (tagname == "/font" && useColor)){
+							str += "}";
+						}
+						else if(tagname == "/u" && useU){
 							str += "}";
 						}
 						i += inside.length-1;
@@ -1475,10 +1641,10 @@ this.getHTML = (function(){
 					}[c] || ""
 				});
 			}
-			this.toggleExecCommand = function(command){
+			this.toggleExecCommand = function(command, value){
 				var sel = window.getSelection();
 				if(this.element.querySelectorAll("td[data-selected]").length <= 1){
-					return document.execCommand(command, false, null);
+					return document.execCommand(command, false, value || null);
 				}
 				else{
 					var foundFirst = false,
@@ -1559,14 +1725,33 @@ this.getHTML = (function(){
 				o.span = (cell.rowSpan != 1 || cell.colSpan != 1);
 				o.static = false;
 				o.isInPreambule = false;
+				o.switch = false; // Is it a rowspan cell with a background color ?
 				o.rowSpan = cell.rowSpan;
 				o.colSpan = cell.colSpan;
 				o.fullContent = o.content;
+				o.background = false;
 				var _this = this;
+				// Determine background
+				var background = cell.style.backgroundColor;
+				if(!this.blacklistPackages["colortbl"]){
+					if(background && !(background == "transparent" || background == "initial" || background == "inherit")){
+						background = toRGBA(background);
+						if(background && background[3] > 0){
+							if(!(background[0] == 255 && background[1] == 255 && background[2] == 255)){
+								// We have a non-white non-transparent background
+								o.background = background;
+								if(o.rowSpan > 1){
+									o.switch = true;
+								}
+							}						
+						}
+					}
+				}
 				o.getFullContent = function(actualColor, forceMulti){
 					var header = "", before = "",
 					content = o.content;
 					actualColor = actualColor || _this.actualColor;
+					// Set background
 					if(cell.rowSpan != 1 && !blockMultirow){
 						_this.packages["multirow"] = true;
 						if(_this.blacklistPackages["makecell"] || (_this.shrink || o.shrinkRatio)) {
@@ -1600,12 +1785,21 @@ this.getHTML = (function(){
 							}
 							_this.packages["makecell"] = true;
 						}
+						if(o.background){
+							_this.packages["colortbl"] = true;
+							content="{\\cellcolor"+getColor(o.background)+"}"+content;
+						}
+						var ratio = o.switch ? -1 : 1;
 						if(_this.shrink){
-							content = _this.multirow(cell.rowSpan, content, o.shrinkRatio+"\\columnwidth");
+							content = _this.multirow(ratio*cell.rowSpan, content, o.shrinkRatio+"\\columnwidth");
 						}
 						else{
-							content = _this.multirow(cell.rowSpan, content);
+							content = _this.multirow(ratio*cell.rowSpan, content);
 						}
+					}
+					else if(o.background){
+						_this.packages["colortbl"] = true;
+						content="{\\cellcolor"+getColor(o.background)+"}"+content;
 					}
 					if(cell.colSpan != 1 || forceMulti || !o.isInPreambule){
 						header = o.getHeader(actualColor);
@@ -1650,16 +1844,19 @@ this.getHTML = (function(){
 							cell.ignore = false;
 							cell.header = refCell.header;
 							cell.fullHeader = refCell.fullHeader;
-							cell.getHeader = refCell.getHeader;
-							cell.isInPreambule = refCell.isInPreambule;
+							cell.getHeader = refCell.getHeader
 							var _this = this;
 							cell.getFullContent = (function(cell, refCell){
 								return function(actualColor, forceMulti){
 									actualColor = actualColor || _this.actualColor;
-									if(refCell.colSpan != 1 || forceMulti || cell.isInPreambule){
-										return _this.multicolumn(refCell.colSpan, cell.getHeader(actualColor), "")
+									var content = "";
+									if(refCell.background){
+										content = "{\\cellcolor"+getColor(refCell.background)+"}";
 									}
-									return "";
+									if(refCell.colSpan != 1 || forceMulti || !refCell.isInPreambule){
+										return _this.multicolumn(refCell.colSpan, cell.getHeader(actualColor), content)
+									}
+									return content;
 								}
 							})(cell, refCell);
 						}
@@ -2097,6 +2294,24 @@ this.getHTML = (function(){
 				return !!this.element.querySelector("td[data-border-left='"+type+"'],td[data-border-bottom='"+type+"'],td[data-border-top='"+type+"'],td[data-border-right='"+type+"']")
 			}
 			this.shrink = false;
+			this.useBooktab = function(){
+				return this.element.hasAttribute("data-booktabs") ||
+				this.hasBorderType("toprule") || this.hasBorderType("midrule") ||
+				this.hasBorderType("bottomrule");
+			}
+			this.useBackgroundColor = function(matrix){
+				if(matrix){
+					for(var i=0;i<matrix.length;i++){
+						var row = matrix[i];
+						for(var j=0;j<row.length;j++){
+							if(row[j].background){
+								return true;
+							}
+						}
+					}
+				}
+				return false;
+			}
 			this.generateLaTeX = function(opt) {
 				
 				this.packages = {};
@@ -2111,6 +2326,7 @@ this.getHTML = (function(){
 					scale = fit.indexOf("sc") >= 0,
 					shrink = fit.indexOf("sh") >= 0,
 					firstPart = "",
+					float = this._id("opt-latex-float").checked,
 					str = "";
 				this.shrink = shrink;
 				var caption = this.caption(),
@@ -2135,16 +2351,33 @@ this.getHTML = (function(){
 					})
 				}
 				this.actualColor = startingColor;
-				firstPart = "\\begin{table}\n";
+				if(float){
+					firstPart = "\\begin{table}\n";
+				}
+				else{
+					firstPart = "\\begin{minipage}{\\columnwidth}\n";
+				}
 				if(this._id("table-opt-center").checked){
 					firstPart += "\\centering\n"
+				}
+				if(this.useBooktab() && this.useBackgroundColor(rg)){
+					firstPart += "\\setlength{\\extrarowheight}{0pt}\n";
+					firstPart += "\\addtolength{\\extrarowheight}{\\aboverulesep}\n";
+					firstPart += "\\addtolength{\\extrarowheight}{\\belowrulesep}\n";
+					firstPart += "\\setlength{\\aboverulesep}{0pt}\n";
+					firstPart += "\\setlength{\\belowrulesep}{0pt}\n";
 				}
 				if (caption.caption) {
 					if(caption.numbered){
 						this.packages["caption"] = true;
 						firstPart += "\\captionsetup{labelformat=empty}\n";
 					}
-					firstPart += "\\caption{" + caption.caption + "}\n";
+					if(float){
+						firstPart += "\\caption{" + caption.caption + "}\n";
+					}
+					else{
+						firstPart += "\\captionof{table}{" + caption.caption + "}";
+					}
 				}
 				if (caption.label) {
 					if(!caption.caption){
@@ -2180,6 +2413,13 @@ this.getHTML = (function(){
 							row.push(false);
 						}
 						else{
+							if(cell.switch){
+								cell = rg[i+cell.rowSpan-1][j]
+								cell.unswitch = true;
+							}
+							else if(cell.unswitch){
+								cell = cell.refCell
+							}
 							row.push({
 									text: cell.getFullContent(this.actualColor), 
 									colSpan : cell.colSpan || (cell.refCell ? cell.refCell.colSpan : 1) || 1
@@ -2239,7 +2479,8 @@ this.getHTML = (function(){
 					this.packages["arydshln"] = true;
 				}
 
-				if(str.indexOf("\\arrayrulecolor") > -1 || firstPart.indexOf("\\arrayrulecolor") > -1){
+				if(str.indexOf("\\arrayrulecolor") > -1 || firstPart.indexOf("\\arrayrulecolor") > -1 
+				   || str.indexOf("\\doublerulesepcolor") > -1 || firstPart.indexOf("\\doublerulesepcolor") > -1){
 					this.packages["colortbl"] = true;
 					if(!areSameColors(this.actualColor, "#000000")){
 						str += "\\arrayrulecolor"+getColor("#000000")+"\n";
@@ -2248,12 +2489,22 @@ this.getHTML = (function(){
 						firstPart += "\\ADLnullwidehline\n";
 					}
 				}
-				str +="\\end{table}";
+				if(float){
+					str +="\\end{table}";
+				}
+				else{
+					str += "\\end{minipage}";
+				}
 				// Packages
 				var packages = "";
 				for (var i in this.packages) {
-					if (this.packages.hasOwnProperty(i) && i != "arydshln") {
-						packages += "% \\usepackage{" + i + "}\n";
+					if (this.packages.hasOwnProperty(i)) {
+						if(i == "ulem"){
+							packages += "% \\usepackage[normalem]{ulem}\n";
+						}
+						else if(i != "arydshln" && !(i == "color" && this.packages["colortbl"])){
+							packages += "% \\usepackage{" + i + "}\n";
+						}
 					}
 				}
 				if (!useTabu && this.packages["arydshln"]) {
@@ -2276,11 +2527,13 @@ this.getHTML = (function(){
 			this.showPackagesInformation = function(packages){
 
 				var packs = [],
+				packDatabase = {},
 				hasSub = false;
 				var _packinfo = function(pack, sub){
-					if(sub && packs[pack]){
+					if(packDatabase[pack]){
 						return;
 					}
+					packDatabase[pack] = true;
 					if(sub){hasSub = true;}
 					packs.push("<span class='package'>"+pack+"</span>" + (sub ? "<sup>*</sup>" : ""));
 					if(packagesDatabase[pack]){
@@ -2620,7 +2873,9 @@ this.getHTML = (function(){
 					var complete = o.complete,
 					hasColor = o.color,
 					borders = o.borders,
-					border = "";
+					border = "",
+					enhanceHhline = this._id("opt-latex-hhline").checked && (!this.packages["arydshln"] || this.useTabu),
+					insertInHhline = !this.blacklistPackages["colortbl"];
 					if(complete){
 						if(!borders[0]){
 							return "";
@@ -2630,26 +2885,108 @@ this.getHTML = (function(){
 							border += "\\arrayrulecolor"+getColor(firstBorder.color);
 							this.actualColor = firstBorder.color;
 						}
-						border += {
-								normal: "\\hline",
-								double: "\\hline\\hline",
-								toprule: "\\toprule",
-								midrule: "\\midrule",
-								bottomrule: "\\bottomrule",
-								hdashline: this.useTabu ? "\\tabucline[on 4pt off 4pt]{-}" : "\\hdashline",
-								dottedline: this.useTabu ? "\\tabucline[on 1pt off 1pt]{-}" : "\\hdashline[1pt/1pt]"
+						if(firstBorder.type == "double" && enhanceHhline){
+							// We use hhline for this double
+							var insideColor = this.actualColor;
+							this.packages["hhline"] = true;
+							border += "\\hhline{";
+							var row = matrix[n] || matrix[n-1];
+							for(var i=0;i<borders.length;i++){
+								var borderLeft = (row[i].refCell||row[i]).leftBorder,
+								  	borderLeftColor = (row[i].refCell||row[i]).leftBorderColor;
+								if((borderLeft == "normal" && i==0) || borderLeft == "double"){
+									if(insertInHhline && !areSameColors(insideColor, borderLeftColor)){
+										insideColor = borderLeftColor;
+										border += ">{\\arrayrulecolor"+getColor(borderLeftColor)+"}";
+									}
+									if(borderLeft == "normal"){
+										border += "|";
+									}
+									else{
+										if(i == 0){
+											border += "|";
+										}
+										else{
+											border += ":";
+										}
+										if(n == 0){
+											border += "t";
+										}
+										else if(n >= matrix.length){
+											border += "b";
+										}
+										border += ":";
+									}
+								}
+								border += "=";
+								var borderRight = (row[i].refCell||row[i]).rightBorder,
+								    borderRightColor = (row[i].refCell||row[i]).rightBorderColor;
+								if(borderRight == "normal" || borderRight == "double"){
+									if(insertInHhline && !areSameColors(insideColor, borderRightColor)){
+										insideColor = borderRightColor;
+										border += ">{\\arrayrulecolor"+getColor(borderRightColor)+"}";
+									}
+									if(borderRight == "normal"){
+										border += "|";
+									}
+									else{
+										border += ":";
+										if(n == 0){																				border += "t"
+										}
+										else if(n >= matrix.length){
+											border += "b";
+										}
+										if(i >= row.length-1){
+											border += "|";
+										}
+										else{
+											border += ":";
+										}
+									}
+								}
+							}
+							border += "}";
+						}
+						else{
+							border += {
+									normal: "\\hline",
+									double: "\\hline\\hline",
+									toprule: "\\toprule",
+									midrule: "\\midrule",
+									bottomrule: "\\bottomrule",
+									hdashline: this.useTabu ? "\\tabucline[on 4pt off 4pt]{-}" : "\\hdashline",
+									dottedline: this.useTabu ? "\\tabucline[on 1pt off 1pt]{-}" : "\\hdashline[1pt/1pt]"
 							}[firstBorder.type]
+						}
 						return border;
 					}
-					else if((hasColor 							// If there's color
+					var row = matrix[n] || matrix[n-1],
+					useHHLine = false;
+					for(var i=0;i<row.length;i++){
+						var cell = row[i];
+						if((cell.refCell||cell).background){
+							useHHLine = true;
+							break;
+						}
+					}
+					if((useHHLine								// If there's a cell with background color
+						|| hasColor							// or colored rules
 						|| (o.types.double && 						// or a double border but
 						   !(o.types.toprule || o.types.midrule || o.types.bottomrule))	// without booktab borders
 						) && (!this.packages["arydshln"] || this.useTabu)		// And we don't use arydshln package
 					){
 						// oh oh... We must use a hhline
 						var insideColor = this.actualColor,
+						doublerulesepcolor = [255,255,255,1], // white
 						metAry = false,
-						row = matrix[n-1] || matrix[n],
+						width = "0.4pt",
+						widthKeys = {
+							"toprule" : "\\heavyrulewidth",
+							"bottomrule" : "\\heavyrulewidth",
+							"midrule" : "\\cmidrulewidth",
+							"normal" : "0.4pt",
+							"double" : "0.4pt"
+						}
 						border = "\\hhline{";
 						this.packages["hhline"] = true;
 						for(var i=0;i<borders.length;i++){
@@ -2658,7 +2995,7 @@ this.getHTML = (function(){
 								var borderLeft = (row[i].refCell||row[i]).leftBorder,
 								    borderLeftColor = (row[i].refCell||row[i]).leftBorderColor;
 								if(borderLeft == "normal" || borderLeft == "double"){
-									if(!areSameColors(insideColor, borderLeftColor)){
+									if(insertInHhline && !areSameColors(insideColor, borderLeftColor)){
 										insideColor = borderLeftColor;
 										border += ">{\\arrayrulecolor"+getColor(borderLeftColor)+"}";
 									}
@@ -2666,29 +3003,111 @@ this.getHTML = (function(){
 										border += "|";
 									}
 									else{
-										border += "||";
+										if(enhanceHhline){
+											border += "|";
+											if(n == 0){
+												border += "t";
+											}
+											else if(n >= matrix.length){
+												border += "b";
+											}
+											if(borders[i].type == "double"){
+												border += ":";
+											}
+											else{
+												border += "|";
+											}
+										}
+										else{
+											border += "||";
+										}
 									}
 								}
 							}
 							// Now the horizontal border
 							var type = borders[i].type,
-							color = borders[i].color;
+							color = borders[i].color,
+							background = (row[i].refCell||row[i]).background,
+							thiswidth = widthKeys[type] || "0.4pt";
 							if(type == "normal" || type == "toprule" || type == "bottomrule" || type == "midrule"){
-								if(!areSameColors(insideColor, color)){
-									insideColor = color;
-									border += ">{\\arrayrulecolor"+getColor(color)+"}";
+								if(insertInHhline){
+									var toadd = "";
+									if(!areSameColors(insideColor, color)){
+										insideColor = color;
+										toadd += "\\arrayrulecolor"+getColor(color);
+									}
+									if(width != thiswidth){
+										width = thiswidth;
+										toadd += "\\setlength{\\arrayrulewidth}{"+thiswidth+"}";
+										this.packages["colortbl"] = true;
+									}
+									if(toadd){
+										border+= ">{"+toadd+"}";
+									}
 								}
 								border += "-";
 							}
 							else if(type == "double"){
-								if(!areSameColors(insideColor, color)){
-									border += ">{\\arrayrulecolor"+getColor(color)+"}";
+								if(insertInHhline){
+									var toadd="";
+									background = background || [255,255,255,1];
+									if(!areSameColors(insideColor, color)){
+										insideColor = color;
+										toadd += "\\arrayrulecolor"+getColor(color);
+									}
+									if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
+										doublerulesepcolor = "FFFFFF";
+										toadd += "\\doublerulesepcolor"+getColor([255,255,255,1]);
+									}
+									if(width != thiswidth){
+										width = thiswidth;
+										toadd += "\\setlength{\\arrayrulewidth}{"+thiswidth+"}";
+									}
+									if(toadd){
+										border += ">{" + toadd + "}";
+									}
 								}
 								border += "=";
 							}
 							else if(type == "dottedline" || type == "hdashline"){
 								metAry = true;
 								border += "~";
+							}
+							else if(background){
+								if(insertInHhline){
+									var toadd="";
+									if(!areSameColors(insideColor, background)){
+										insideColor = background;
+										toadd += "\\arrayrulecolor"+getColor(background);
+									}
+									if(o.types.double){
+										if(!areSameColors(doublerulesepcolor, background)){
+											doublerulesepcolor = background;
+											toadd += "\\doublerulesepcolor"+getColor(background);
+										}
+									}
+									else if(o.types.toprule || o.types.bottomrule || o.types.midrule){
+										if(o.types.toprule || o.types.bottomrule){
+											thiswidth = widthKeys["toprule"];
+										}
+										else{
+											thiswidth = widthKeys["midrule"];
+										}
+										if(width != thiswidth){
+											width = thiswidth;
+											toadd += "\\setlength{\\arrayrulewidth}{"+thiswidth+"}";
+										}
+									}
+									if(toadd){
+										border += ">{" + toadd + "}";
+									}
+								}
+								if(o.types.double){
+									border += "=";
+								}
+								else{
+									border += "-";
+								}
 							}
 							else{
 								border += "~";
@@ -2697,7 +3116,7 @@ this.getHTML = (function(){
 							var borderRight = (row[i].refCell||row[i]).rightBorder,
 							    borderRightColor = (row[i].refCell||row[i]).rightBorderColor;
 							if(borderRight == "normal" || borderLeft == "double"){
-								if(!areSameColors(insideColor, borderRightColor)){
+								if(insertInHhline && !areSameColors(insideColor, borderRightColor)){
 									insideColor = borderRightColor;
 									border += ">{\\arrayrulecolor"+getColor(borderRightColor)+"}";
 								}
@@ -2705,7 +3124,34 @@ this.getHTML = (function(){
 									border += "|";
 								}
 								else{
-									border += "||";
+									if(enhanceHhline){
+										if(type == "double"){
+											border += ":";
+										}
+										else{
+											border += "|";
+										}
+										if(n == 0){
+											border += "t";
+										}
+										else if(n >= matrix.length){
+											border += "b";
+										}
+										if(i >= row.length-1){
+											border += "|";
+										}
+										else{
+											if(borders[i+1].type == "double"){
+												border += ":"
+											}
+											else{
+												border += "|";
+											}
+										}
+									}
+									else{
+										border += "||";
+									}
 								}
 							}
 						}

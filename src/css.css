@@ -1,5 +1,5 @@
 		#c{
-			white-space: nowrap;
+			white-space: pre;
 			overflow: auto;
 			width:100%;
 			height:20%;
@@ -84,47 +84,16 @@
 			border-radius: 5px;
 			padding: 2px;
 		}
-
-		.group .button {
-			display: inline-block;
-			cursor: default;
-			border: 1px solid black;
-			border-radius: 3px;
-			margin-top: 2px;
-			margin-bottom: 2px;
-			padding: 2px;
+		.icon-underline{
+			height:14px;
+			width:14px;
+			display:inline-block;
+			background-size:14px 14px;
+			background-image: url('underline.png');
+			position:relative;
+			top:2px;
 		}
 
-		.group .button:hover:active,
-		.group .button:active {
-			background: lightgray;
-		}
-
-		.group .button.button-selected {
-			background: darkgray;
-			color: white;
-		}
-
-		.group .button.button-selected:active,
-		.group .button.button-selected:hover:active {
-			background: dimgray;
-		}
-
-		.group .button:not(.button-selected):hover {
-			background: whitesmoke;
-		}
-
-		.group .button .button-legend {
-			font-size: x-small;
-		}
-
-		.group-legend {
-			font-size: smaller;
-			text-align: center;
-			border-top: 1px solid black;
-			margin-left: 2px;
-			margin-right: 2px;
-		}
 
 		#table td div[contenteditable] {
 			min-height: 1em;
@@ -203,8 +172,8 @@
 		}
 
 		body:not([data-view-editor]) #table td[data-rotated]:not([data-selected]) div.outer {
-			display: inline-block;
-			overflow: hidden;
+			display:table-cell;
+			height:100%;
 		}
 
 		#popup_new {
@@ -328,29 +297,32 @@
 
 		#table td[data-rotated]:not([data-selected]) div[contenteditable],
 		body[data-view-editor] #table td[data-rotated] div[contenteditable] {
-			display: inline-block;
-			white-space: nowrap;
-			transform: translate(0, 100%) rotate(-90deg);
-			transform-origin: 0 0;
+			transform: rotate(-90deg);
 		}
-
-		body:not([data-view-editor]) #table td[data-selected][data-diagonal] {
-			background: linear-gradient(to right top, highlight 0%, highlight 49.9%, #000000 50%, #000000 51%, highlight 51.1%, highlight 100%);
+		
+		body:not([data-view-editor]) #table td[data-selected]{
+			overflow:hidden;
+}
+		body:not([data-view-editor]) #table td[data-selected] div.outer {
+			position:relative;
 		}
-
-		body:not([data-view-editor]) #table td[data-selected][data-two-diagonals] div.outer {
+		body:not([data-view-editor]) #table td[data-selected] div[contenteditable] {
 			position: relative;
+			z-index:100;
+			color:black;
+			color:HighlightText;
 		}
-
-		body:not([data-view-editor]) #table td[data-selected][data-two-diagonals] div.outer:before {
+		body:not([data-view-editor]) #table td[data-selected] div.outer:before {
 			content: "";
 			position: absolute;
-			background: highlight;
-			z-index: -2;
-			left: 0;
-			bottom: 0;
-			top: 0;
-			right: 0;
+			background:whitesmoke;
+			background:highlight;
+			z-index: 2;
+			opacity:0.5;
+			left: -9999px;
+			bottom: -9999px;
+			top: -9999px;
+			right: -9999px;
 		}
 
 		#table td,
@@ -360,5 +332,6 @@
 		}
 
 		body:not([data-view-editor]) #table td[data-selected]:not([data-two-diagonals]):not([data-diagonal]) {
-			background: highlight;
+//			background: highlight;
+			height:auto !important;
 		}
