@@ -19,20 +19,6 @@
 	<script type="text/javascript" src="color.js">
 	</script>
 	<script type="text/javascript" src="js.js"></script>
-	<script type="text/javascript" src="toMarkdown.js">
-	</script>
-	<script type="text/javascript" src="toTeX.js">
-	</script>
-	<script type="text/javascript" src="toHTML.js">
-	</script>
-	<script type="text/javascript" src="toCSV.js">
-	</script>
-	<script type="text/javascript" src="toBBCode.js">
-	</script>
-	<script type="text/javascript" src="toEplain.js">
-	</script>
-	<script type="text/javascript" src="latex-import.js">
-	</script>
 </head>
 
 <body>
@@ -311,7 +297,24 @@ Color of border :
 
 					<h6>LaTeX Content</h6>
 					<textarea id="latex_content" class="form-control"></textarea>
+
+	<!--- START COLORPICKER--
+	<div><center>
+	<table style="width:90%">
+	<tr><td rowspan=2 style="text-align:left;">
+		<table><tr><td>R :</td><td><input style="width:3em;padding:3px;height:auto;" maxlength=3 class="form-control">
+		<tr><td>G : <td><input style="width:3em;padding:3px;height:auto;" maxlength=3 class="form-control">
+		<tr><td>B : <td><input style="width:3em;padding:3px;height:auto;" maxlength=3 class="form-control"></table>	
+	</td><td></td>
+	<tr><td></td>
+	</table>
+	<center>
+	</div>
+	---->
+
      </div>
+
+
     </div>
   </div>
 </div>
@@ -489,7 +492,8 @@ Color of border :
 								</div>
 							</div>
 <h5>Advanced options</h5>
-<label><input type="checkbox" id="opt-latex-hhline"> Enhance double borders with <code>hhline</code> when possible <span class="label label-warning">BETA</span></label> 
+<div><label><input type="checkbox" id="opt-latex-hhline"> Enhance double borders with <code>hhline</code> when possible <span class="label label-warning">BETA</span></label></div>
+<label><input type="checkbox" id="opt-latex-tabu"> Force table to use <code>tabu</code> when possible <span class="label label-warning">BETA</span></label>  
 <!--
 <h5>Colors</h5>
 <select id="opt-color" class="form-control"><option value="rgb">RGB</option>
@@ -628,6 +632,22 @@ Color of border :
  		  ga('send', 'pageview');
 		}
 		</script>
+	<script type="text/javascript" src="toMarkdown.js">
+	</script>
+	<script type="text/javascript" src="toTeX.js">
+	</script>
+	<script type="text/javascript" src="toHTML.js">
+	</script>
+	<script type="text/javascript" src="toCSV.js">
+	</script>
+	<script type="text/javascript" src="toBBCode.js">
+	</script>
+	<script type="text/javascript" src="toEplain.js">
+	</script>
+	<script type="text/javascript" src="latex-import.js">
+	</script>
+	<script type="text/javascript" src="ntc.js">
+	</script>
 </body>
 
 </html>

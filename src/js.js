@@ -15,6 +15,18 @@ function $id(id) {
 				ga('send', 'event', category, action, label);
 			}
 		},
+		// From here : https://codereview.stackexchange.com/questions/16124/
+		//             implement-numbering-scheme-like-a-b-c-aa-ab-aaa-similar-to-converting
+		toZZZ = function(number) {
+			var baseChar = ("A").charCodeAt(0),
+			letters  = "";
+			do {
+				number -= 1;
+				letters = String.fromCharCode(baseChar + (number % 26)) + letters;
+				number = (number / 26) >> 0;
+			} while(number > 0);
+			return letters;
+		},
 		packagesDatabase = {
 			"array" : [],
 			"arydshln" : [],
@@ -47,6 +59,16 @@ function $id(id) {
 			return [c,y,m,k]
 		},
 		noColor = false,
+		defaultColors = {
+			"1,0,0" : "red",
+			"0,1,0" : "green",
+			"0,0,1" : "blue",
+			"0,1,1" : "cyan",
+			"1,0,1" : "magenta",
+			"1,1,0" : "yellow",
+			"0,0,0" : "black",
+			"1,1,1" : "white"
+		},
 		areSameColors = function(color1, color2){
 			if(noColor){return true;}
 			if(typeof color1 == "string"){
@@ -70,10 +92,14 @@ function $id(id) {
 			for(var i=0;i<3;i++){
 				arr.push(Math.round((+color[i]||0)/255*1000)/1000);
 			}
-			return "[rgb]{"+arr.join(",")+"}";
+			var sep = arr.join(",");
+			if(defaultColors[sep]){
+				return "{"+defaultColors[sep]+"}";
+			}
+			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "0.8";
+			this.version = "0.8.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -1623,24 +1649,6 @@ this.getHTML = (function(){
 				rightBorder = o[rightBorder] || "";
 				return leftBorder + align + rightBorder
 			}
-			this.convertToHeader = function(simili) {
-				var _this = this;
-				return simili.replace(/[|=\^\#_;:]+/g, function(a) {
-					var c = a.charAt(0);
-					if (c == ":" || c == ";") {
-						_this.packages["arydshln"] = true;
-					}
-					return {
-						"|": "|",
-						"^": "!{\\vrule width \\heavyrulewidth}",
-						"=": "||",
-						"#": "!{\\vrule width \\heavyrulewidth}",
-						"_": "!{\\vrule width \\lightrulewidth}",
-						":": (_this.useTabu) ? "|[\\arrayrulewidth on 4pt off 4pt]" : ":",
-						";": (_this.useTabu) ? "|[\\arrayrulewidth on 1pt off 1pt]" : ";{1pt/1pt}" 
-					}[c] || ""
-				});
-			}
 			this.toggleExecCommand = function(command, value){
 				var sel = window.getSelection();
 				if(this.element.querySelectorAll("td[data-selected]").length <= 1){
@@ -1671,33 +1679,6 @@ this.getHTML = (function(){
 					return state;
 				}
 			}
-			this.createCellObject = function(before, cell, after) {
-				if (arguments.length == 2) {
-					var content = before,
-						o = {
-							refCell: cell
-						};
-					if (content === false) {
-						o.ignore = true;
-					} else {
-						o.content = o.fullContent = content;
-					}
-					return o;
-				}
-				var o = {
-					cell: cell,
-					ignore: false,
-					before: before,
-					after: after,
-					leftBorder: cell.getAttribute("data-border-left") || "",
-					rightBorder: cell.getAttribute("data-border-right") || "",
-					content: this.generateForCell(cell),
-					header: this.getHeaderForCell(cell),
-					align: cell.getAttribute("data-align") || "l"
-				}
-				o.fullContent = before + "" + o.content + "" + after;
-				return o;
-			}
 			this.createCellO = function(o, row){
 				var before = null,
 				    after = null,
@@ -1719,7 +1700,6 @@ this.getHTML = (function(){
 				}
 				o.align = cell.getAttribute("data-align") || "l"
 				o.content = this.generateForCell(cell, o.align);
-				o.fullHeader = this.convertToHeader(this.getContextualHeader(before, o, after));
 				o.getHeader = this.comparableHeader(before, o, after);
 				o.header = o.getHeader(this.actualMainColor);
 				o.span = (cell.rowSpan != 1 || cell.colSpan != 1);
@@ -1843,7 +1823,6 @@ this.getHTML = (function(){
 							var refCell = cell.refCell;
 							cell.ignore = false;
 							cell.header = refCell.header;
-							cell.fullHeader = refCell.fullHeader;
 							cell.getHeader = refCell.getHeader
 							var _this = this;
 							cell.getFullContent = (function(cell, refCell){
@@ -1897,47 +1876,6 @@ this.getHTML = (function(){
 					this.selectedCell = null;
 				}
 			}
-			this.getContextualHeader = function(before, middle, after) {
-				if (before) {
-					before = before.cell || before.refCell.cell;
-				}
-				if (after) {
-					after = after.cell || after.refCell.cell;
-				}
-				var align = middle.align,
-					leftBorder = "",
-					rightBorder = "",
-					leftColor = "",
-					rightColor = "",
-					o = {
-						"": "",
-						"normal": "|",
-						"double": "=",
-						"toprule": "^",
-						"midrule": "#",
-						"bottomrule": "_",
-						"hdashline": ":",
-						"dottedline": ";"
-					};
-				middle = middle.cell || middle.refCell.cell;
-				if (before) {
-					leftBorder = before.getAttribute("data-border-right");
-					leftColor = before.style.borderRightColor;
-				}
-				else{
-					leftColor = middle.style.borderRightColor;
-				}
-				leftBorder = o[leftBorder || (middle.getAttribute("data-border-left") || "")] || "";
-				leftColor = leftColor || "";
-				rightBorder = middle.getAttribute("data-border-right");
-				rightColor = middle.style.borderRightColor;
-				if (after && !rightBorder) {
-					rightBorder = after.getAttribute("data-border-left");
-					rightColor = after.style.borderRightColor;
-				}
-				rightBorder = o[rightBorder || ""] || "";
-				return leftBorder + align + rightBorder;
-			}
 			this.caption = function() {
 				return {
 					caption: $id("caption")
@@ -1986,8 +1924,22 @@ this.getHTML = (function(){
 				else{
 					var before = "",
 					colorcomm = "\\color" + getColor(color);
-					if(type == "normal"){return "!{"+colorcomm+"\\vrule}"}
-					else if(type == "double"){return "!{"+colorcomm+"\\vrule}!{"+color+"\\vrule}"}
+					if(type == "normal"){
+						if(this.useTabu){
+							return "|["+this.tabuColor(color)+"]"
+						}
+						else{
+							return "!{"+colorcomm+"\\vrule}"
+						}
+					}
+					else if(type == "double"){
+						if(this.useTabu){
+							return "|["+this.tabuColor(color)+"]|["+this.tabuColor(color)+"]"
+						}
+						else{
+							return "!{"+colorcomm+"\\vrule}!{"+colorcomm+"\\vrule}"
+						}
+					}
 					else if(type == "toprule" || type == "bottomrule"){
 						return "!{"+colorcomm+"\\vrule width \\heavyrulewidth}";
 					}
@@ -1997,7 +1949,7 @@ this.getHTML = (function(){
 					else if(type == "hdashline"){
 						before = char + "{\\arrayrulecolor"+getColor(color)+"}"
 						if(this.useTabu){
-							return before + "|[on 4pt off 4pt]";
+							return "|["+this.tabuColor(color)+" on 4pt off 4pt]";
 						}
 						else{
 							this.packages["arydshln"] = true;
@@ -2007,7 +1959,7 @@ this.getHTML = (function(){
 					else if(type == "dottedline"){
 						before = char + "{\\arrayrulecolor"+getColor(color)+"}"
 						if(this.useTabu){
-							return before + "|[on 1pt off 1pt]";
+							return "|["+this.tabuColor(color)+" on 1pt off 1pt]";
 						}
 						else{
 							this.packages["arydshln"] = true;
@@ -2094,7 +2046,7 @@ this.getHTML = (function(){
 						else if(rightBorder == "dottedline" || rightBorder == "hdashline"){
 							if(!areSameColors(rightColor, color)){
 								if(_this.useTabu){
-									this.uniqueLog("Some vertical lines could not be colored correctly with 'tabu' package.", "warning");
+									_this.uniqueLog("Some vertical lines could not be colored correctly with 'tabu' package.", "warning");
 								}
 								else{
 									preambule += "\\arrayrulecolor"+getColor(rightColor);
@@ -2279,14 +2231,17 @@ this.getHTML = (function(){
 				}
 			})();
 			this.shouldUseTabu = function(){
-				if(this.blacklistPackages["arydshln"]){
-					return this.hasBorderType("hdashline") || this.hasBorderType("dottedline");
-				}
-				else if(this.blacklistPackages["tabu"]){
+				if(this.blacklistPackages["tabu"]){
 					return false;
 				}
+				else if(this._id("opt-latex-tabu").checked){
+					return true;
+				}
+				else if(this.blacklistPackages["arydshln"]){
+					return this.hasBorderType("hdashline") || this.hasBorderType("dottedline");
+				}
 				else{
-					// Detect hhline
+					// TODO : Detect hhline
 					return false;
 				}
 			}
@@ -2312,12 +2267,62 @@ this.getHTML = (function(){
 				}
 				return false;
 			}
+			this.tabuColor = function(color){
+				if(typeof color == "string"){
+					color = toRGBA(color);
+				}
+				var hex = "#" + ((1 << 24) + (color[0] << 16) + (color[1] << 8) + color[2]).toString(16).slice(1);
+				color = [color[0],color[1],color[2]].map(function(n){
+					return Math.floor((n/255)*1000)/1000
+				});
+				var sep = color.join(",");
+				if(defaultColors[sep]){
+					return defaultColors[sep];
+				}
+				else if(this.tabuColors[sep]){
+					return this.tabuColors[sep].name
+				}
+				else{
+					var prename = ntc.name(hex), name;
+					if(!prename){return "black"}
+					prename = prename[1];
+					if(!prename){return "black"}
+					prename = prename.replace(/[^a-zA-Z]/g, "");
+					for(var i=0;true;i++){ // infinite loop
+						name = prename
+						if(i>0){
+							name += toZZZ(i);
+						}
+						if(!this.tabuColorsDic[name]){
+							break;
+						}
+					}
+					this.tabuColorsDic[name] = sep;
+					this.tabuColors[sep] = {
+						name : name,
+						rgb: color,
+						hex : hex
+					}
+					this.packages["color"] = true;
+					return name;
+				}
+			}
+			this.tabuColors = {
+			}
+			this.tabuColorsDic = {};
 			this.generateLaTeX = function(opt) {
-				
+				this.tabuColors = {};
+				this.tabuColorsDic = {};
 				this.packages = {};
 				this.actualMainColor = this.mainColor();
 				this.actualColor = this.actualMainColor;
 				this.useTabu = this.shouldUseTabu(); // Must we use "tabu" package ?
+				;;;; this.useTabu = true;
+				;;;; this.blacklistPackages["arydshln"] = true;
+				if(this.useTabu){
+					// we avoid \arrayrulecolor
+					this.actualMainColor = this.actualColor = "#000000";
+				}
 				if(!this.useTabu && (this.hasBorderType("hdashline") || this.hasBorderType("dottedline"))){
 					this.packages["arydshln"] = true;
 				}
@@ -2478,15 +2483,27 @@ this.getHTML = (function(){
 				if (/\\(cdashline|hdashline)/.test(str)) {
 					this.packages["arydshln"] = true;
 				}
-
+				if(str.indexOf("\\hhline")>-1){
+					this.packages["hhline"] = true;
+				}
 				if(str.indexOf("\\arrayrulecolor") > -1 || firstPart.indexOf("\\arrayrulecolor") > -1 
 				   || str.indexOf("\\doublerulesepcolor") > -1 || firstPart.indexOf("\\doublerulesepcolor") > -1){
 					this.packages["colortbl"] = true;
 					if(!areSameColors(this.actualColor, "#000000")){
 						str += "\\arrayrulecolor"+getColor("#000000")+"\n";
 					}
-					if(this.packages["arydshln"]){
+					if(!this.useTabu && this.packages["arydshln"]){
 						firstPart += "\\ADLnullwidehline\n";
+					}
+				}
+				if(this.useTabu){
+					// Let see if we have some colors from tabu that we have to declare
+					var tabuColors = this.tabuColors;
+					for(var i in tabuColors){
+						if(tabuColors.hasOwnProperty(i)){
+							var color = tabuColors[i];
+							firstPart += "\\definecolor{"+color.name+"}{rgb}{"+color.rgb.join(",")+"}\n";
+						}
 					}
 				}
 				if(float){
@@ -2641,7 +2658,20 @@ this.getHTML = (function(){
 
 					return css;
 				}
-
+				function backgroundInfo(cell){
+					var color = window.getComputedStyle(cell,null).getPropertyValue("background-color");
+					if(color == "transparent" || color == "white"){return ""}
+					var rgba = toRGBA(color);
+					alert(rgba);
+					if(rgba[3] == 0){
+						return "";
+					}
+					rgba.pop();
+					if(rgba.join(",") == "255,255,255"){
+						return "";
+					}
+					return "background-color: "+color+";";
+				}
 				function getHTML(html) {
 					html = html.replace(/<\s*\/?\s*([^>]+)>/gi, function(a, b) {
 						if (!/^((em)|i)($|[^a-z])/i.test(b)) {
@@ -2685,7 +2715,7 @@ this.getHTML = (function(){
 							} else {
 								o2.html = getHTML(cell.innerHTML);
 							}
-							o2.css = borderInfo(cell, o2);
+							o2.css = borderInfo(cell, o2) + backgroundInfo(cell);
 							o2.rowSpan = cell.rowSpan;
 							o2.colSpan = cell.colSpan;
 							o.cells[i][j] = o2;
@@ -2881,7 +2911,7 @@ this.getHTML = (function(){
 							return "";
 						}
 						var firstBorder = borders[0];
-						if(hasColor){
+						if(hasColor && !(this.useTabu && (firstBorder.type == "hdashline" || firstBorder.type == "dottedline"))){
 							border += "\\arrayrulecolor"+getColor(firstBorder.color);
 							this.actualColor = firstBorder.color;
 						}
@@ -2947,6 +2977,15 @@ this.getHTML = (function(){
 							}
 							border += "}";
 						}
+						else if(this.useTabu && hasColor && (firstBorder.type == "hdashline" || firstBorder.type == "dottedline")){
+							var colorname = this.tabuColor(firstBorder.color);
+							if(firstBorder.type == "hdashline"){
+								border += "\\tabucline["+colorname+" on 4pt off 4pt]{-}"
+							}
+							else{
+								border += "\\tabucline["+colorname+" on 1pt off 1pt]{-}"
+							}
+						}
 						else{
 							border += {
 									normal: "\\hline",
@@ -2988,7 +3027,6 @@ this.getHTML = (function(){
 							"double" : "0.4pt"
 						}
 						border = "\\hhline{";
-						this.packages["hhline"] = true;
 						for(var i=0;i<borders.length;i++){
 							if(i===0){
 							// Must check for left border
@@ -3156,21 +3194,20 @@ this.getHTML = (function(){
 							}
 						}
 						border += "}";
+						// Remove useless hhline. Faster this way.
+						border = border.replace(/\\hhline{[^=-]*}$/, "");
 						if(metAry){
 							for(var i=0;i<borders.length;i++){
 								if(borders[i]){
 									var type = borders[i].type,
 									color = borders[i].color;
 									if(type == "hdashline" || type == "dottedline"){
-										if(!areSameColors(this.actualColor, color)){
-											this.actualColor = color;
-											border+="\\arrayrulecolor"+getColor(color);
-										}
+										var colorname = this.tabuColor(color);
 										if(type == "hdashline"){
-											border+="\\tabucline[on 4pt off 4pt]{"+(i+1);
+											border+="\\tabucline["+colorname+" on 4pt off 4pt]{"+(i+1);
 										}
 										else{
-											border+="\\tabucline[on 1pt off 1pt]{"+(i+1);
+											border+="\\tabucline["+colorname+" on 1pt off 1pt]{"+(i+1);
 										}
 										while(true){	// We know what we are doing
 											i++;
@@ -3194,17 +3231,23 @@ this.getHTML = (function(){
 							if(!borderO){
 								continue;
 							}
+							var insideTabu = "";
 							if(!areSameColors(this.actualColor, borderO.color)){
-								this.actualColor = borderO.color;
-								border+= "\\arrayrulecolor"+getColor(borderO.color);
+								if(this.useTabu){
+									insideTabu = this.tabuColor(borderO.color)+" ";
+								}
+								else{
+									this.actualColor = borderO.color;
+									border+= "\\arrayrulecolor"+getColor(borderO.color);
+								}
 							}
 							border += {
 								normal: "\\cline",
 								toprule: "\\cmidrule[\\heavyrulewidth]",
 								midrule: "\\cmidrule",
 								bottomrule: "\\cmidrule[\\heavyrulewidth]",
-								hdashline: this.useTabu ? "\\tabucline[on 4pt off 4pt]" : "\\cdashline",
-								dottedline: this.useTabu ? "\\tabucline[on 1pt off 1pt]" : "\\cdashline",
+								hdashline: this.useTabu ? "\\tabucline["+insideTabu+"on 4pt off 4pt]" : "\\cdashline",
+								dottedline: this.useTabu ? "\\tabucline["+insideTabu+"on 1pt off 1pt]" : "\\cdashline",
 								double: "\\cmidrule"
 							}[borderO.type] + "{" + (i+1);
 							if(borderO.type == "double"){doubleBorder = true;}

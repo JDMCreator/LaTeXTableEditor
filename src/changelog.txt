@@ -6,6 +6,26 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 0.8.1 BETA
+
+CORE
+
+[+] Added LaTeX option to force 'tabu' package when possible
+[-] Removed legacy code
+
+LATEX IMPORT
+
+[+] Support for background color of cells
+
+LATEX EXPORT
+
+[+] Added support for colored rules with 'tabu'
+[+] Support for default color names in all cases (red, green, blue, cyan, magenta, yellow, black, white)
+[#] Fixed fatal issue with 'tabu'
+[#] Fixed issue with double vertical borders with color
+[#] Fixed issue with useless \hhline commands
+[#] Fixed issue where 'arydshln' package was used even when blacklisted
+
 Version 0.8 BETA
 ===========
 
