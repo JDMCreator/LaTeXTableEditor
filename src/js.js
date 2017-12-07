@@ -2317,8 +2317,6 @@ this.getHTML = (function(){
 				this.actualMainColor = this.mainColor();
 				this.actualColor = this.actualMainColor;
 				this.useTabu = this.shouldUseTabu(); // Must we use "tabu" package ?
-				;;;; this.useTabu = true;
-				;;;; this.blacklistPackages["arydshln"] = true;
 				if(this.useTabu){
 					// we avoid \arrayrulecolor
 					this.actualMainColor = this.actualColor = "#000000";

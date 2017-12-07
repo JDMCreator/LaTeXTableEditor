@@ -6,7 +6,15 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 0.8.1 BETA
+Version 0.8.2 BETA (2017/12/07)
+===========
+
+LATEX EXPORT
+
+[#] Fixed issue where every table was a 'tabu' table
+
+Version 0.8.1 BETA (2017/12/06)
+===========
 
 CORE
 
