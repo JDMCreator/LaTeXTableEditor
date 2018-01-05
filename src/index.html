@@ -25,7 +25,7 @@
 <div style="border-top:1px dashed black;transform-origin: top left;z-index:9999;display:none;position:absolute;width:100px;height:5px;" id="line"></div>
 <div class="container-fluid">
 <div>
-  <div style="float:left;width:calc(100% - 300px);padding-bottom:10px;">
+  <div id="left-panel">
 <div class="alert alert-info" role="alert" style="margin:3px;display:none;">
   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 <span class="glyphicon glyphicon-info-sign"></span> <strong>Preview.</strong> You are now using a preview version of our upcoming Open Source LaTeX table editor. Please report any issues <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues">here</a>.</div>
@@ -197,7 +197,10 @@
 </div>
 </div>
 		</div>
-  <div style="float:right;width:300px;" id="right">
+  <div id="right">
+<div id="right-controler" onclick="$(document.body).toggleClass('closedPanel')">
+<span>&#9654;</span>
+</div>
 <div id="right-container">
 
 <div class="panel-group" id="right_accordion" role="tablist" aria-multiselectable="true">
@@ -456,18 +459,17 @@ Color of border :
 
 							<div><label><input type="checkbox" id="opt-latex-whitespace"> Remove whitespace</label></div>
 							<div><label><input type="checkbox" id="opt-latex-border" checked> Border commands are on separated lines</label></div>
+<h5>Table's caracteristics</h5>
+							<div><label><input type="checkbox" id="opt-latex-split"> Split table in multiple pages</label></div>
+<!--							<div><label><input type="checkbox" id="opt-latex-columns"> Table spans multiple columns</label></div>-->
+							<div><label><input type="checkbox" id="opt-latex-landscape"> Display table in landscape mode</label></div>
 <div><label><input type="checkbox" id="opt-latex-float" checked> Use table as a float</label></div>
 <h5>Fit table to page method</h5>
 <select id="opt-fit-table" class="form-control"><option value="none">None</option>
 <option value="sc">Scale</option>
 <option value="sh">Shrink columns (BETA)</option>
 <option value="sc-sh">Shrink (BETA) & scale</option></select>
-<!--
-<h5>Table's caracteristics</h5>
-							<div><label><input type="checkbox" id="opt-latex-split"> Split table in multiple page</label></div>
-							<div><label><input type="checkbox" id="opt-latex-columns"> Table spans multiple columns</label></div>
-							<div><label><input type="checkbox" id="opt-latex-landscape"> Display table in landscape mode</label></div>
--->
+
 							<h5>Packages</h5>
 							<div class="row">
 								<div class="col-md-6">
@@ -478,7 +480,7 @@ Color of border :
 									<input type="checkbox" class="input-control" id="blacklist-colortbl" value="colortbl" checked> <label for="blacklist-colortbl">Colortbl</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
 <input type="checkbox" class="input-control" id="blacklist-graphicx" value="graphicx" checked disabled> <label for="blacklist-graphicx">Graphicx</label><br>
-									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked disabled> <label for="blacklist-hhline">Hhline</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked> <label for="blacklist-hhline">Hhline</label><br>
 								</div>
 								<div class="col-md-6">
 									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
@@ -492,7 +494,7 @@ Color of border :
 								</div>
 							</div>
 <h5>Advanced options</h5>
-<div><label><input type="checkbox" id="opt-latex-hhline"> Enhance double borders with <code>hhline</code> when possible <span class="label label-warning">BETA</span></label></div>
+<div><label><input type="checkbox" id="opt-latex-hhline"> Enhance double borders with <code>hhline</code> when possible</div>
 <label><input type="checkbox" id="opt-latex-tabu"> Force table to use <code>tabu</code> when possible <span class="label label-warning">BETA</span></label>  
 <!--
 <h5>Colors</h5>

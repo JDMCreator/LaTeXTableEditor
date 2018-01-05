@@ -7,6 +7,40 @@
 			min-height:300px;
 			font-family:monaco, "Lucida Console", Courier, monospace;
 		}
+		body.closedPanel #right-controler span{
+			transform:rotate(180deg);
+		}
+		body.closedPanel #right{
+			width:1.2em;
+		}
+		body.closedPanel #right-container{
+			display:none;
+		}
+		body.closedPanel #left-panel{
+			width:calc(100% - 1.2em);
+		}
+		#left-panel{
+			float:left;
+			width:calc(100% - 300px);
+			padding-bottom:10px;
+		}
+		#right-controler{
+			position:absolute;
+			left:0;
+			top:0;
+			bottom:0;
+			background-color:rgba(165,165,165,0.5);
+			width:1.2em;
+			//display:table;
+			vertical-align:middle
+			height:100%;
+			cursor:pointer;
+		}
+		#right-controler span{
+			position:absolute;
+			top:calc(50% - 10px);
+			padding:2px;
+		}
 		.package{
 			font-family:monospace;
 		}
@@ -193,12 +227,15 @@
 
 
 		#right {
+			float:right;
+			width:300px;
 			position: fixed;
 			top: 0;
 			right: 0;
 			margin:0;
 			padding:0;
 			background:#ddd;
+			padding-left:1.25em;
 			bottom:0;
 			overflow-y:hidden;
 		}

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="14"
+   height="14"
+   viewBox="0 0 14 14"
+   id="svg4236"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="diag-one.svg"
+   inkscape:export-filename="C:\Users\Xavier\Documents\Xavier\Code\latexTables\diag-one2.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <defs
+     id="defs4238">
+    <linearGradient
+       id="linearGradient4788"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop4790" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="12.411137"
+     inkscape:cx="-7.7045355"
+     inkscape:cy="1.4296907"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     units="px"
+     borderlayer="true"
+     inkscape:window-width="1280"
+     inkscape:window-height="666"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4244" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata4241">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1038.3622)">
+    <rect
+       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:1.80753183;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4246"
+       width="12.192469"
+       height="12.192469"
+       x="0.90376592"
+       y="1039.266" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.94577771px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 12.310126,1050.5904 1.6093009,1040.0579"
+       id="path6252"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

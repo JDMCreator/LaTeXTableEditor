@@ -125,6 +125,79 @@ Table = function(table){
 			}
 			return false;
 		}
+		this.normalize = function(matrix){
+			matrix = matrix || this.matrix();
+			// First, we adjust rowspan attribute
+			var change = false;
+			rowLoop: for(var i=0, row;i<matrix.length;i++){
+				row = matrix[i];
+				for(var j=0, cell;j<row.length;j++){
+					cell = row[j];
+					if(!cell.refCell){
+						continue rowLoop;
+					}
+				}
+				change = true;
+				for(var j=0, cell;j<row.length;j++){
+					cell = row[j];
+					cell.refCell.cell.rowSpan -= 1;
+					j += cell.refCell.cell.colSpan-1;
+				}
+			}
+			// We calculate the max column
+			var colLength = 0;
+			for(var i=0;i<matrix.length;i++){
+				colLength = Math.max(colLength, matrix[i].length);
+			}
+			// Then, we adjust colspan attribute
+			colLoop: for(var j=0;j<colLength;j++){
+				for(var i=0, cell;i<matrix.length;i++){
+					cell = matrix[i][j];
+					if(cell && !cell.refCell){
+						continue colLoop;
+					}
+				}
+				change = true;
+				for(var i=0, cell;i<matrix.length;i++){
+					cell = matrix[i][j];
+					if(cell){
+						cell.refCell.cell.colSpan -= 1;
+						i += cell.refCell.cell.rowSpan - 1;
+					}
+				}
+			}
+			var rows = table.rows;
+			// Then, we remove all empty rows
+			for(var i=0, row;i<rows.length;i++){
+				row = rows[i];
+				if(row && row.cells.length <= 0){
+					// Remove empty row
+					row.parentNode.removeChild(row);
+					i--;
+					change = true
+				}
+			}
+			// We might refresh the matrix and the max length of rows
+			// TODO : Improve speed (maybe adjust the matrix on the fly?)
+			if(change){
+				colLength = 0;
+				matrix = this.matrix()
+				for(var i=0;i<matrix.length;i++){
+					colLength = Math.max(colLength, matrix[i].length);
+				}
+			}
+			// Then, we expand the colspan of cells if there are empty cells
+			for(var i=0, cells;i<matrix.length;i++){
+				if(rows[i]){
+					cells = rows[i].cells;
+					if(matrix[i].length < colLength && cells && cells[0]){
+						cells[cells.length-1].colSpan += colLength-cells.length;
+						change = true;
+					}
+				}
+			}
+			return true;
+		}
 		this.clearCache = function(){
 			cache = {};
 		}
@@ -681,6 +754,12 @@ Table = function(table){
 			}
 			
 		}
+		this.rel = function(x,y){
+			var row = this.element.rows[y];
+			if(row){
+				return row.cells[x];
+			}
+		}
 		this.getCellByPosition = function(x, y) {
 			var table = this.element,
 			occupied = [],
@@ -740,8 +819,8 @@ Table.rowSpan = function(cell){
 }
 Table.maxIteration = 50;
 Table.cache = true;
-Table.build = 4;
-Table.version = "0.1.3"
-Table.stable = false;
+Table.build = 5;
+Table.version = "0.2"
+Table.stable = true;
 window.Table = Table;
 })();

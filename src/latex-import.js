@@ -286,6 +286,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		"bottomrule" : "2px solid black",
 		"midrule" : "1px solid black",
 		"cline" : "1px solid black",
+		"cdouble" : "2px solid black",
 		"cmidrule" : "1px solid black",
 		"hdashline" : "1px dashed black",
 		"dottedline" : "1px dotted black"
@@ -328,7 +329,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				}
 				i+=com.full.length-1;				
 			}
-			else if(name == "hline" || name == "firsthline" || name == "lasthline"){
+			else if(name == "hline" || name == "firsthline" || name == "lasthline" || name == "Xhline"){
 				if(actuBorder == "normal"){
 					actuBorder = "double";
 				}
@@ -372,7 +373,10 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				}
 				i+=com.full.length-1;
 			}
-			else if(name == "cline" || name == "cmidrule" || name == "cdashline"){
+			else if(name == "cline" || name == "cmidrule" || name == "cdashline" || name == "Xcline"){
+				if(name == "Xcline"){
+					name = "cline";
+				}
 				if(name == "cdashline" && com.options[0]){
 					if(parseInt(com.options[0].split(/\//)[0],10) <= 1.5){
 						name = "cdottedline";
@@ -384,6 +388,49 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 						actuBorder = [];
 					}
 					actuBorder.push([name, com.args[0]]);
+				}
+				i+=com.full.length-1;
+			}
+			else if(name == "hhline"){
+				actuBorder = [];
+				var hhline = com.args[0], hhlinecomment = false, insidehhline = 0, pos = 1;
+				hhlineLoop: for(var j=0, hc;j<hhline.length;j++){
+					hc = hhline.charAt(j);
+					if(hhlinecomment){
+						if(hc == "\n"){
+							hhlinecomment = false;
+						}
+						continue hhlineLoop;
+					}
+					if(hc == "%"){
+						hhlinecomment = true;
+					}
+					else if(insidehhline > 0){
+						if(hc == "\\"){
+							j++;
+						}
+						else if(hc == "{"){
+							insidehhline++;
+						}
+						else if(hc == "}"){
+							insidehhline--;
+						}
+					}
+					else if(hc == ">"){
+						j++;
+						insidehhline = 1;
+					}
+					else if(hc == "-"){
+						actuBorder.push(["cline", pos+"-"+pos]);
+						pos++;
+					}
+					else if(hc == "="){
+						actuBorder.push(["cdouble", pos+"-"+pos]);
+						pos++;
+					}
+					else if(hc == "~"){
+						pos++;
+					}
 				}
 				i+=com.full.length-1;
 			}
@@ -496,7 +543,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		else if(border.push){
 			for(var j=0;j<border.length;j++){
 				var subborder = border[j];
-				if(subborder[0]  == "cline" || subborder[0] == "cmidrule" || subborder[0] == "cdottedline" || subborder[0] == "cdashline"){
+				if(subborder[0]  == "cline" || subborder[0] == "cdouble" || subborder[0] == "cmidrule" || subborder[0] == "cdottedline" || subborder[0] == "cdashline"){
 					var end = subborder[1].split(/-+/),
 					start = parseInt(end[0],10)-1;
 					end = (parseInt(end[1],10)||row.length)-1,
@@ -505,7 +552,8 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 						cline : "normal",
 						cmidrule : "midrule",
 						cdottedline : "dottedline",
-						cdashline : "hdashline"
+						cdashline : "hdashline",
+						cdouble: "double"
 					}[subborder[0]];
 					for(k=0;k<row.length;k++){
 						var o = row[k];
@@ -922,7 +970,7 @@ treatCom = function(code){
 	else if(name == "multicolumn" || name == "multirow"){
 		html += getHTML(com.args[2]);
 	}
-	else if(name == "multirowcell" || name == "multirowhead"){
+	else if(name == "multirowcell" || name == "multirowhead" || name == "textcolor"){
 		html += getHTML(com.args[1]);
 	}
 	else if(name == "verb"){
@@ -943,7 +991,7 @@ treatCom = function(code){
 	else if(name == "pounds" || name == "textsterling"){html += "&pound;"}
 	else if(name == "og"){html+="&laquo;"}
 	else if(name == "fg"){html+="&raquo;"}
-	else if(com.args.length == 1 && name != "label" && name != "ref" && name != "pageref" && name != "hhline" && name != "phantom" && name != "hspace" && name != "vspace" && name != "rule" && name != "cite"){
+	else if(com.args.length == 1 && name != "label" && name != "ref" && name != "pageref" && name != "hhline" && name != "phantom" && name != "hspace" && name != "vspace" && name != "rule" && name != "cite" && name != "cellcolor" && name != "rowcolor"){
 		html += getHTML(com.args[0]);
 	}
 	

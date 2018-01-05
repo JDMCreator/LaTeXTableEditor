@@ -103,18 +103,19 @@ $(function(){
 <div id="confidential" class="question">
 <p><strong>Credits ?</strong>
 
-<p>All code by myself. This project uses many of my own code which is host as separate project :
+<p>Most of the code by myself. This project uses many of my own code which is host as separate project :
 <p><ul>
 <li> <a href="https://github.com/JDMCreator/Table.js">Table.js</a> (by myself) : Complex operations on HTML Tables with JavaScript
 <li> <a href="https://github.com/JDMCreator/toRGBA.js">toRGBA.js</a> (by myself) : Convert any HTML or CSS color to RGBA
 <li> <a href="https://gist.github.com/JDMCreator/c0944e1caab3b913353ac165177b5241">CSVtoArray.js</a> (by myself) : Convert a CSV file to an Array
 </ul>
 
-<p>This project uses two libraries :
+<p>This project uses three libraries :
 
 <p><ul>
 <li> <a href="https://getbootstrap.com">Bootstrap 3.3</a>
 <li> <a href="http://jquery.com">JQuery</a>
+<li> <a href="http://chir.ag/projects/ntc/">ntc.js</a> : Convert a RGBA value to a color name
 </ul>
 
 <p>Most of the icons are from <a href="http://glyphicons.com">glyphicons</a> and are included in <a href="https://getbootstrap.com">Bootstrap 3.3</a>. Some are from me. The "underline" icon is made by <a href="https://www.flaticon.com/authors/dave-gandy" title="Dave Gandy">Dave Gandy</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a>
@@ -213,6 +214,7 @@ document.write("t")
 <li>\H</li>
 <li>\hdashline
 <li>\hline</li>
+<li>\hhline
 <li>\i</li>
 <li>\j</li>
 <li>\k</li>
@@ -263,6 +265,8 @@ document.write("t")
 <li>\v</li>
 <li>\vdashline
 <li>\verb</li>
+<li>\Xcline
+<li>\Xhline
 </ul>
 <h3><a id="Partially_supported_commands_108"></a>Partially supported commands</h3>
 <ul>
@@ -271,17 +275,19 @@ document.write("t")
 <li>\hbox</li>
 <li>\hrule</li>
 <li>\noalign</li>
+<li>\textcolor
 <li>\vrule</li>
 </ul>
 <h3><a id="Ignored_commands_117"></a>Ignored commands</h3>
 <ul>
+<li>\cellcolor
 <li>\cite</li>
-<li>\hhline</li>
 <li>\hspace</li>
 <li>\label</li>
 <li>\pageref</li>
 <li>\phantom</li>
 <li>\ref</li>
+<li>\rowcolor
 <li>\rule</li>
 <li>\vspace</li>
 </ul>

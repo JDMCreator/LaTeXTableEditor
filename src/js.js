@@ -41,6 +41,7 @@ function $id(id) {
 			"hhline" : [],
 			"makecell" : ["array"],
 			"multirow" : [],
+			"pdflscape": ["lscape"],
 			"ragged2e" : ["everysel"],
 			"rotating" : ["graphicx", "ifthen"],
 			"slashbox" : [],
@@ -99,7 +100,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "0.8.1";
+			this.version = "0.9";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -818,10 +819,6 @@ this.getHTML = (function(){
 				td.addEventListener("click", this._clickCellManager, false);
 				return td;
 			}
-			this.split = function() {
-				this.statesManager.registerState();
-				this.Table.split(document.querySelector("#table td[data-selected]"), this.applyToCell);
-			}
 			this.createCell = function(classNames) {
 				var td = document.createElement("td");
 				td.classNames = classNames || "";
@@ -981,7 +978,8 @@ this.getHTML = (function(){
 					$id("label")
 						.value = o.caption.label || "";
 				}
-				var table = document.createDocumentFragment();
+				var table = document.createDocumentFragment(),
+				colLength = 0;
 				for (var i = 0; i < o.cells.length; i++) {
 					var row = o.cells[i],
 						elem = document.createElement("tr");
@@ -1589,7 +1587,7 @@ this.getHTML = (function(){
 						}
 					
 				} else if(this.shrink){
-					text = this.generateFromHTML(this.getHTML(cell), true, align).replace(/\\{4,}/g, function(full){
+					text = this.generateFromHTML(this.getHTML(cell), true, align).replace(/\\{2,}/g, function(full){
 						var after = "", str = "", nb = full.length;
 						if(nb % 2 == 1){
 							after = "\\";
@@ -2107,6 +2105,8 @@ this.getHTML = (function(){
 			this.generate = function() {
 				var start = +new Date()
 				this.buildBlacklist();
+				// Normalize the table
+				this.Table.normalize();
 				var format = $id("format")
 					.value;
 				this.log = "";
@@ -2330,7 +2330,9 @@ this.getHTML = (function(){
 					shrink = fit.indexOf("sh") >= 0,
 					firstPart = "",
 					float = this._id("opt-latex-float").checked,
-					str = "";
+					str = "",
+					useLongtable = this._id("opt-latex-split").checked,
+					rotateTable = this._id("opt-latex-landscape").checked;
 				this.shrink = shrink;
 				var caption = this.caption(),
 					booktabs = table.hasAttribute("data-booktabs"),
@@ -2338,6 +2340,9 @@ this.getHTML = (function(){
 					border,
 					useTabu = this.useTabu, // Must we use "tabu" package ?
 					asteriskMultirow = false;
+				if(useLongtable){
+					asteriskMultirow = true;
+				}
 				noColor = this.blacklistPackages["colortbl"];
 				var colHeaders = this.headers(rg),
 				borderNewLine = $id("opt-latex-border").checked,
@@ -2354,51 +2359,95 @@ this.getHTML = (function(){
 					})
 				}
 				this.actualColor = startingColor;
-				if(float){
-					firstPart = "\\begin{table}\n";
+				var booktabColor = false;
+				if(this.useBooktab() && this.useBackgroundColor(rg)){
+					booktabColor = "\\setlength{\\extrarowheight}{0pt}\n";
+					booktabColor += "\\addtolength{\\extrarowheight}{\\aboverulesep}\n";
+					booktabColor += "\\addtolength{\\extrarowheight}{\\belowrulesep}\n";
+					booktabColor += "\\setlength{\\aboverulesep}{0pt}\n";
+					booktabColor += "\\setlength{\\belowrulesep}{0pt}\n";
+				}
+				if(useLongtable){
+					if(rotateTable){
+						this.packages["pdflscape"] = true;
+						firstPart += "\\begin{landscape}\n";
+					}
+					if(booktabColor){
+						if(!rotateTable){
+							firstPart += "{\n";
+						}
+						rotateTable += booktabColor
+					}
+					if(!areSameColors(startingColor, "black")){
+						firstPart += "\\arrayrulecolor" + getColor(startingColor) + "\n";
+					}
+					if (caption.label && !caption.caption) {
+						firstPart += "\\refstepcounter{table}\n";
+						firstPart += "\\label{" + caption.label + "}\n";
+					}
+					str += "\\begin{" + (useTabu ? "longtabu" : "longtable") + "}{" + header + "}";
+					if (caption.caption) {
+						if(caption.numbered){
+							str += "\n\\caption*{"+ caption.caption;
+						}
+						else{
+							str += "\n\\caption{"+ caption.caption;
+						}
+						if(caption.label){
+							str += "\\label{"+caption.label+"}";
+						}
+						str += "}";
+					}
+					if(scale){
+						this.message("'scale' option can't be used with longtable or longtabu.");
+					}
 				}
 				else{
-					firstPart = "\\begin{minipage}{\\columnwidth}\n";
-				}
-				if(this._id("table-opt-center").checked){
-					firstPart += "\\centering\n"
-				}
-				if(this.useBooktab() && this.useBackgroundColor(rg)){
-					firstPart += "\\setlength{\\extrarowheight}{0pt}\n";
-					firstPart += "\\addtolength{\\extrarowheight}{\\aboverulesep}\n";
-					firstPart += "\\addtolength{\\extrarowheight}{\\belowrulesep}\n";
-					firstPart += "\\setlength{\\aboverulesep}{0pt}\n";
-					firstPart += "\\setlength{\\belowrulesep}{0pt}\n";
-				}
-				if (caption.caption) {
-					if(caption.numbered){
-						this.packages["caption"] = true;
-						firstPart += "\\captionsetup{labelformat=empty}\n";
-					}
 					if(float){
-						firstPart += "\\caption{" + caption.caption + "}\n";
+						firstPart = "\\begin{"+ (rotateTable ? "sidewaystable" : "table") +"}\n";
 					}
 					else{
-						firstPart += "\\captionof{table}{" + caption.caption + "}";
+						firstPart = "\\begin{minipage}{\\columnwidth}\n";
+					}
+					if(this._id("table-opt-center").checked){
+						firstPart += "\\centering\n"
+					}
+					if(booktabColor){
+						firstPart += booktabColor;
+					}
+					if (caption.caption) {
+						if(caption.numbered){
+							this.packages["caption"] = true;
+							firstPart += "\\captionsetup{labelformat=empty}\n";
+						}
+						if(float){
+							firstPart += "\\caption{" + caption.caption + "}\n";
+						}
+						else{
+							this.packages["caption"] = true;
+							firstPart += "\\captionof{table}{" + caption.caption + "}";
+						}
+					}
+					if (caption.label) {
+						if(!caption.caption){
+							firstPart += "\\refstepcounter{table}\n";
+						}
+						firstPart += "\\label{" + caption.label + "}\n";
+					}
+					if(!areSameColors(startingColor, "black")){
+						firstPart += "\\arrayrulecolor" + getColor(startingColor) + "\n";
 					}
 				}
-				if (caption.label) {
-					if(!caption.caption){
-						firstPart += "\\refstepcounter{table}\n";
-					}
-					firstPart += "\\label{" + caption.label + "}\n";
-				}
-				if(!areSameColors(startingColor, "black")){
-					firstPart += "\\arrayrulecolor" + getColor(startingColor) + "\n";
-				}
-				if(scale){
+				if(scale && !useLongtable){
 					this.packages["graphicx"] = true;
 					str += "\\resizebox{\\columnwidth}{!}{%\n";
 				}
 				if(useTabu){
 					this.packages["tabu"] = true;
 				}
-				str += "\\begin{"+(useTabu ? "tabu" : "tabular")+"}{" + header + "}";
+				if(!useLongtable){
+					str += "\\begin{"+(useTabu ? "tabu" : "tabular")+"}{" + header + "}";
+				}
 				var rg2 = [],
 				multiRows = {};
 				for(var i=0;i<rg.length;i++){
@@ -2432,6 +2481,7 @@ this.getHTML = (function(){
 					rg2.push(row);
 				}
 				var beautifyRows = this.beautifyRows(rg2);
+				var foundFirst = false;
 				for(var i=0;i<beautifyRows.length;i++){
 					var row = beautifyRows[i];
 					if (i === 0 && booktabs) {
@@ -2451,10 +2501,16 @@ this.getHTML = (function(){
 						}
 					}
 					if (i !== 0) {
-						str += " \\\\";
+						if(!foundFirst && useLongtable && !multiRows[i]){
+							str += " \\endfirsthead";
+						}
+						else{						
+							str += " \\\\";
+						}
 						if(asteriskMultirow && multiRows[i]){
 							str+= "*";
 						}
+						else{foundFirst = true;}
 						str += border
 					} else {
 						str += border;
@@ -2469,9 +2525,20 @@ this.getHTML = (function(){
 						str += " \\\\"+ (borderNewLine ? "\n" : " ") + border;
 					}
 				}
-				str += "\n\\end{"+(useTabu ? "tabu" : "tabular")+"}\n"
-				if(scale){
-					str += "}\n";
+				if(useLongtable){
+					if(!useTabu){
+						this.packages["longtable"] = true;
+					}
+					str += "\n\\end{"+(useTabu ? "longtabu" : "longtable")+"}\n"
+					if(booktabColor && !rotateTable){
+						str += "}\n";
+					}
+				}
+				else{
+					str += "\n\\end{"+(useTabu ? "tabu" : "tabular")+"}\n"
+					if(scale){
+						str += "}\n";
+					}
 				}
 				// Booktabs
 				if (/\\(bottomrule)|(toprule)|(midrule)|(cmidrule)|(heavyrulewidth)|(lightrulewidth)/.test(str)) {
@@ -2504,11 +2571,20 @@ this.getHTML = (function(){
 						}
 					}
 				}
-				if(float){
-					str +="\\end{table}";
+				if(!useLongtable){
+					if(float){
+						if(rotateTable){
+							this.packages["rotating"] = true;
+						}
+						str +="\\end{"+(rotateTable ? "sidewaystable" : "table")+"}";
+					}
+					else{
+						this.message("Rotated tables without float are not supported for now.","warning"); //TODO
+						str += "\\end{minipage}";
+					}
 				}
-				else{
-					str += "\\end{minipage}";
+				else if(rotateTable){
+					str += "\\end{landscape}";
 				}
 				// Packages
 				var packages = "";
@@ -2516,6 +2592,9 @@ this.getHTML = (function(){
 					if (this.packages.hasOwnProperty(i)) {
 						if(i == "ulem"){
 							packages += "% \\usepackage[normalem]{ulem}\n";
+						}
+						else if(i == "multirow" && useLongtable){
+							packages += "% \\usepackage[longtable]{multirow}\n";
 						}
 						else if(i != "arydshln" && !(i == "color" && this.packages["colortbl"])){
 							packages += "% \\usepackage{" + i + "}\n";
@@ -2904,6 +2983,9 @@ this.getHTML = (function(){
 					border = "",
 					enhanceHhline = this._id("opt-latex-hhline").checked && (!this.packages["arydshln"] || this.useTabu),
 					insertInHhline = !this.blacklistPackages["colortbl"];
+					if(borders[0].type == "double" && enhanceHhline){
+						complete = false;
+					}
 					if(complete){
 						if(!borders[0]){
 							return "";
@@ -2913,69 +2995,7 @@ this.getHTML = (function(){
 							border += "\\arrayrulecolor"+getColor(firstBorder.color);
 							this.actualColor = firstBorder.color;
 						}
-						if(firstBorder.type == "double" && enhanceHhline){
-							// We use hhline for this double
-							var insideColor = this.actualColor;
-							this.packages["hhline"] = true;
-							border += "\\hhline{";
-							var row = matrix[n] || matrix[n-1];
-							for(var i=0;i<borders.length;i++){
-								var borderLeft = (row[i].refCell||row[i]).leftBorder,
-								  	borderLeftColor = (row[i].refCell||row[i]).leftBorderColor;
-								if((borderLeft == "normal" && i==0) || borderLeft == "double"){
-									if(insertInHhline && !areSameColors(insideColor, borderLeftColor)){
-										insideColor = borderLeftColor;
-										border += ">{\\arrayrulecolor"+getColor(borderLeftColor)+"}";
-									}
-									if(borderLeft == "normal"){
-										border += "|";
-									}
-									else{
-										if(i == 0){
-											border += "|";
-										}
-										else{
-											border += ":";
-										}
-										if(n == 0){
-											border += "t";
-										}
-										else if(n >= matrix.length){
-											border += "b";
-										}
-										border += ":";
-									}
-								}
-								border += "=";
-								var borderRight = (row[i].refCell||row[i]).rightBorder,
-								    borderRightColor = (row[i].refCell||row[i]).rightBorderColor;
-								if(borderRight == "normal" || borderRight == "double"){
-									if(insertInHhline && !areSameColors(insideColor, borderRightColor)){
-										insideColor = borderRightColor;
-										border += ">{\\arrayrulecolor"+getColor(borderRightColor)+"}";
-									}
-									if(borderRight == "normal"){
-										border += "|";
-									}
-									else{
-										border += ":";
-										if(n == 0){																				border += "t"
-										}
-										else if(n >= matrix.length){
-											border += "b";
-										}
-										if(i >= row.length-1){
-											border += "|";
-										}
-										else{
-											border += ":";
-										}
-									}
-								}
-							}
-							border += "}";
-						}
-						else if(this.useTabu && hasColor && (firstBorder.type == "hdashline" || firstBorder.type == "dottedline")){
+						if(this.useTabu && hasColor && (firstBorder.type == "hdashline" || firstBorder.type == "dottedline")){
 							var colorname = this.tabuColor(firstBorder.color);
 							if(firstBorder.type == "hdashline"){
 								border += "\\tabucline["+colorname+" on 4pt off 4pt]{-}"
@@ -2998,6 +3018,7 @@ this.getHTML = (function(){
 						return border;
 					}
 					var row = matrix[n] || matrix[n-1],
+					toprow = matrix[n-1] || matrix[n-2] || [],
 					useHHLine = false;
 					for(var i=0;i<row.length;i++){
 						var cell = row[i];
@@ -3006,7 +3027,7 @@ this.getHTML = (function(){
 							break;
 						}
 					}
-					if((useHHLine								// If there's a cell with background color
+					if(!this.blacklistPackages["hhline"] && (useHHLine			// If there's a cell with background color
 						|| hasColor							// or colored rules
 						|| (o.types.double && 						// or a double border but
 						   !(o.types.toprule || o.types.midrule || o.types.bottomrule))	// without booktab borders
@@ -3029,8 +3050,30 @@ this.getHTML = (function(){
 							if(i===0){
 							// Must check for left border
 								var borderLeft = (row[i].refCell||row[i]).leftBorder,
-								    borderLeftColor = (row[i].refCell||row[i]).leftBorderColor;
-								if(borderLeft == "normal" || borderLeft == "double"){
+								    borderLeftColor = (row[i].refCell||row[i]).leftBorderColor,
+								    borderLeftTop = ((toprow[i]||{}).refCell||toprow[i]||{}).leftBorder,
+								    borderLeftTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).leftBorderColor;
+								if(enhanceHhline && (borderLeft == "double" || borderLeftTop == "double")){
+									var borderLeftFColor = borderLeftColor || borderLeftTopColor;
+									if(insertInHhline && !areSameColors(insideColor, borderLeftFColor)){
+										insideColor = borderLeftFColor;
+										border += ">{\\arrayrulecolor"+getColor(borderLeftFColor)+"}";
+									}
+									border += "|";
+									if(borderLeftTop != "double" || n == 0){
+										border += "t";
+									}
+									else if(borderLeft != "double" || n>= matrix.length){
+										border += "b";
+									}
+									if(borders[i].type == "double"){
+										border += ":";
+									}
+									else{
+										border += "|";
+									}
+								}
+								else if(borderLeft == "normal" || borderLeft == "double"){
 									if(insertInHhline && !areSameColors(insideColor, borderLeftColor)){
 										insideColor = borderLeftColor;
 										border += ">{\\arrayrulecolor"+getColor(borderLeftColor)+"}";
@@ -3039,24 +3082,7 @@ this.getHTML = (function(){
 										border += "|";
 									}
 									else{
-										if(enhanceHhline){
-											border += "|";
-											if(n == 0){
-												border += "t";
-											}
-											else if(n >= matrix.length){
-												border += "b";
-											}
-											if(borders[i].type == "double"){
-												border += ":";
-											}
-											else{
-												border += "|";
-											}
-										}
-										else{
-											border += "||";
-										}
+										border += "||";
 									}
 								}
 							}
@@ -3150,8 +3176,42 @@ this.getHTML = (function(){
 							}
 							// Check for right border;
 							var borderRight = (row[i].refCell||row[i]).rightBorder,
-							    borderRightColor = (row[i].refCell||row[i]).rightBorderColor;
-							if(borderRight == "normal" || borderLeft == "double"){
+							    borderRightColor = (row[i].refCell||row[i]).rightBorderColor,
+							    borderRightTop = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorder,
+							    borderRightTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorderColor;
+							if(enhanceHhline && (borderRight == "double" || borderRightTop == "double")){
+								if(n==1){debugger;}
+								var borderRightFColor = borderRightColor || borderRightTopColor;
+								if(insertInHhline && !areSameColors(insideColor, borderRightFColor)){
+									insideColor = borderRightFColor;
+									border += ">{\\arrayrulecolor"+getColor(borderRightFColor)+"}";
+								}
+								if(type == "double"){
+									border += ":";
+								}
+								else{
+									border += "|";
+								}
+								if(borderRightTop != "double" || n == 0){
+									border += "t";
+								}
+								else if(borderRight != "double" || n>= matrix.length){
+									border += "b";
+								}
+								if(i >= row.length-1){
+									border += "|";
+								}
+								else{
+									if(borders[i+1].type == "double"){
+										border += ":"
+									}
+									else{
+										border += "|";
+									}
+								}
+								
+							}
+							else if(borderRight == "normal" || borderRight == "double"){
 								if(insertInHhline && !areSameColors(insideColor, borderRightColor)){
 									insideColor = borderRightColor;
 									border += ">{\\arrayrulecolor"+getColor(borderRightColor)+"}";
@@ -3160,38 +3220,20 @@ this.getHTML = (function(){
 									border += "|";
 								}
 								else{
-									if(enhanceHhline){
-										if(type == "double"){
-											border += ":";
-										}
-										else{
-											border += "|";
-										}
-										if(n == 0){
-											border += "t";
-										}
-										else if(n >= matrix.length){
-											border += "b";
-										}
-										if(i >= row.length-1){
-											border += "|";
-										}
-										else{
-											if(borders[i+1].type == "double"){
-												border += ":"
-											}
-											else{
-												border += "|";
-											}
-										}
-									}
-									else{
-										border += "||";
-									}
+									border += "||";
 								}
 							}
 						}
 						border += "}";
+						// If the hhline was not a must, we use \hline\hline in the case of full double horizontal borders
+						if(o.complete && !/[:\|]/g.test(border) && borders[0].type == "double"){
+							border = "\\hline\\hline";
+							if(hasColor){
+								border = "\\arrayrulecolor"+getColor(firstBorder.color)+border;
+								this.actualColor = borders[0].color;
+							}
+							return border;
+						}
 						// Remove useless hhline. Faster this way.
 						border = border.replace(/\\hhline{[^=-]*}$/, "");
 						if(metAry){

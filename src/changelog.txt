@@ -6,6 +6,40 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 0.9 BETA
+===========
+
+| Note on this release :
+|     This release introduces support for longtable,
+|     rotated tables and an option to merge double borders
+|     together.
+
+CORE
+
+[+] Table.js upgraded to 0.2
+[+] New button the show/hide the right panel
+[+] Now possible to disable "hhline" package 
+[/] Changed diagonal icons
+[#] Fix issue where splitted cells couldn't be selected
+
+HTML EXPORT
+
+[#] Fixed left/right margins (we used 'cm' instead of 'pt')
+
+LATEX IMPORT
+
+[+] Support for \hhline
+[+] Text support for \textcolor
+[+] Support for \Xhline and \Xcline from 'makecell' package
+[#] \cellcolor and \rowcolor are ignored for now
+
+LATEX EXPORT
+
+[+] Support for tables that span multiple pages
+[+] Support for rotated tables
+[+] Enhanced hhline now works for every row
+[#] Fixed issue with multiline cells and 'shrink' option
+
 Version 0.8.2 BETA (2017/12/07)
 ===========
 
@@ -21,7 +55,7 @@ CORE
 [+] Added LaTeX option to force 'tabu' package when possible
 [-] Removed legacy code
 
-LATEX IMPORT
+PASTE IMPORT
 
 [+] Support for background color of cells
 
