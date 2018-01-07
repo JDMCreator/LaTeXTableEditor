@@ -66,7 +66,7 @@
 						ocell.style.borderBottom = "2px solid black";
 					}
 				}
-				ocell.style.paddingLeft = ocell.style.paddingRight = "3cm";
+				ocell.style.paddingLeft = ocell.style.paddingRight = "3pt";
 				if(cell.rowSpan != 1){ocell.rowSpan=cell.rowSpan}
 				if(cell.colSpan != 1){ocell.colSpan=cell.colSpan}
 				if(cell.hasAttribute("data-diagonal")){

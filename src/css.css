@@ -1,3 +1,9 @@
+		/* Edge hack to have the good white-space value */
+		@supports (-ms-ime-align:auto) {
+			#c {
+				white-space: nowrap !important;
+			}
+		}
 		#c{
 			white-space: pre;
 			overflow: auto;

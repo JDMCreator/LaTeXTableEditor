@@ -54,7 +54,7 @@
 
 			<!-- Nav tabs -->
 			<ul class="nav nav-tabs" role="tablist">
-				<li><span class="glyphicon glyphicon-pushpin" title="Pin/Unpin the toolbar to the top of the page" style="padding:10px 5px;cursor:pointer;" onclick="table.togglePin()"></span></li>
+				<li><span class="glyphicon glyphicon-pushpin" data-toggle="tooltip" title="Pin/Unpin the toolbar to the top of the page" style="padding:10px 5px;cursor:pointer;" onclick="table.togglePin()"></span></li>
 				<li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Home</a></li>
 				<li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Rows/Columns</a></li>
 				<li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Borders</a></li>
@@ -64,31 +64,31 @@
 			<!-- Tab panes -->
 			<div class="tab-content">
 				<div role="tabpanel" class="tab-pane active" id="home">
-					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="...">
+					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="Home toolbar">
 						<div class="btn-group" role="group" aria-label="New">
 							<span data-target="#myModal" data-toggle="modal"><button type="button" data-toggle="tooltip" title="New table" class="btn btn-default" data-target="#myModal"><span class="glyphicon glyphicon-file"></span></button></span>
-						</div><div class="btn-group" role="group" aria-label="New">
+						</div><div class="btn-group" role="group" aria-label="Export">
 							<button type="button" data-toggle="tooltip" title="Save/Export to JSON" class="btn btn-default" onclick="table.saveToJSON()"><span class="glyphicon glyphicon-floppy-disk"></span></button>
 							<button type="button" data-toggle="tooltip" title="Download LaTeX" class="btn btn-default" data-toggle="tooltip" onclick="table.prepareDownload()"><span class="glyphicon glyphicon-download-alt"></span></button>
 						</div>
 						<div class="btn-group" role="group" aria-label="Undo">
 							<button type="button" data-toggle="tooltip" title="Undo" onclick="table.statesManager.undo()" class="btn btn-default"><span class="glyphicon glyphicon-repeat" style="transform: scale(-1, 1)"></span></button>
 						</div>
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Modes">
 							<button type="button" data-toggle="tooltip" title="Edit mode" class="btn btn-default active" id="button-mode-edit" onclick="table.mode(0)"><span class="glyphicon glyphicon-pencil"></span></button>
 							<button type="button" data-toggle="tooltip" title="View mode" class="btn btn-default" id="button-mode-view" onclick="table.mode(1)"><span class="glyphicon glyphicon-eye-open"></span></button>
 							<button type="button" data-toggle="tooltip" title="Border editor mode" class="btn btn-default" id="button-mode-border" onclick="table.mode(2)"><span class="glyphicon glyphicon-unchecked"></span></button>
 						</div>
-<div class="btn-group" role="group" aria-label="...">
+<div class="btn-group" role="group" aria-label="Unordered List">
 							<button type="button" data-toggle="tooltip" title="Unordered List" class="btn btn-default" onmousedown="event.preventDefault()" onclick="document.execCommand('insertunorderedlist', false, false);return false;"><span class="glyphicon glyphicon-list"></span></button>
 </div>
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Text formatting">
 							<button type="button" data-toggle="tooltip" title="Bold" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('bold');return false;"><span class="glyphicon glyphicon-bold"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Italic" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('italic');return false;"><span class="glyphicon glyphicon-italic"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Underline" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('underline');return false;"><span class="icon-underline"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Equation" onmousedown="event.preventDefault()" onclick="table.insertEquation();return false;"><span class="glyphicon glyphicon-usd"></span></button>
 						</div>
-<div class="btn-group" role="group" aria-label="...">
+<div class="btn-group" role="group" aria-label="Text color">
 							<button type="button" data-toggle="tooltip" title="Text color" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('foreColor', this.getAttribute('data-color')||'#000000');return false;" id="text-color-button"><span class="glyphicon glyphicon-font" style="text-shadow:0 0 1px #000;" id="text-color-span"></span></button>
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <span class="caret"></span>
@@ -105,34 +105,34 @@
 					</div>
 				</div>
 				<div role="tabpanel" class="tab-pane" id="profile">
-					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="...">
-						<div class="btn-group" role="group" aria-label="...">
+					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="Rows and columns toolbar">
+						<div class="btn-group" role="group" aria-label="Insert rows or columns">
 							<button type="button" class="btn btn-default" onclick="table.insertColBefore()" data-toggle="tooltip" title="Insert a column before"><span class="glyphicon glyphicon-arrow-left"></span></button>
 							<button type="button" class="btn btn-default" onclick="table.insertColAfter()" data-toggle="tooltip" title="Insert a column after"><span class="glyphicon glyphicon-arrow-right"></span></button>
 							<button type="button" class="btn btn-default" onclick="table.insertRowOver()" data-toggle="tooltip" title="Insert a row over"><span class="glyphicon glyphicon-arrow-up"></span></button>
 							<button type="button" class="btn btn-default" onclick="table.insertRowUnder()" data-toggle="tooltip" title="Insert a row under"><span class="glyphicon glyphicon-arrow-down"></span></button>
 						</div>
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Remove rows or columns">
 							<button type="button" class="btn btn-default" onclick="table.removeCol()" data-toggle="tooltip" title="Delete columns"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-vertical"></span></button>
 							<button type="button" class="btn btn-default" data-toggle="tooltip" onclick="table.removeRow()" title="Delete rows"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-horizontal"></span></button>
 						</div>
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Merge or split cells">
 							<button type="button" class="btn btn-default" onclick="table.merge()" data-toggle="tooltip" title="Merge cells"><span class="glyphicon glyphicon-resize-small" style="transform:rotate(45deg)"></span></button>
 							<button type="button" class="btn btn-default" onclick="table.split()" data-toggle="tooltip" title="Split cells"><span class="glyphicon glyphicon-resize-full" style="transform:rotate(45deg)"></span></button>
 						</div>
 					</div>
 				</div>
 				<div role="tabpanel" class="tab-pane" id="messages">
-					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="...">
+					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="Borders toolbar">
 
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Draw borders">
 							<button type="button" class="btn btn-default" onclick="table.mode(table.mode() == 2 ? 0 : 2)" data-toggle="tooltip" title="Draw borders" id="button-border-draw"><span class="glyphicon glyphicon-pencil"></span></button>
 						</div>
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Add or remove borders">
 							<button type="button" class="btn btn-default" onclick="table.setAllBorders()" data-toggle="tooltip" title="Add all borders"><span class="glyphicon glyphicon-unchecked"></span></button>
 							<button type="button" class="btn btn-default" onclick="table.removeBorders()" data-toggle="tooltip" title="Remove all borders"><span class="glyphicon glyphicon-remove"></span></button>
 						</div>
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Booktabs">
 							<button type="button" class="btn btn-default" onclick="table.autoBooktabs()" data-toggle="tooltip" title="Automatic Booktabs" id="button-booktabs"><span class="glyphicon glyphicon-book"></span></button>
 						</div>
 					</div>
@@ -273,19 +273,19 @@ Color of border :
     </div>
     <div id="right_cell" class="panel-collapse collapse" role="tabpanel">
       <div class="panel-body">
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Text alignment">
 							<button type="button" class="btn btn-default active" id="info_align_left" onclick="table.setAlign('l')"><span class="glyphicon glyphicon-align-left"></span></button>
 							<button type="button" class="btn btn-default" id="info_align_center" onclick="table.setAlign('c')"><span class="glyphicon glyphicon-align-center"></span></button>
 							<button type="button" class="btn btn-default" id="info_align_right" onclick="table.setAlign('r')"><span class="glyphicon glyphicon-align-right"></span></button>
 						</div>
 					<h6>Effects</h6>
 					<div class="btn-toolbar" role="toolbar">
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Diagonal separators">
 							<button type="button" class="btn btn-default active" id="info_diag_zero" onclick="table.separators(0)"><img src="diag-zero.png"></button>
 							<button type="button" class="btn btn-default" id="info_diag_one" onclick="table.separators(1)"><img src="diag-one.png"></button>
 							<button type="button" class="btn btn-default" id="info_diag_two" onclick="table.separators(2)"><img src="diag-two.png"></button>
 						</div>
-						<div class="btn-group" role="group" aria-label="...">
+						<div class="btn-group" role="group" aria-label="Cell rotation">
 							<button type="button" class="btn btn-default active" id="info-unrotated" onclick="table.rotate(false)"><span class="glyphicon glyphicon-font"></span></button>
 							<button type="button" class="btn btn-default" id="info-rotated" onclick="table.rotate(true)"><span class="glyphicon glyphicon-font" style="transform: rotate(-90deg);margin-left: -4px;"></span></button>
 						</div>
@@ -557,7 +557,10 @@ Color of border :
 						.tab('show')
 				})
 			
-			$('[data-toggle="tooltip"]').tooltip();
+			$('[data-toggle="tooltip"]').tooltip({
+container: 'body',
+placement: 'auto top'
+});
 			table.load($id('table'));
 			var json = localStorage.getItem("table");
 			if(json){

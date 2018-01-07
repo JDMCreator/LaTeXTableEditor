@@ -6,7 +6,25 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 0.9 BETA
+Version 0.9.0.1 BETA (2018/01/05)
+===========
+
+| Note on this release :
+|     Multiple bug fixes
+
+CORE
+
+[+] Better accessibility
+[/] Pin/Unpin button now uses the same tooltip as the other buttons
+[#] Buttons jumped on hover
+[#] Issue with copy/paste in some cases (e.g. bold text)
+[#] Generated code textarea didn't wrap in Edge
+
+LATEX EXPORT
+
+[/] Remove useless \arraybackslash that appeared with 'shrink column' mode and 'ragged2e' package disabled
+
+Version 0.9 BETA (2018/01/05)
 ===========
 
 | Note on this release :

@@ -100,7 +100,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "0.9";
+			this.version = "0.9.0.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -563,7 +563,7 @@ this.getHTML = (function(){
 				var ok = true;
 				if(node.color == "#000000"){
 					ok = false;
-					// black is the default color. Let's check if there's another font tag, however this will pollute the DOM
+					// black is the default color. Let's check if there's another font tag, otherwise this will pollute the DOM
 						ok = false;
 						var trav = cont;
 						do{
@@ -615,7 +615,6 @@ this.getHTML = (function(){
 			else{
 				var frag = document.createDocumentFragment(), lastnode;
 				newnode = frag;
-				cont.appendChild(frag);
 				if(node.style.color){
 					var color = toRGBA(node.style.color);
 					if(color){
@@ -660,6 +659,7 @@ this.getHTML = (function(){
 				if(frag === newnode){
 					newnode = null;
 				}
+				cont.appendChild(frag);
 			}
 			for(var i=0;i<node.childNodes.length;i++){
 				_eqHTML(node.childNodes[i], newnode || cont)
@@ -1327,7 +1327,6 @@ this.getHTML = (function(){
 				var _this = this,
 				waitingforpaste = false;
 				table.addEventListener("paste", function(e) {
-					console.log(1);
 					var target = e.target || e.srcElement;
 					target = target.nodeType == 3 ? target.parentElement : target;
 					do{
@@ -2020,13 +2019,21 @@ this.getHTML = (function(){
 							if(_this.packages["ragged2e"]){
 								before += "\\Centering"
 							}
-							else{
+							else if(!after){
 								before += "\\centering\\arraybackslash"
+							}
+							else{
+								before += "\\centering"
 							}
 						}
 						else if(align == "r"){
 							if(blockragged){
-								before += "\\raggedleft\\arraybackslash"
+								if(after){
+									before += "\\raggedleft";
+								}
+								else{
+									before += "\\raggedleft\\arraybackslash"
+								}
 							}
 							else{
 								_this.packages["ragged2e"] = true;
@@ -3180,7 +3187,6 @@ this.getHTML = (function(){
 							    borderRightTop = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorder,
 							    borderRightTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorderColor;
 							if(enhanceHhline && (borderRight == "double" || borderRightTop == "double")){
-								if(n==1){debugger;}
 								var borderRightFColor = borderRightColor || borderRightTopColor;
 								if(insertInHhline && !areSameColors(insideColor, borderRightFColor)){
 									insideColor = borderRightFColor;
