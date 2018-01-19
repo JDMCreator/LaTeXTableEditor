@@ -83,6 +83,18 @@
 		}
 
 		otable.appendChild(orow);
+		var oddevenrow = this.oddEvenColors();
+		if(oddevenrow){
+			for(var i=oddevenrow[0];i<otable.rows.length+1;i++){
+				var row = otable.rows[i-1];
+				if(i%2<1){
+					row.style.backgroundColor = oddevenrow[1];
+				}
+				else{
+					row.style.backgroundColor = oddevenrow[2];
+				}
+			}
+		}
 		var container = document.createElement("div");
 		container.appendChild(fulltable);
 		var equations = container.querySelectorAll("span.latex-equation");

@@ -6,6 +6,28 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 0.9.1 BETA
+===========
+
+| Note on this release :
+|     This release introduces alignment with decimal 
+|     and alternate rows background color
+
+CORE
+
+[+] Alignment with decimal
+[+] Alternate rows background color
+[+] Tooltip for text alignment
+[/] Changed the way the background color is retrieved
+
+LATEX EXPORT
+
+[+] The generator now produces \rowcolor to simplify the code in some cases
+[#] Enhanced hhline didn't work well with multicolumn cells
+[#] A small line of color could be produced with enhanced hhline and multirow cells
+[#] Small squares of color in borders could appeared with enhanced hhline and multirow cells
+[#] Disabling 'makecell' produced code with errors 
+
 Version 0.9.0.1 BETA (2018/01/05)
 ===========
 

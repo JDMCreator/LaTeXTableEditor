@@ -13,6 +13,9 @@
 			min-height:300px;
 			font-family:monaco, "Lucida Console", Courier, monospace;
 		}
+		.glyphicon.glyphicon-dot:before {
+		    content: "\25cf";
+		}
 		body.closedPanel #right-controler span{
 			transform:rotate(180deg);
 		}

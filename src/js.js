@@ -34,16 +34,18 @@ function $id(id) {
 			"color" : [],
 			"colortbl" : ["array", "color"],
 			"diagbox" : ["keyval","pict2e","fp"],
-			"fp" : ["defpattern","fp-basic","fp-addons","fp-snap","fp-exp",
-			       "fp-trigo","fp-pas","fp-random","fp-eqn","fp-upn","fp-eval"],
+			"expl3" : ["etex"],
+			"fp" : ["defpattern"],
 			"graphics" : ["trig"],
 			"graphicx" : ["keyval", "graphics"],
 			"hhline" : [],
+			"l3keys2e" : ["xparse"],
 			"makecell" : ["array"],
 			"multirow" : [],
 			"pdflscape": ["lscape"],
 			"ragged2e" : ["everysel"],
 			"rotating" : ["graphicx", "ifthen"],
+			"siunitx" : ["expl3","amstext" , "array" , "l3keys2e"],
 			"slashbox" : [],
 			"tabu" : ["array","varwidth"],
 			"tabularx" : ["array"],
@@ -100,7 +102,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "0.9.0.1";
+			this.version = "0.9.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -517,7 +519,7 @@ function $id(id) {
 			}
 			this.setAlign = function(value) {
 				this.statesManager.registerState();
-				if (value != "l" && value != "r" && value != "c") {
+				if (value != "l" && value != "r" && value != "c" && value != "d") {
 					value = "l";
 				}
 				$id("info_align_left")
@@ -526,13 +528,16 @@ function $id(id) {
 					.classList.remove("active");
 				$id("info_align_right")
 					.classList.remove("active");
+				$id("info_align_decimal")
+					.classList.remove("active");
 				this.forEachSelectedCell(function(cell) {
 					cell.setAttribute("data-align", value);
 				});
 				$id({
 						"l": "info_align_left",
 						"c": "info_align_center",
-						"r": "info_align_right"
+						"r": "info_align_right",
+						"d": "info_align_decimal"
 					}[value])
 					.classList.add("active");
 			}
@@ -777,6 +782,9 @@ this.getHTML = (function(){
 					.classList.remove("active");
 				this._id("info_align_center")
 					.classList.remove("active");
+
+				this._id("info_align_decimal")
+					.classList.remove("active");
 				this._id("info_align_right")
 					.classList.remove("active");
 				var align = element.getAttribute("data-align");
@@ -785,6 +793,9 @@ this.getHTML = (function(){
 						.classList.add("active");
 				} else if (align == "r") {
 					this._id("info_align_right")
+						.classList.add("active");
+				} else if (align == "d") {
+					this._id("info_align_decimal")
 						.classList.add("active");
 				} else {
 					this._id("info_align_left")
@@ -801,8 +812,13 @@ this.getHTML = (function(){
 					this._id("info-rotated").classList.remove("active")
 				}
 				// Background color
-				var color = element.style.backgroundColor || "#FFFFFF";
-				color = toRGBA(color);
+				var color = window.getComputedStyle(element,null).getPropertyValue("background-color") || "#FFFFFF";
+				if(color == "transparent" || /rgba?\s*\(\s*\d+[\s,]+\d+[\s,]+\d+[\s,]+0\s*\)/.test(color)){
+					color = [1,1,1,0];
+				}
+				else{
+					color = toRGBA(color);
+				}
 				color = "#" + ((1 << 24) + (color[0] << 16) + (color[1] << 8) + color[2]).toString(16).slice(1);
 				this._id('info-background-color').value = color;
 				
@@ -968,6 +984,9 @@ this.getHTML = (function(){
 						}
 					}
 				}
+				if (o.oddEvenColors){
+					this.oddEvenColors.apply(this, o.oddEvenColors);
+				}
 				if (o.caption) {
 					if (o.caption.numbered) {
 						$id("caption-nb")
@@ -1030,6 +1049,10 @@ this.getHTML = (function(){
 				o.caption = this.caption();
 				o.cells = [];
 				var options = document.querySelectorAll("*[id^='opt-']");
+				var oddeven = this.oddEvenColors();
+				if(oddeven){
+					o.oddEvenColors = oddeven;
+				}
 				for( var i = 0,option; i < options.length;i++){
 					option = options[i];
 					o.options[option.id.substring(option.id.indexOf("-")+1)] = (option.type == "radio" || option.type == "checkbox") ? option.checked : option.value;
@@ -1566,7 +1589,29 @@ this.getHTML = (function(){
 							this.packages["rotating"] = true;
 						}
 					}
-				} else if (cell.rowSpan > 1 && (!this.blacklistPackages["makecell"] || this.shrink) && !this.blacklistPackages["multirow"]) {
+				} else if(align == "d"){
+					this.packages["siunitx"] = true;
+					text = this.generateFromHTML(this.getHTML(cell), false, "S");
+					if(text.indexOf("\\\\")>-1){
+						text = text.replace(/\\{4,}/g, function(full){
+							var after = "", str = "", nb = full.length;
+							if(nb % 2 == 1){
+								after = "\\";
+								nb--;
+							}
+							for(var i=0;i<nb;i=i+2){
+								str += "\\\\";
+								if(i+2<nb){
+									str+= "{~}";
+								}
+							}
+							return str + after;
+						});
+					}
+					else if((!this.blacklistPackages["multirow"] && cell.rowSpan > 1) || cell.colSpan > 1){
+						text = "\\tablenum{" + text + "}";
+					}
+				}else if (cell.rowSpan > 1 && (!this.blacklistPackages["makecell"] || this.shrink) && !this.blacklistPackages["multirow"]) {
 						text = this.generateFromHTML(this.getHTML(cell), true, align);
 						if(this.blacklistPackages["makecell"]){
 							text = text.replace(/\\{4,}/g, function(full){
@@ -1709,9 +1754,9 @@ this.getHTML = (function(){
 				o.background = false;
 				var _this = this;
 				// Determine background
-				var background = cell.style.backgroundColor;
+				var background = window.getComputedStyle(cell,null).getPropertyValue("background-color");
 				if(!this.blacklistPackages["colortbl"]){
-					if(background && !(background == "transparent" || background == "initial" || background == "inherit")){
+					if(background && !/rgba?\s*\(\d+[,\s]+\d+[,\s]+\d+[,\s]+0\)/.test(background)){
 						background = toRGBA(background);
 						if(background && background[3] > 0){
 							if(!(background[0] == 255 && background[1] == 255 && background[2] == 255)){
@@ -1724,6 +1769,7 @@ this.getHTML = (function(){
 						}
 					}
 				}
+				o.cellBackground = o.background;
 				o.getFullContent = function(actualColor, forceMulti){
 					var header = "", before = "",
 					content = o.content;
@@ -1731,7 +1777,7 @@ this.getHTML = (function(){
 					// Set background
 					if(cell.rowSpan != 1 && !blockMultirow){
 						_this.packages["multirow"] = true;
-						if(_this.blacklistPackages["makecell"] || (_this.shrink || o.shrinkRatio)) {
+						if((_this.shrink || o.shrinkRatio)) {
 							var alignment = "";
 							if(o.align == "c"){
 								if(_this.blacklistPackages["ragged2e"]){
@@ -1758,7 +1804,9 @@ this.getHTML = (function(){
 								content = "\\makecell[{{p{"+o.shrinkRatio+"\\columnwidth}}}]{" + content + "}";
 							}
 							else{
-								content = "\\makecell["+o.align+"]{" + content + "}";
+								var align = o.align;
+								align = align == "d" ? "c" : align;
+								content = "\\makecell["+align+"]{" + content + "}";
 							}
 							_this.packages["makecell"] = true;
 						}
@@ -1798,6 +1846,65 @@ this.getHTML = (function(){
 					}
 				}
 			}
+			this.applyOddEvenColors = function() {
+				this.statesManager.registerState();
+				this.oddEvenColors(this._id("oddevencolors-number").value,
+					this._id("oddevencolors-even").value || "white",
+					this._id("oddevencolors-odd").value || "white"
+				);
+			}
+			this.showOddEvenColorsModal = function(){
+				var actual = this.oddEvenColors() || [1,"FFFFFF","FFFFFF"];
+				function toHex(color){
+					return "#" + ((1 << 24) + (color[0] << 16) + (color[1] << 8) + color[2]).toString(16).slice(1);
+				}
+				this._id("oddevencolors-number").value = actual[0];
+				this._id("oddevencolors-even").value = toHex(toRGBA(actual[1])) || "#FFFFFF";
+				this._id("oddevencolors-odd").value = toHex(toRGBA(actual[2])) || "#FFFFFF";
+				$('#oddevencolors').modal('show');
+			}
+			this.oddEvenColors = (function(){
+				var css = null,
+				actual = null;
+				function addRule(rule){
+					if(!css){
+						css = document.createElement("style");
+						document.head.appendChild(css);
+						css = css.sheet;
+					}
+					css.insertRule(rule, 0);
+				}
+				function removeAllRules(){
+					actual = null;
+					if(css){
+						while(css.cssRules.length>0){
+							css.deleteRule(0);
+						}
+					}
+				}
+				return function(n, even, odd){
+					if(arguments.length < 1){
+						return actual;
+					}
+					else if(arguments.length < 2){
+						removeAllRules();
+					}
+					else{
+						n = Math.round(Math.max(n||1, 1));
+						removeAllRules();
+						actual = [n, even, odd];
+						if(n%2<1){
+							addRule("tr:nth-child(2n+"+n+") td {background-color:"+even+";}");
+							addRule("tr:nth-child(2n+"+(n+1)+") td {background-color:"+odd+";}");
+						}
+						else{
+							addRule("tr:nth-child(2n+"+n+") td {background-color:"+odd+";}");
+							addRule("tr:nth-child(2n+"+(n+1)+") td {background-color:"+even+";}");
+						}
+
+					}
+				}
+			})()
 			this.multicolumn = function(span, header, content){
 				return "\\multicolumn{"+span+"}{" + header + "}{" + content + "}";
 			}
@@ -1820,14 +1927,15 @@ this.getHTML = (function(){
 							var refCell = cell.refCell;
 							cell.ignore = false;
 							cell.header = refCell.header;
-							cell.getHeader = refCell.getHeader
+							cell.getHeader = refCell.getHeader;
+							cell.background = refCell.cellBackground;
 							var _this = this;
 							cell.getFullContent = (function(cell, refCell){
 								return function(actualColor, forceMulti){
 									actualColor = actualColor || _this.actualColor;
 									var content = "";
-									if(refCell.background){
-										content = "{\\cellcolor"+getColor(refCell.background)+"}";
+									if(cell.background){
+										content = "{\\cellcolor"+getColor(cell.background)+"}";
 									}
 									if(refCell.colSpan != 1 || forceMulti || !refCell.isInPreambule){
 										return _this.multicolumn(refCell.colSpan, cell.getHeader(actualColor), content)
@@ -2013,7 +2121,18 @@ this.getHTML = (function(){
 						}
 					}
 					var before = "";
-					if(shrinkRatio){
+					if(align2 == "d"){
+						if(o.span){
+							align2 = "c";
+						}
+						else{
+							align2 = "S";
+						}
+						if(shrinkRatio){
+							_this.uniqueLog("The 'shrink columns' option won't work with decimal-alignment cells", "warning");
+						}
+					}
+					else if(shrinkRatio){
 						var blockragged = _this.blacklistPackages["ragged2e"];
 						if(align == "c"){
 							if(_this.packages["ragged2e"]){
@@ -2459,7 +2578,7 @@ this.getHTML = (function(){
 				multiRows = {};
 				for(var i=0;i<rg.length;i++){
 					var cells = rg[i];
-					var row = []
+					var row = [];
 					for(var j=0;j<cells.length;j++){
 						var cell = cells[j],
 						header = colHeaders[j] || "l";
@@ -2479,8 +2598,15 @@ this.getHTML = (function(){
 							else if(cell.unswitch){
 								cell = cell.refCell
 							}
+							var text = "";
+							if(j == 0){
+								// rowColor;
+								text = this.rowColor(i, rg);
+								if(text){ text += " " }
+							}
+							text += cell.getFullContent(this.actualColor);
 							row.push({
-									text: cell.getFullContent(this.actualColor), 
+									text: text, 
 									colSpan : cell.colSpan || (cell.refCell ? cell.refCell.colSpan : 1) || 1
 								 })
 						}
@@ -2979,6 +3105,57 @@ this.getHTML = (function(){
 				$id("link-download")
 					.href = "";
 			}
+			this.rowColor = function (n, matrix){
+				matrix = matrix || this.matrix();
+				var row = matrix[n];
+				if(!row){
+					return "";
+				}
+				var results = {},
+				max = 1,
+				value = null;
+				for(var i=0;i<row.length;i++){
+					var cell = row[i],
+					color = (cell.refCell||cell).cellBackground;
+					if(!color){
+						return "";
+					}
+					color = color.map(function(value){return Math.floor(value*1000)/1000});
+					color.pop();
+					color = color.join(",");
+					if(!results[color]){
+						results[color] = {
+							value : color,
+							i : 0,
+							cells : []
+						}
+					}
+					results[color].cells.push(cell);
+					results[color].i++;
+					i += (cell.refCell||cell).cell.colSpan-1;
+				}
+				for(var i in results){
+					if(results.hasOwnProperty(i)){
+						var result = results[i];
+						if(result.i > max){
+							value = result;
+							max = result.i;
+						}
+					}
+				}
+				if(!value){
+					return "";
+				}
+				var color = value.cells[0];
+				color = (color.refCell||color).cellBackground;
+				for(var i=0;i<value.cells.length;i++){
+					var cell = value.cells[i]
+					if((cell.refCell||cell).cell.rowSpan == 1){
+						value.cells[i].background = null;
+					}
+				}
+				return "\\rowcolor"+getColor(color);
+			}
 			this.getBorder = function(n, matrix) {
 				return this.HBorder(n, function(o) {
 					if (arguments.length == 0) {
@@ -3029,7 +3206,7 @@ this.getHTML = (function(){
 					useHHLine = false;
 					for(var i=0;i<row.length;i++){
 						var cell = row[i];
-						if((cell.refCell||cell).background){
+						if((cell.refCell||cell).cellBackground){
 							useHHLine = true;
 							break;
 						}
@@ -3096,7 +3273,7 @@ this.getHTML = (function(){
 							// Now the horizontal border
 							var type = borders[i].type,
 							color = borders[i].color,
-							background = (row[i].refCell||row[i]).background,
+							background = (row[i].refCell||row[i]).cellBackground,
 							thiswidth = widthKeys[type] || "0.4pt";
 							if(type == "normal" || type == "toprule" || type == "bottomrule" || type == "midrule"){
 								if(insertInHhline){
@@ -3182,10 +3359,20 @@ this.getHTML = (function(){
 								border += "~";
 							}
 							// Check for right border;
-							var borderRight = (row[i].refCell||row[i]).rightBorder,
-							    borderRightColor = (row[i].refCell||row[i]).rightBorderColor,
-							    borderRightTop = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorder,
-							    borderRightTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorderColor;
+							// We have to do special checks for \multicolumn and \hhline
+							var borderRight = "",
+							    borderRightColor = "",
+							    borderRightTop = "",
+							    borderRightTopColor = "";
+							borderRight = borderRightColor = borderRightTop = borderRightTopColor = "";
+							if(row[i].x == (row[i].refCell||row[i]).x + (row[i].refCell||row[i]).cell.colSpan-1){
+								borderRight = (row[i].refCell||row[i]).rightBorder;
+								borderRightColor = (row[i].refCell||row[i]).rightBorderColor;
+							}
+							if(toprow[i] && (toprow[i].x == (toprow[i].refCell||toprow[i]).x + (toprow[i].refCell||toprow[i]).cell.colSpan-1)){
+								borderRightTop = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorder;
+								borderRightTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorderColor;
+							}
 							if(enhanceHhline && (borderRight == "double" || borderRightTop == "double")){
 								var borderRightFColor = borderRightColor || borderRightTopColor;
 								if(insertInHhline && !areSameColors(insideColor, borderRightFColor)){
@@ -3193,15 +3380,27 @@ this.getHTML = (function(){
 									border += ">{\\arrayrulecolor"+getColor(borderRightFColor)+"}";
 								}
 								if(type == "double"){
+									if(insertInHhline && !areSameColors(doublerulesepcolor, [255,255,255,1])){
+										doublerulesepcolor = "FFFFFF";
+										border += ">{\\doublerulesepcolor"+getColor([255,255,255,1])+"}";
+									}
 									border += ":";
 								}
 								else{
 									border += "|";
 								}
 								if(borderRightTop != "double" || n == 0){
+									if(insertInHhline && !areSameColors(doublerulesepcolor, [255,255,255,1])){
+										doublerulesepcolor = "FFFFFF";
+										border += ">{\\doublerulesepcolor"+getColor([255,255,255,1])+"}";
+									}
 									border += "t";
 								}
 								else if(borderRight != "double" || n>= matrix.length){
+									if(insertInHhline && !areSameColors(doublerulesepcolor, [255,255,255,1])){
+										doublerulesepcolor = "FFFFFF";
+										border += ">{\\doublerulesepcolor"+getColor([255,255,255,1])+"}";
+									}
 									border += "b";
 								}
 								if(i >= row.length-1){
@@ -3209,6 +3408,10 @@ this.getHTML = (function(){
 								}
 								else{
 									if(borders[i+1].type == "double"){
+										if(insertInHhline && !areSameColors(doublerulesepcolor, [255,255,255,1])){
+											doublerulesepcolor = "FFFFFF";
+											border += ">{\\doublerulesepcolor"+getColor([255,255,255,1])+"}";
+										}
 										border += ":"
 									}
 									else{
@@ -3216,6 +3419,17 @@ this.getHTML = (function(){
 									}
 								}
 								
+							}
+							else if(enhanceHhline && borderRight == "normal"){
+								if(!row[i+1]){
+									if(insertInHhline && !areSameColors(insideColor, borderRightColor)){
+										insideColor = borderRightColor;
+										border += ">{\\arrayrulecolor"+getColor(borderRightColor)+"}";
+									}
+									if(borderRight == "normal"){
+										border += "|";
+									}
+								}
 							}
 							else if(borderRight == "normal" || borderRight == "double"){
 								if(insertInHhline && !areSameColors(insideColor, borderRightColor)){

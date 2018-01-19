@@ -274,9 +274,10 @@ Color of border :
     <div id="right_cell" class="panel-collapse collapse" role="tabpanel">
       <div class="panel-body">
 						<div class="btn-group" role="group" aria-label="Text alignment">
-							<button type="button" class="btn btn-default active" id="info_align_left" onclick="table.setAlign('l')"><span class="glyphicon glyphicon-align-left"></span></button>
-							<button type="button" class="btn btn-default" id="info_align_center" onclick="table.setAlign('c')"><span class="glyphicon glyphicon-align-center"></span></button>
-							<button type="button" class="btn btn-default" id="info_align_right" onclick="table.setAlign('r')"><span class="glyphicon glyphicon-align-right"></span></button>
+							<button type="button" class="btn btn-default active" data-toggle="tooltip" title="Align left" id="info_align_left" onclick="table.setAlign('l')"><span class="glyphicon glyphicon-align-left"></span></button>
+							<button type="button" class="btn btn-default" id="info_align_center" data-toggle="tooltip" title="Align center" onclick="table.setAlign('c')"><span class="glyphicon glyphicon-align-center"></span></button>
+							<button type="button" class="btn btn-default" id="info_align_right" onclick="table.setAlign('r')" data-toggle="tooltip" title="Align right"><span class="glyphicon glyphicon-align-right"></span></button>
+							<button type="button" class="btn btn-default" id="info_align_decimal" data-toggle="tooltip" title="Align with decimal" onclick="table.setAlign('d')"><span class="glyphicon glyphicon-dot"></span></button>
 						</div>
 					<h6>Effects</h6>
 					<div class="btn-toolbar" role="toolbar">
@@ -297,6 +298,7 @@ Color of border :
        <button type="button" class="btn btn-default" onclick="table.removeBackgroundColor()" data-toggle="tooltip" title="Remove background color"><span class="glyphicon glyphicon-ban-circle"></span></button>
       </span>
     </div>
+<a href="#" class="small" onclick="table.showOddEvenColorsModal()">Alternate Rows Background Colors</a>
 
 					<h6>LaTeX Content</h6>
 					<textarea id="latex_content" class="form-control"></textarea>
@@ -430,6 +432,45 @@ Color of border :
       </div>
       <div class="modal-body">
 		<a href="" download="table.tex" style="line-height:100%" id="link-download">Click to download your .tex file</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="oddevencolors" tabindex="-1" role="dialog" aria-labelledby="oddevencolors-label">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="oddevencolors-label">Alternate Rows Background Colors</h4>
+      </div>
+      <div class="modal-body">
+
+<div class="form-horizontal">
+  <div class="form-group">
+    <label for="oddevencolors-number" class="col-sm-4 control-label">Starting Row</label>
+    <div class="col-sm-8">
+      <input type="number" step="1" min="1" class="form-control" id="oddevencolors-number" value="1">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="oddevencolors-even" class="col-sm-4 control-label">Even color</label>
+    <div class="col-sm-8">
+      <input type="color" class="form-control" id="oddevencolors-even" value="#FFFFFF">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="oddevencolors-odd" class="col-sm-4 control-label">Odd color</label>
+    <div class="col-sm-8">
+      <input type="color" class="form-control" id="oddevencolors-odd" value="#FFFFFF">
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-4 col-sm-8">
+      <button type="button" class="btn btn-success" onclick="table.applyOddEvenColors()">Apply</button><button type="button" class="btn btn-danger" onclick="table.oddEvenColors(false)">Remove</button>
+    </div>
+  </div>
+</div>
       </div>
     </div>
   </div>
