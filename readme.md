@@ -16,6 +16,7 @@ You need Bootstrap 3 and JQuery. See the online example.
 
  - LaTeX
  - Plain TeX
+ - PreTeXt
  - Markdown
  - HTML
  - CSV

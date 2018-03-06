@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8"> 
 
-<meta name="description" content="A powerful and robust LaTeX, Plain TeX, Markdown, CSV and HTML Table Editor and Generator. Also convert LaTeX tables to Plain TeX, Markdown, CSV or HTML.">
+<meta name="description" content="A powerful and robust LaTeX, Plain TeX, PreTeXt, EPlain, Markdown, CSV and HTML Table Editor and Generator. Also convert LaTeX tables to Plain TeX, Markdown, CSV or HTML.">
 	<title>LaTeX Tables Editor</title>
 	<link href="css.css" rel="stylesheet">
 	<link href="css/bootstrap.min.css" rel="stylesheet">
@@ -22,7 +22,7 @@
 </head>
 
 <body>
-<div style="border-top:1px dashed black;transform-origin: top left;z-index:9999;display:none;position:absolute;width:100px;height:5px;" id="line"></div>
+<div class="border-line" id="line"></div>
 <div class="container-fluid">
 <div>
   <div id="left-panel">
@@ -50,7 +50,7 @@
     line-height: 0;
     text-transform: uppercase;
     vertical-align: -0.45ex;margin-left:-0.15em;margin-right:-0.07em;">e</span>X Complex Table Editor <small style="font-size:14px;">With <a href="https://github.com/JDMCreator/Table.js" target="_blank">Table.js</a></small></span></div>
-		<nav style="background-color:white;z-index:1045;">
+		<nav class="nav-latex">
 
 			<!-- Nav tabs -->
 			<ul class="nav nav-tabs" role="tablist">
@@ -59,8 +59,8 @@
 				<li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Rows/Columns</a></li>
 				<li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Borders</a></li>
 				<li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Export settings</a></li>
+				<li style="width:auto;float:right;line-height: 1.42857143;padding:10px 15px;" id="support-us"><span>Like this editor ? <a href="supportus.html" target="_blank">Support us</a>.</span></li>
 			</ul>
-
 			<!-- Tab panes -->
 			<div class="tab-content">
 				<div role="tabpanel" class="tab-pane active" id="home">
@@ -93,11 +93,15 @@
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <span class="caret"></span>
     </button>
-    <div class="dropdown-menu" style="padding:3px;">
+    <div class="dropdown-menu" style="padding:3px;width:200px;">
    <div class="input-group">
-          <input type="color" class="form-control" oninput="table.textColor(this.value)" id="text-color-input">
-      <span class="input-group-btn">
-<button type="button" data-toggle="tooltip" title="Remove text color" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('foreColor', '#000000');return false;" id="text-color-button"><span class="glyphicon glyphicon-ban-circle"></span></button>
+          <input type="color" style="min-width:100px;" class="form-control" oninput="table.textColor(this.value)" id="text-color-input">
+
+      <span class="input-group-btn" style="width:auto;">
+
+<button type="button" data-toggle="tooltip" title="Color Picker" class="btn btn-default" onclick="table.textColorPick()"><span class="glyphicon glyphicon-tint"></span></button>
+
+<button type="button" data-toggle="tooltip" title="Remove text color" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('foreColor', '#000000');return false;" id="text-color-button"><span class="glyphicon glyphicon-ban-circle"></span></button>
       </span>
     </div>
     </div>
@@ -145,6 +149,7 @@
 <optgroup label="TeX">
 	<option value="latex">LaTeX</option>
 	<option value="plain">Plain TeX</option>
+	<option value="pretext">PreTeXt</option>
 	<option value="eplain">Eplain</option>
 </optgroup>
 <optgroup label="Markup">
@@ -188,6 +193,7 @@
 
 <div class="col-md-9"><textarea id="c" class="form-control">
 </textarea>
+<a href="javascript:;" onclick="table.toMWE();">Convert to Minimal Working Example (MWE)</a>
 </div>
 <div class="col-md-3">
 <div style="width:100%;height:20%;min-height:300px;overflow-y:auto;" id="log" class="form-control">
@@ -258,7 +264,12 @@
     </div>
 
 Color of border : 
+<div class="input-group">
 <input type="color" class="form-control" value="#000000" id="border-color">
+ <span class="input-group-btn">
+      <button type="button" class="btn btn-default" onclick="table.borderPick()" data-toggle="tooltip" title="Color Picker"><span class="glyphicon glyphicon-tint"></span></button>
+</span>
+</div>
 
       </div>
     </div>
@@ -295,6 +306,7 @@ Color of border :
     <div class="input-group">
       <input type="color" class="form-control" id="info-background-color" style="display:inline-block;" value="#FFFFFF" oninput="table.backgroundColor(this.value)">
       <span class="input-group-btn">
+      <button type="button" class="btn btn-default" onclick="table.backgroundPick()" data-toggle="tooltip" title="Color Picker"><span class="glyphicon glyphicon-tint"></span></button>
        <button type="button" class="btn btn-default" onclick="table.removeBackgroundColor()" data-toggle="tooltip" title="Remove background color"><span class="glyphicon glyphicon-ban-circle"></span></button>
       </span>
     </div>
@@ -302,20 +314,6 @@ Color of border :
 
 					<h6>LaTeX Content</h6>
 					<textarea id="latex_content" class="form-control"></textarea>
-
-	<!--- START COLORPICKER--
-	<div><center>
-	<table style="width:90%">
-	<tr><td rowspan=2 style="text-align:left;">
-		<table><tr><td>R :</td><td><input style="width:3em;padding:3px;height:auto;" maxlength=3 class="form-control">
-		<tr><td>G : <td><input style="width:3em;padding:3px;height:auto;" maxlength=3 class="form-control">
-		<tr><td>B : <td><input style="width:3em;padding:3px;height:auto;" maxlength=3 class="form-control"></table>	
-	</td><td></td>
-	<tr><td></td>
-	</table>
-	<center>
-	</div>
-	---->
 
      </div>
 
@@ -361,7 +359,7 @@ Color of border :
 			<p> - Or use one of these options - </p> 
 			<div>
 				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$id('import_format').value='latex';$('#importModal').modal('show');">Import a LaTeX table</button></div>
-				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$id('import_format').value='auto';$('#importModal').modal('show');">Import JSON or CSV</button></div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$id('import_format').value='auto';$('#importModal').modal('show');">Import JSON, Markdown or CSV</button></div>
 				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$('#pasteModal').modal('show');">Import from Word, Excel or OpenOffice</button></div>
 				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$('#pasteModal').modal('show');">Import by pasting a table</button></div>
 			</div>
@@ -381,7 +379,7 @@ Color of border :
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="myModalLabel">Import from LaTeX, JSON and CSV</h4>
+        <h4 class="modal-title" id="myModalLabel">Import from LaTeX, JSON, Markdown and CSV</h4>
       </div>
       <div class="modal-body">
 <div class="form-group">
@@ -389,6 +387,7 @@ Color of border :
 					<option value="auto">Auto</option>
 					<option value="json">JSON</option>
 					<option value="latex">LaTeX</option>
+					<option value="markdown">Markdown</option>
 					<option value="csv">CSV</option>
 				</select></div>
 			<div class="form-group">
@@ -421,6 +420,71 @@ Color of border :
 	</div>
 	</div>
       </div>
+</div>
+
+<div class="modal fade" id="colorpicker" style="z-index:1051;" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" onclick="ColorPicker.cancel()" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Color Picker</h4>
+      </div>
+      <div class="modal-body">
+
+	<div id="colorpicker-container" style="color:red;">
+		<div class="clearfix" style="margin-top:-1rem;">
+			<span style="float:left;color:#000;"id="colorpicker-name1">Sample black text</span>
+			<span style="float:right;color:#fff;" id="colorpicker-name2">Sample white text</span>
+		</div>
+		<div id="colorpicker-name">Red</div>
+	</div>
+	<div class="row" style="text-align:center;">
+		<div class="col-lg-4">
+			<input class="form-control" style="border:none;outline:initial;text-align:center;" id="colorpicker-rgb">
+			<small>RGB</small>
+		</div>
+		<div class="col-lg-4">
+			<input class="form-control" style="border:none;outline:initial;text-align:center;" id="colorpicker-hex">
+			<small>HEX</small>
+		</div>
+		<div class="col-lg-4">
+			<input class="form-control" style="border:none;outline:initial;text-align:center;" id="colorpicker-hsl">
+			<small>HSL</small>
+		</div>
+      </div>
+<div style="text-align:center;">
+<div class="row"><div class="col-lg-3" style="text-align:right";>R :</div><div class="col-lg-9"><input type="range" id="colorpicker-r" min="0" max="255" step="0.01"></div></div>
+<div class="row"><div class="col-lg-3" style="text-align:right";>G :</div><div class="col-lg-9"><input type="range" id="colorpicker-g" min="0" max="255" step="0.01"></div></div>
+<div class="row"><div class="col-lg-3" style="text-align:right";>B :</div><div class="col-lg-9"><input type="range" id="colorpicker-b" min="0" max="255" step="0.01"></div></div>
+</div>
+<h5>Table Color Scheme</h5>
+	<div id="colorpicker-table-scheme" class="color-scheme">
+		
+	</div>
+
+<h5>Default Colors</h5>
+	<div id="colorpicker-default-scheme" class="color-scheme">
+		
+	</div>
+	<div style="text-align:center;">
+		<label>
+		<input type="color" oninput="ColorPicker.color(this.value)" hidden>
+		<a type="button" data-toggle="tooltip" title="Use system colorpicker" class="btn btn-default"><span class="glyphicon glyphicon-tint"></span></a>
+		</label>
+		<div class="btn-group" role="group" aria-label="...">
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(-0.2)">-20%</button>
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(-0.05)">-5%</button>
+  			<button type="button" class="btn btn-default" readonly>Darken/Lighten Color</button>
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(+0.05)">+5%</button>
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(+0.2)">+20%</button>
+		</div>
+		<div style="margin-top:5px;">
+		<button type="button" class="btn btn-primary" onclick="ColorPicker.choose()">Select</button>
+		<button type="button" class="btn btn-default" onclick="ColorPicker.cancel()">Cancel</button></div>
+	</div>
+    </div>
+  </div>
+</div>
 </div>
 
 <div class="modal fade" id="download" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -456,13 +520,28 @@ Color of border :
   <div class="form-group">
     <label for="oddevencolors-even" class="col-sm-4 control-label">Even color</label>
     <div class="col-sm-8">
+<div class="input-group" style="width:100%">
+
       <input type="color" class="form-control" id="oddevencolors-even" value="#FFFFFF">
+
+      <span class="input-group-btn">
+
+<button type="button" data-toggle="tooltip" title="Color Picker" class="btn btn-default" onclick="ColorPicker.get(document.getElementById('oddevencolors-even'))"><span class="glyphicon glyphicon-tint"></span></button>
+	</span>
+	</div>
     </div>
   </div>
   <div class="form-group">
     <label for="oddevencolors-odd" class="col-sm-4 control-label">Odd color</label>
-    <div class="col-sm-8">
+    <div class="col-sm-8"><div class="input-group" style="width:100%">
+
       <input type="color" class="form-control" id="oddevencolors-odd" value="#FFFFFF">
+
+      <span class="input-group-btn">
+
+<button type="button" data-toggle="tooltip" title="Color Picker" class="btn btn-default" onclick="ColorPicker.get(document.getElementById('oddevencolors-odd'))"><span class="glyphicon glyphicon-tint"></span></button>
+	</span>
+	</div>
     </div>
   </div>
   <div class="form-group">
@@ -494,6 +573,7 @@ Color of border :
 	<option value="bbcode">BBCode</option>
 	<option value="csv">CSV</option>
 	<option value="eplain">Eplain</option>
+	<option value="pretext">PreTeXt</option>
 	</select>
 <div class="form-group" data-option-group="latex">
 							<h4>LaTeX options</h4>
@@ -535,13 +615,16 @@ Color of border :
 								</div>
 							</div>
 <h5>Advanced options</h5>
-<div><label><input type="checkbox" id="opt-latex-hhline"> Enhance double borders with <code>hhline</code> when possible</div>
-<label><input type="checkbox" id="opt-latex-tabu"> Force table to use <code>tabu</code> when possible <span class="label label-warning">BETA</span></label>  
+<div><label><input type="checkbox" id="opt-latex-hhline" checked> Enhance double borders with <code>hhline</code> when possible</div>
+<label><input type="checkbox" id="opt-latex-tabu"> Force table to use <code>tabu</code> when possible</label>  
 <!--
 <h5>Colors</h5>
 <select id="opt-color" class="form-control"><option value="rgb">RGB</option>
 <option value="cmyk">CYMK</option></select>
 -->
+<h5>Microfixes</h5>
+<div><small>Microfixes are features that improves the presentation of your table, but may use a lot of ressources.</small></div>
+<div><label><input type="checkbox" id="opt-latex-microfix-alignment"> Correct alignment with borders <span class="label label-warning">BETA</span></div>
 						</div>
 						<div class="form-group" data-option-group="md" style="display:none;">
 							<h4>Markdown options</h4>
@@ -575,9 +658,17 @@ Color of border :
 							<div class="form-group">
 							<label for="opt-bbcode-header">Number of headers' rows</label>
 							<input type="number" value="1" min="0" class="form-control" id="opt-bbcode-header">
-						</div> 
+							</div> 
+						</div>
 						<div class="form-group" data-option-group="eplain" style="display:none;">
 							<h4>Eplain options</h4>
+						</div>
+						<div class="form-group" data-option-group="pretext" style="display:none;">
+							<h4>PreTeXt options</h4>
+<h5>Indentation</h5>
+<select id="opt-pretext-indent" class="form-control"><option value="tab">Tab</option>
+<option value="two">Two spaces</option>
+<option value="four">Four spaces</option></select>
 						</div>
       </div>
     </div>
@@ -591,7 +682,7 @@ Color of border :
 			if(isEdge){
 				$("#edge-info").show();
 			}
-			$('nav a')
+			$('nav ul > a')
 				.click(function(e) {
 					e.preventDefault()
 					$(this)
@@ -690,9 +781,13 @@ placement: 'auto top'
 	</script>
 	<script type="text/javascript" src="toEplain.js">
 	</script>
+	<script type="text/javascript" src="toPreTeXt.js">
+	</script>
 	<script type="text/javascript" src="latex-import.js">
 	</script>
 	<script type="text/javascript" src="ntc.js">
+	</script>
+	<script type="text/javascript" src="colorpicker.js">
 	</script>
 </body>
 

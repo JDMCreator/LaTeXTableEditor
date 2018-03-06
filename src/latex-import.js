@@ -231,6 +231,37 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		}
 	}
 	code = initEnv.content;
+	if(type == "longtable" || type=="longtabu"){
+		var caption = code.indexOf("\\caption");
+			if(caption >=0){
+				var comcaption = command(code.substring(caption));
+				// Find end of line
+				var comment = false;
+				for(var i=caption + comcaption.full.length;i<code.length;i++){
+					var char = code.charAt(i);
+					if(comment){
+						if(char == "\n"){
+							comment = false;
+						}
+						continue;
+					}
+					if(char == "%"){
+						comment = true;continue;
+					}
+					if(char == "\\"){
+						var subcommand = command(code.substring(i)),
+						scname = subcommand.name;
+						if(scname == "\\" || scname == "tabularnewline" || scname == "cr"){
+							code = code.substring(0, caption) + "" + code.substring(i+subcommand.full.length);
+							break;
+						}
+					}
+				};
+				obj.caption = {}
+				obj.caption.caption = comcaption.args[0];
+				obj.caption.numbered = comcaption.asterisk;
+			}	
+	}
 	var head;
 	if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable"){
 		head = header(initEnv.command.args[1]);
@@ -308,14 +339,25 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				continue;
 			}
 			var com = command(sub), name = com.name;
-			if(name == "\\" || name == "cr" || name == "tabularnewline"){
-				row.push(cell);
-				cell = "";
-				table.push([]);
-				borders.push(actuBorder);
-				actuBorder = "";
-				row = table[table.length-1];
-				ignoreSpace = true;
+			if(name == "\\" || name == "cr" || name == "tabularnewline" || name == "endfirsthead"
+			|| name == "endhead" || name == "endfoot" || name == "endlastfoot" || name == "crcr"){
+				if(name != "crcr" || (row.length > 0 && (row.length > 1 || /\S/.test(row[0])) || actuBorder != "")){
+					row.push(cell);
+					if(name == "endfirsthead" || name == "endhead" || name == "endfoot" || name == "endlastfoot"){
+						// Avoid useless cells
+						// TODO : Improve
+						if(row.length == 0 || (row.length == 1 && /^\s*$/.test(row[0]))){
+							table.pop();
+							borders.pop();
+						}
+					}
+					cell = "";
+					table.push([]);
+					borders.push(actuBorder);
+					actuBorder = "";
+					row = table[table.length-1];
+					ignoreSpace = true;
+				}
 				i+=com.full.length-1;
 			}
 			else if(name == "catcode" && /^\\catcode`\\?.=4/.test(sub)){

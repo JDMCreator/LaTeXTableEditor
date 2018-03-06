@@ -6,6 +6,61 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.0
+===========
+
+| First stable release.
+|     Note on this release : this release introduces a color picker,
+|     import from Markdown, export to PreTeXt, microtuning, decimal
+|     format for 'siunitx', multiple bug fixes and more
+
+CORE
+
+[+] Moved Core to Table.js 0.2 STABLE
+[+] The toolbar now scrolls down with the user
+[+] ColorPicker
+[+] Convert the code to a MWE
+[/] Changed the way background cell were handled
+[#] Fixed an issue where cells could go over the right panel
+[#] Fixed an issue where the toolbar could go over modals
+[#] Fixed an issue where alternate row colors could go on other tables
+[#] Cells without background showed a black background on the info panel
+[#] New version of Table.js fixes issues with adding columns and rows
+
+LATEX EXPORT
+
+[+] Added a microtuning option which fix alignment issues with borders
+[+] Support for decimal format with 'siunitx' (i.e. S[table-format=3.2])
+[/] Multirow cells no longer use 'makecell' unless it is rotated
+[#] Fixed an issue where background color could leak inside double borders
+[#] Color of the vertical dashed/dotted left border of the first column could be ignored if it was a named color
+[#] Fixed an issue where the background color was not applied for multiline cells and cells with bullets points
+[#] Fixed useless code when vertical rules from Booktab (lol) were used
+[#] Caption did not work with longtable
+
+IMPORT MODULE
+
+[+] Import from Markdown
+
+PASTE IMPORT MODULE
+
+[+] Alignment of cells supported, including with legacy "align" attribute
+[#] The module produded alerts
+
+LATEX IMPORT
+
+[+] Support for \endfirsthead and \endhead from 'longtable'
+[+] Support for primitive \crcr
+[+] Minimal support for \endfoot and \endlastfoot from 'longtable'
+
+HTML EXPORT
+
+[#] Fixed a small issue with spaces and equations
+
+PRETEXT EXPORT
+
+[+] New PreTeXt export module
+
 Version 0.9.1 BETA
 ===========
 

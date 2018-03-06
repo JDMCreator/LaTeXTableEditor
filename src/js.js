@@ -102,7 +102,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "0.9.1";
+			this.version = "1.0";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -180,6 +180,16 @@ function $id(id) {
 							console.error(e);
 						}
 						$("#latex-import-error").show();
+					}
+				}
+				else if(format == "markdown"){
+					try{
+						this.importFromJSON(this.importMd(content));
+						$('#importModal').modal('hide');
+						sendGAEvent("Code", "import", "md");
+					}
+					catch(e){
+						alert("Your Markdown file could not be loaded");
 					}
 				}
 				else if(format == "csv"){
@@ -814,7 +824,7 @@ this.getHTML = (function(){
 				// Background color
 				var color = window.getComputedStyle(element,null).getPropertyValue("background-color") || "#FFFFFF";
 				if(color == "transparent" || /rgba?\s*\(\s*\d+[\s,]+\d+[\s,]+\d+[\s,]+0\s*\)/.test(color)){
-					color = [1,1,1,0];
+					color = [255,255,255,0];
 				}
 				else{
 					color = toRGBA(color);
@@ -1235,6 +1245,28 @@ this.getHTML = (function(){
 					color : color
 				}
 			}
+			this.textColorPick = function(){
+				var _this = this;
+				ColorPicker.get(this._id("text-color-input").value, function(hex){
+					if(hex){
+						_this._id("text-color-input").value = hex;
+						_this.textColor(hex);
+					}
+				});
+			}
+			this.backgroundPick = function(){
+				var _this = this;
+				ColorPicker.get(this._id("info-background-color").value, function(hex){
+					if(hex){
+						_this._id("info-background-color").value = hex;
+						_this.backgroundColor(hex);
+					}
+				});
+			}
+			this.borderPick = function(){
+				var _this = this;
+				ColorPicker.get(this._id("border-color"));
+			}
 			this.setAllBorders = function() {
 				this.statesManager.registerState();
 				var borderType = document.getElementById('border')
@@ -1349,6 +1381,9 @@ this.getHTML = (function(){
 				this.element = table;
 				var _this = this,
 				waitingforpaste = false;
+				$id("support-us").addEventListener("animationend",function(){
+					this.classList.remove("active");
+				}, false);
 				table.addEventListener("paste", function(e) {
 					var target = e.target || e.srcElement;
 					target = target.nodeType == 3 ? target.parentElement : target;
@@ -1551,9 +1586,12 @@ this.getHTML = (function(){
 				return str
 			};
 
-			this.generateForCell = function(cell, align, shrinkRatio) {
+			this.generateForCell = function(cell, align, shrinkRatio, o) {
 				align = align || "l";
-				var text = "";
+				var text = "",
+				background = o ? o.cellBackground : false,
+				leftCorrection = o ? o.leftCorrection : "",
+				rightCorrection = o ? o.rightCorrection : "";
 				if (cell.hasAttribute("data-two-diagonals")) {
 					this.packages["diagbox"] = true;
 					text = "\\diagbox{" + this.generateFromHTML(this.getHTML(cell, 2)) + "}{" + this.generateFromHTML(this.getHTML(cell)) + "}{" +
@@ -1612,23 +1650,21 @@ this.getHTML = (function(){
 						text = "\\tablenum{" + text + "}";
 					}
 				}else if (cell.rowSpan > 1 && (!this.blacklistPackages["makecell"] || this.shrink) && !this.blacklistPackages["multirow"]) {
-						text = this.generateFromHTML(this.getHTML(cell), true, align);
-						if(this.blacklistPackages["makecell"]){
-							text = text.replace(/\\{4,}/g, function(full){
-								var after = "", str = "", nb = full.length;
-								if(nb % 2 == 1){
-									after = "\\";
-									nb--;
+						text = this.generateFromHTML(this.getHTML(cell), false, align);
+						text = text.replace(/\\{4,}/g, function(full){
+							var after = "", str = "", nb = full.length;
+							if(nb % 2 == 1){
+								after = "\\";
+								nb--;
+							}
+							for(var i=0;i<nb;i=i+2){
+								str += "\\\\";
+								if(i+2<nb){
+									str+= "~";
 								}
-								for(var i=0;i<nb;i=i+2){
-									str += "\\\\";
-									if(i+2<nb){
-										str+= "~";
-									}
-								}
-								return str + after;
-							});
-						}
+							}
+							return str + after;
+						});
 					
 				} else if(this.shrink){
 					text = this.generateFromHTML(this.getHTML(cell), true, align).replace(/\\{2,}/g, function(full){
@@ -1652,6 +1688,17 @@ this.getHTML = (function(){
 				else{
 					text = this.generateFromHTML(this.getHTML(cell), false, align);
 				}
+
+				// We have to use a stupid .replace to fix an issue with multiline and background color
+				// TODO : Optimize
+				text = leftCorrection + text + rightCorrection;
+				if(background){
+					text = text.replace(/\\begin\{tabular\}[^@\{]*\{@\{(?:\\textbullet\\hspace\{\\labelsep\}|)\}/g, function(full){
+						return full + ">{\\cellcolor"+getColor(background)+"}";
+					});
+				}
+
+
 				return text;
 			}
 			this.packages = {};
@@ -1721,6 +1768,26 @@ this.getHTML = (function(){
 					return state;
 				}
 			}
+			this.calculateDecimalCharacters = function(cell, separator){
+				separator = separator || ".";
+				var text = cell.innerText || cell.textContent;
+				text = text.split(/\n+/g);
+				var first = 0,
+				second = 0;
+				for(var i=0, subtext;i<text.length;i++){
+					subtext = text[i].trim();
+					if(subtext){
+						if(subtext.indexOf(separator)>=0){
+							first = Math.max(first,subtext.lastIndexOf(separator));
+							second = Math.max(second,subtext.length-1-subtext.lastIndexOf(separator));
+						}
+						else{
+							first = Math.max(first,subtext.length);
+						}
+					}
+				}
+				return [first, second]
+			}
 			this.createCellO = function(o, row){
 				var before = null,
 				    after = null,
@@ -1740,10 +1807,12 @@ this.getHTML = (function(){
 						after = after2;break;
 					}
 				}
-				o.align = cell.getAttribute("data-align") || "l"
-				o.content = this.generateForCell(cell, o.align);
+				o.align = cell.getAttribute("data-align") || "l";
+				if(o.align == "d"){
+					o.decimalChars = this.calculateDecimalCharacters(cell);
+				}
 				o.getHeader = this.comparableHeader(before, o, after);
-				o.header = o.getHeader(this.actualMainColor);
+				//o.header = o.getHeader(this.actualMainColor);
 				o.span = (cell.rowSpan != 1 || cell.colSpan != 1);
 				o.static = false;
 				o.isInPreambule = false;
@@ -1751,6 +1820,7 @@ this.getHTML = (function(){
 				o.rowSpan = cell.rowSpan;
 				o.colSpan = cell.colSpan;
 				o.fullContent = o.content;
+				o.leftCorrection = o.rightCorrection = "";
 				o.background = false;
 				var _this = this;
 				// Determine background
@@ -1770,6 +1840,7 @@ this.getHTML = (function(){
 					}
 				}
 				o.cellBackground = o.background;
+				o.content = this.generateForCell(cell, o.align, o.shrinkRatio, o);
 				o.getFullContent = function(actualColor, forceMulti){
 					var header = "", before = "",
 					content = o.content;
@@ -1799,17 +1870,19 @@ this.getHTML = (function(){
 							}
 							content = alignment + content;
 						}
-						if(!_this.blacklistPackages["makecell"]) {
-							if(_this.shrink && o.shrinkRatio){
-								content = "\\makecell[{{p{"+o.shrinkRatio+"\\columnwidth}}}]{" + content + "}";
-							}
-							else{
-								var align = o.align;
-								align = align == "d" ? "c" : align;
-								content = "\\makecell["+align+"]{" + content + "}";
-							}
-							_this.packages["makecell"] = true;
-						}
+						/* === LEGACY CODE / Makecell for multirow ===
+ 						/* if(!_this.blacklistPackages["makecell"]) {
+						/* 	if(_this.shrink && o.shrinkRatio){
+						/* 		content = "\\makecell[{{p{"+o.shrinkRatio+"\\columnwidth}}}]{" + content + "}";
+						/* 	}
+						/* 	else{
+						/* 		var align = o.align;
+						/* 		align = align == "d" ? "c" : align;
+						/* 		content = "\\makecell["+align+"]{" + content + "}";
+						/* 	}
+						/* 	_this.packages["makecell"] = true;
+						/* }
+						/* === END OF LEGACY CODE === */
 						if(o.background){
 							_this.packages["colortbl"] = true;
 							content="{\\cellcolor"+getColor(o.background)+"}"+content;
@@ -1894,12 +1967,12 @@ this.getHTML = (function(){
 						removeAllRules();
 						actual = [n, even, odd];
 						if(n%2<1){
-							addRule("tr:nth-child(2n+"+n+") td {background-color:"+even+";}");
-							addRule("tr:nth-child(2n+"+(n+1)+") td {background-color:"+odd+";}");
+							addRule("#table tr:nth-child(2n+"+n+") td {background-color:"+even+";}");
+							addRule("#table tr:nth-child(2n+"+(n+1)+") td {background-color:"+odd+";}");
 						}
 						else{
-							addRule("tr:nth-child(2n+"+n+") td {background-color:"+odd+";}");
-							addRule("tr:nth-child(2n+"+(n+1)+") td {background-color:"+even+";}");
+							addRule("#table tr:nth-child(2n+"+n+") td {background-color:"+odd+";}");
+							addRule("#table tr:nth-child(2n+"+(n+1)+") td {background-color:"+even+";}");
 						}
 
 					}
@@ -1919,6 +1992,11 @@ this.getHTML = (function(){
 					var row = result[i];
 					for(var j=0;j<row.length;j++){
 						var cell = row[j];
+						cell.matrix = (function(){
+							return function(){
+								return result;
+							}
+						})(result);
 						if(!cell.refCell){
 							this.createCellO(cell, row);
 						}
@@ -2073,6 +2151,26 @@ this.getHTML = (function(){
 					}
 				}
 			}
+			this.toMWE = function(){
+				var element = this._id("c"),
+				src = element.value,
+				format = this._id("format").value;
+				if(format == "latex"){
+					src = src.replace(/^%\s*\\usepack/mg, "\\usepack");
+					src = "\\documentclass{article}\n" + src;
+					var lastpackage = src.lastIndexOf("\\usepackage"),
+					endofheader = src.indexOf("}", lastpackage);
+					src = src.substring(0, endofheader+1) + "\n\n\\begin{document}\n"+src.substring(endofheader+1)+"\n\\end{document}";
+					src = src.replace(/\n{3,}/g, "\n\n");
+				}
+				else if(format == "plain" || format == "eplain"){
+					src += "\n\\bye";
+				}
+				else if(format == "html"){
+					src = "<!doctype>\n<html>\n<head>\n\t<title>Minimal Working Example</title>\n</head>\n<body>\n"+src+"\n</body>\n</html>";
+				}
+				element.value = src;
+			}
 			this.comparableHeader = function(before, middle, after) {
 				if (before) {
 					before = before.cell || before.refCell.cell;
@@ -2109,7 +2207,59 @@ this.getHTML = (function(){
 				return function(color, isPreambule){
 					var preambule = "",
 					align2 = align,
-					shrinkRatio = o.shrinkRatio;
+					shrinkRatio = o.shrinkRatio,
+					microfixBorderActivate = _this._id("opt-latex-microfix-alignment").checked;
+
+					if(microfixBorderActivate){
+						// Introduce a 'microfix' : some cells may have a strange alignment
+						var lengthTable = {
+							"midrule" : 1,
+							"normal" : 1,
+							"dottedline" : 1,
+							"hdashline" : 1,
+							"toprule" : 3,
+							"bottomrule" : 3,
+							"double" : 4
+						    },
+						    biggestLeftBorder = 0,
+						    biggestRightBorder = 0,
+						    matrix = o.matrix();
+						for(var i=0;i<matrix.length;i++){
+							if((o.refCell||o).x == 0){
+								var microfixLeftCell = matrix[i][0];
+								if(microfixLeftCell){
+									var microfixLeftBorder = (microfixLeftCell.refCell||microfixLeftCell).leftBorder;
+									biggestLeftBorder = Math.max(biggestLeftBorder,
+											    lengthTable[microfixLeftBorder] || 0);
+								}
+							}
+							var microfixRightCell = matrix[i][o.x+middle.colSpan-1];
+							if(microfixRightCell){
+								microfixRightCell = (microfixRightCell.refCell||microfixRightCell);
+								if(microfixRightCell.x+microfixRightCell.colSpan-1 == (o.refCell||o).x+middle.colSpan-1){
+									var microfixRightBorder = microfixRightCell.rightBorder;
+									biggestRightBorder = Math.max(biggestRightBorder, 
+											    lengthTable[microfixRightBorder] || 0);
+								}
+							}
+						}
+						o.leftCorrection = o.rightCorrection = "";
+						if(o.x == 0){
+							var leftBorderSize = lengthTable[leftBorder] || 0;
+							if(leftBorderSize < biggestLeftBorder){
+								o.leftCorrection = _this.microfixBorderCorrection(leftBorderSize, 
+										   biggestLeftBorder, o.cellBackground);
+							}
+						}
+						var rightBorderSize = lengthTable[rightBorder] || 0;
+						if(rightBorderSize < biggestRightBorder){
+							o.rightCorrection = _this.microfixBorderCorrection(rightBorderSize,
+									    biggestRightBorder, o.cellBackground);
+						}
+						
+						// End of 'microfix'
+					}
+
 					if(leftBorder){
 						leftColor = leftColor || "#000000";
 						preambule += _this.headerBorder(leftBorder, leftColor, color, isPreambule, "@");
@@ -2120,13 +2270,34 @@ this.getHTML = (function(){
 							}
 						}
 					}
+
 					var before = "";
 					if(align2 == "d"){
+						if(!o.globalDecimals){
+							// Let's travel the matrix !
+							var matrix = o.matrix(),
+							first = 0,
+							second = 0;
+							for(var i=0;i<matrix.length;i++){
+								var traveledCell = matrix[i][(o.refCell||o).x];
+								traveledCell = traveledCell.refCell||traveledCell;
+								if(traveledCell.x == (o.refCell||o).x && traveledCell.cell.colSpan == middle.colSpan){
+									if(traveledCell.align == "d"){
+										first = Math.max(first, traveledCell.decimalChars[0]);
+										second = Math.max(second, traveledCell.decimalChars[1]);
+									}
+								}
+							}
+							o.globalDecimals = [first, second];							
+						}
 						if(o.span){
 							align2 = "c";
 						}
 						else{
 							align2 = "S";
+							if(o.globalDecimals){
+								align2 += "[table-format="+o.globalDecimals[0]+"."+o.globalDecimals[1]+"]";
+							}
 						}
 						if(shrinkRatio){
 							_this.uniqueLog("The 'shrink columns' option won't work with decimal-alignment cells", "warning");
@@ -2186,13 +2357,60 @@ this.getHTML = (function(){
 						preambule += ">{"+before+"}";
 						_this.packages["array"] = true;
 					}
+					if(o.leftCorrection){
+					//	preambule += "@{"+o.leftCorrection+"}"
+					}
 					preambule += align2;
+					if(o.rightCorrection){
+					//	preambule += "@{"+o.rightCorrection+"}"
+					}
 					if(rightBorder){
 						preambule += _this.headerBorder(rightBorder, rightColor, color, isPreambule, ">")
 					}
 					return preambule;
 				};
 
+			}
+			this.microfixBorderCorrection = function(size, obj, color){
+				if(size >= obj){
+					return "";
+				}
+				var normal = "\\arrayrulewidth",
+				toprule = "\\heavyrulewidth",
+				double = "\\doublerulesep";
+				function hspace(length){
+					if(length.indexOf("+") >= 0 || length.indexOf("-") >= 0){
+						length = "\\dimexpr "+length+"\\relax";
+					}
+					return "\\hspace*{"+length+"}";
+				}
+				if(size == 0){
+					if(obj == 1){
+						return hspace(normal);
+					}
+					else if(obj == 3){
+						return hspace(toprule);
+					}
+					else if(obj == 4){
+						return hspace("2"+normal) + hspace(double);
+					}
+				}
+				else if(size == 1){
+					if(obj == 3){
+						// We need some calculation here
+						return hspace(toprule+"-"+normal) // TODO : Not sure if it's good
+					}
+					else if(obj == 4){
+						return hspace(double) + hspace(normal);
+					}
+				}
+				else if(size == 3){
+					if(obj == 4){
+						// We need an even bigger calculation
+						return hspace("2"+normal+"+"+double+"-"+toprule); // TODO : Not sure if it's good
+					}
+				}
+				return "";
 			}
 			this.getComparableHeader = function(before, middle, after) {
 				if (before) {
@@ -2247,6 +2465,8 @@ this.getHTML = (function(){
 				$id("log")
 					.innerHTML = "<strong>Log</strong> (" + ((new Date())
 						.toLocaleTimeString()) + ")<hr>" + this.log;
+				var supportus = $id("support-us");
+				supportus.classList.add("active");
 			}
 			this.headers = function(matrix){
 				matrix = matrix || this.matrix();
@@ -2343,7 +2563,7 @@ this.getHTML = (function(){
 					if(isPinned){
 						$(".hide-on-full").show();
 						document.body.style.paddingTop = "";
-						nav.style.position = "static";
+						nav.style.position = "sticky";
 					}
 					else{
 						$(".hide-on-full").hide();
@@ -2366,10 +2586,19 @@ this.getHTML = (function(){
 				else if(this.blacklistPackages["arydshln"]){
 					return this.hasBorderType("hdashline") || this.hasBorderType("dottedline");
 				}
-				else{
-					// TODO : Detect hhline
-					return false;
+				else if(this._id("opt-latex-hhline").checked){
+					return this.hasVBorderType("double") && this.hasHBorderType("double") &&
+					(this.hasBorderType("hdashline") || this.hasBorderType("dottedline"));
 				}
+				else{
+					return false
+				}
+			}
+			this.hasHBorderType = function(type){
+				return !!this.element.querySelector("td[data-border-bottom='"+type+"'],td[data-border-top='"+type+"']")
+			}
+			this.hasVBorderType = function(type){
+				return !!this.element.querySelector("td[data-border-left='"+type+"'],td[data-border-right='"+type+"']")
 			}
 			this.hasBorderType = function(type){
 				return !!this.element.querySelector("td[data-border-left='"+type+"'],td[data-border-bottom='"+type+"'],td[data-border-top='"+type+"'],td[data-border-right='"+type+"']")
@@ -2377,8 +2606,8 @@ this.getHTML = (function(){
 			this.shrink = false;
 			this.useBooktab = function(){
 				return this.element.hasAttribute("data-booktabs") ||
-				this.hasBorderType("toprule") || this.hasBorderType("midrule") ||
-				this.hasBorderType("bottomrule");
+				this.hasHBorderType("toprule") || this.hasHBorderType("midrule") ||
+				this.hasHBorderType("bottomrule");
 			}
 			this.useBackgroundColor = function(matrix){
 				if(matrix){
@@ -2478,8 +2707,13 @@ this.getHTML = (function(){
 				if(header.charAt(0) == "@"){
 					header = header.replace(/^@\{(\\array[^\{]+\{[^\}]+\})\}/, function(full, command){
 						startingDshCommand = command;
-						command.replace(/\{[\s,]*([\d.]+)[\s,]*([\d.]+)[\s,]*([\d.]+)[\s,]*\}/, function(full, r, g, b){
-							startingColor = "rgb("+(+r*255)+","+(+g*255)+","+(+b*255)+")";
+						command.replace(/\{(?:[\s,]*([\d.]+)[\s,]*([\d.]+)[\s,]*([\d.]+)[\s,]*|([^\}]+))\}/, function(full, r, g, b, name){
+							if(name){
+								startingColor = name;
+							}
+							else {
+								startingColor = "rgb("+(+r*255)+","+(+g*255)+","+(+b*255)+")";
+							}
 						})
 						return "";
 					})
@@ -2522,7 +2756,7 @@ this.getHTML = (function(){
 						if(caption.label){
 							str += "\\label{"+caption.label+"}";
 						}
-						str += "}";
+						str += "}\\\\";
 					}
 					if(scale){
 						this.message("'scale' option can't be used with longtable or longtabu.");
@@ -2872,7 +3106,6 @@ this.getHTML = (function(){
 					var color = window.getComputedStyle(cell,null).getPropertyValue("background-color");
 					if(color == "transparent" || color == "white"){return ""}
 					var rgba = toRGBA(color);
-					alert(rgba);
 					if(rgba[3] == 0){
 						return "";
 					}
@@ -2924,6 +3157,17 @@ this.getHTML = (function(){
 								o2.html = [getHTML(cell.innerHTML), ""]
 							} else {
 								o2.html = getHTML(cell.innerHTML);
+							}
+							// align
+							var align = cell.getAttribute("align");
+							if(cell.style.textAlign){
+								align = cell.style.textAlign;
+							}
+							if(align == "right"){
+								o2.dataset.align = "r";
+							}
+							else if(align == "center"){
+								o2.dataset.align = "c";
 							}
 							o2.css = borderInfo(cell, o2) + backgroundInfo(cell);
 							o2.rowSpan = cell.rowSpan;
@@ -3375,15 +3619,21 @@ this.getHTML = (function(){
 							}
 							if(enhanceHhline && (borderRight == "double" || borderRightTop == "double")){
 								var borderRightFColor = borderRightColor || borderRightTopColor;
-								if(insertInHhline && !areSameColors(insideColor, borderRightFColor)){
-									insideColor = borderRightFColor;
-									border += ">{\\arrayrulecolor"+getColor(borderRightFColor)+"}";
+								if(insertInHhline){
+									var toadd = "";
+									if(!areSameColors(insideColor, borderRightFColor)){
+										insideColor = borderRightFColor;
+										toadd += "\\arrayrulecolor"+getColor(borderRightFColor);
+									}
+									if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
+										doublerulesepcolor = "FFFFFF";
+										toadd += "\\doublerulesepcolor"+getColor([255,255,255,1]);
+									}
+									if(toadd){
+										border += ">{"+toadd+"}";
+									}
 								}
 								if(type == "double"){
-									if(insertInHhline && !areSameColors(doublerulesepcolor, [255,255,255,1])){
-										doublerulesepcolor = "FFFFFF";
-										border += ">{\\doublerulesepcolor"+getColor([255,255,255,1])+"}";
-									}
 									border += ":";
 								}
 								else{
@@ -3432,9 +3682,19 @@ this.getHTML = (function(){
 								}
 							}
 							else if(borderRight == "normal" || borderRight == "double"){
-								if(insertInHhline && !areSameColors(insideColor, borderRightColor)){
-									insideColor = borderRightColor;
-									border += ">{\\arrayrulecolor"+getColor(borderRightColor)+"}";
+								if(insertInHhline){
+									var toadd = "";
+									if(!areSameColors(insideColor, borderRightColor)){
+										insideColor = borderRightColor;
+										toadd += "\\arrayrulecolor"+getColor(borderRightColor);
+									}
+									if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
+										doublerulesepcolor = "FFFFFF";
+										toadd += "\\doublerulesepcolor"+getColor([255,255,255,1]);
+									}
+									if(toadd){
+										border += ">{"+toadd+"}";
+									}
 								}
 								if(borderRight == "normal"){
 									border += "|";
@@ -3677,7 +3937,7 @@ window.addEventListener("beforeunload", function() {
 							var where = (rectangle.left+(rectangle.right-rectangle.left)/2 > posCell.left+posCell.width/2)
 								    ? "right" : "left";
 							if(should === null){
-								should = !table.isBorderSet(cell, where);
+							should = !table.isBorderSet(cell, where);
 							}
 							table.setBorder(cell, where, should)
 						}

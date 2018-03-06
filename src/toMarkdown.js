@@ -133,6 +133,138 @@
 		}
 		return str;
 	})
+	var getContent = function(str, header){
+		var newstr = "", openItalique = false, openBold = false;
+		for(var i=0;i<str.length;i++){
+			var char = str[i],
+			before = str[i-1], after = str[i+1];
+			if((char == "*" || char == "_") && after != char){
+				if(openItalique){
+					newstr += "</i>";
+					openItalique = false;
+				}
+				else{
+					newstr += "<i>";
+					openItalique = true;
+				}
+			}
+			else if((char == "*" || char == "_") && after == char){
+				i++;
+				if(openBold){
+					newstr += "</b>";
+					openBold = false;
+				}
+				else{
+					newstr += "<b>";
+					openBold = true;
+				}
+			}
+			else if(char == "\\"){
+				if(i+1<str.length){
+					newstr += after;
+				}
+			}
+			else{
+				newstr += "" + char;
+			}
+		}
+		return newstr;
+	}
+	table.importMd = function(str){
+		var o = {cells:[]}
+		str = str.split(/\n/g),
+		caption;
+		var newstr = [], index=-1, caption = "";
+		var headers = [];
+		for(var i=0;i<str.length;i++){
+			if(/^[\|=:.+\s-]+$/.test(str[i]) && str[i].indexOf("|") >= 0){
+				index = i;break;
+			}
+		}
+		if(index == -1){
+			return false;
+		}
+		for(var i=index-1;i>=0;i--){
+			if(str[i].indexOf("|") < 0){
+				str[i].replace(/^\s*\[([\s\S]*)\]\s*$/, function(full, result){
+					caption = result;
+				})
+				index = i+1;break;
+			}
+			else{
+				headers.push(str[i].replace(/^\s*\|?/, "").replace(/\|?\s*$/, "")+"|");
+			}
+		}
+		for(var i=index+1;i<str.length;i++){
+			if(str[i].indexOf("|") != -1){
+				newstr.push(str[i].replace(/^\s*\|?/, "").replace(/\|?\s*$/, "")+"|");
+			}
+			else{
+				break;
+			}
+		}
+		var colsAlign = [],
+		align = str[index].replace(/^\s*\|/g, "").replace(/\|\s*$/g, "").split("|");
+		for(var i=0;i<align.length;i++){
+			if(/\:[^\:]+\:/.test(align[i])){
+				colsAlign.push("c");
+			}
+			else if(/[^\:]+\:/.test(align[i])){
+				colsAlign.push("r");
+			}
+			else{
+				colsAlign.push("l");
+			}
+		}
+		for(var i=0;i<headers.length;i++){
+			var row = [];
+			var content = "",
+			cellO = {};
+			for(var j=0, char;j<headers[i].length;j++){
+				cellO = {dataset:{}};
+				char = headers[i].charAt(j);
+				if(char == "|"){
+					cellO.html = "<b>"+getContent(content, true)+"</b>";
+					console.log(colsAlign[row.length]);
+					if(colsAlign[row.length] != "l"){
+						cellO.dataset.align = colsAlign[row.length];
+					}
+					row.push(cellO);
+					content = "";
+					continue;
+				}
+				content += "" + char;
+				if(char == "\\"){
+					j++;
+				}
+			}
+			o.cells.push(row);
+		}
+		for(var i=0;i<newstr.length;i++){
+			var row = [];
+			var content = "",
+			cellO = {};
+			for(var j=0, char;j<newstr[i].length;j++){
+				cellO = {dataset:{}};
+				char = newstr[i].charAt(j);
+				if(char == "|"){
+					cellO.html = getContent(content);
+					if(colsAlign[row.length] != "l"){
+						cellO.dataset.align = colsAlign[row.length];
+					}
+					row.push(cellO);
+					content = "";
+					continue;
+				}
+				content += "" + char;
+				if(char == "\\"){
+					j++;
+				}
+			}
+			o.cells.push(row);
+		}
+		return o;
+	}
 })();
 
 

@@ -101,7 +101,7 @@
 		// TODO : SPACE PROBLEMS!!!
 		for(var i=0,eq;i<equations.length;i++){
 			eq = equations[i];
-			var text = document.createTextNode("$$"+(eq.textContent || eq.innerText)+"$$");
+			var text = document.createTextNode("$$"+(eq.innerText || eq.textContent)+"$$");
 			eq.parentNode.replaceChild(text, eq);
 		}
 		var html = beautify(container.innerHTML);

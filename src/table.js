@@ -305,9 +305,9 @@ Table = function(table){
 					copycell = matrix[i][nb2-1]
 				}
 				var actualCell = matrix[i][nb2-1];
-				if(actualCell && actualCell.refCell){
-					actualCell.refCell.cell.colSpan+=1
-					i+=actualCell.refCell.cell.rowSpan-1;
+				if(actualCell && (actualCell.refCell||actualCell.cell.colSpan != 1)){
+					(actualCell.refCell||actualCell).cell.colSpan+=1
+					i+=(actualCell.refCell||actualCell).cell.rowSpan-1;
 				}
 				else{
 					actualCell = matrix[i][nb2]
@@ -354,9 +354,9 @@ Table = function(table){
 					var copycell = copyrow[i],
 					actualCell = (actualRow||[])[i],
 					cell;
-					if(copycell && copycell.refCell){
-						copycell.refCell.cell.rowSpan+=1;
-						i+=copycell.refCell.cell.colSpan-1;
+					if(copycell && (copycell.refCell || copycell.cell.rowSpan != 1)){
+						(copycell.refCell||copycell).cell.rowSpan+=1;
+						i+=(copycell.refCell||copycell).cell.colSpan-1;
 					}
 					else{
 						copycell = copycell.cell||copycell.refCell
