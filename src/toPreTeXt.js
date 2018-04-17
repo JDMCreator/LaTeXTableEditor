@@ -1,5 +1,5 @@
 (function(){
-	var indent = "tab";
+	var indent = "two";
 	function beautify(html){
 		var str = ""
 		html = html.replace(/<\s*(\/?)\s*([a-z]+)[^>]*>/gi,function(full,close,name){
@@ -31,10 +31,14 @@
 	var getContent = function(cell){
 		var container = (cell.refCell||cell).cell.cloneNode(true);
 		// First, we take care of math
-		var equations = container.querySelectorAll("span.latex-equation");
+		var equations = container.querySelectorAll("span.latex-equation"),
+		equationArr = [];
 		for(var i=0,eq;i<equations.length;i++){
 			eq = equations[i];
-			var text = document.createTextNode("****m****"+(eq.innerText || eq.textContent).replace(/\n\r/g, "")+"****/m****");
+			var text = document.createTextNode("****m"+equationArr.length+"****"),
+			contentMath = (eq.innerText||eq.textContent).replace(/[\n\r]+/g, "")
+					.replace(/</g, "\\lt ").replace(/>/g, "\\gt ").replace(/\&/g, "\\amp ");
+			equationArr.push(contentMath);
 			eq.parentNode.replaceChild(text, eq);
 		}
 		var text = container.innerText.replace(/([^\n\r])[\n\r]+$/, "$1");
@@ -57,7 +61,12 @@
 				">" : "greater"
 			}[char]+">";
 		});
-		text = text.replace(/\*\*\*\*(\/?(?:line|m))\*\*\*\*/g, function(full, name){
+		text = text.replace(/\*\*\*\*(\/?(?:line|m\d+))\*\*\*\*/g, function(full, name){
+			if(name.charAt(0) == "m"){
+				name = +(name.substring(1));
+				var contentMath = equationArr[name];
+				return "<m>"+contentMath+"</m>";
+			}
 			return "<"+name+">";
 		});
 		var frag = document.createDocumentFragment(),

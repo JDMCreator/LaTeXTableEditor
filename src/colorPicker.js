@@ -67,6 +67,7 @@ console.log(h);
 			$("colorpicker-b").value = color[2];
 			$("colorpicker-rgb").value = rgb;
 			$("colorpicker-hex").value = hex;
+			$("colorpicker-system-input").value = hex;
 			$("colorpicker-hsl").value = hsl;
 			$("colorpicker-container").style.color = hex;
 			$("colorpicker-name").innerHTML = name;

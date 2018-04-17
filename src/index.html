@@ -468,7 +468,7 @@ Color of border :
 	</div>
 	<div style="text-align:center;">
 		<label>
-		<input type="color" oninput="ColorPicker.color(this.value)" hidden>
+		<input type="color" oninput="ColorPicker.color(this.value)" id="colorpicker-system-input" hidden>
 		<a type="button" data-toggle="tooltip" title="Use system colorpicker" class="btn btn-default"><span class="glyphicon glyphicon-tint"></span></a>
 		</label>
 		<div class="btn-group" role="group" aria-label="...">
@@ -667,7 +667,7 @@ Color of border :
 							<h4>PreTeXt options</h4>
 <h5>Indentation</h5>
 <select id="opt-pretext-indent" class="form-control"><option value="tab">Tab</option>
-<option value="two">Two spaces</option>
+<option value="two" selected>Two spaces</option>
 <option value="four">Four spaces</option></select>
 						</div>
       </div>

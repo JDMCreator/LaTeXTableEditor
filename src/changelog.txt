@@ -6,7 +6,24 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 1.0
+Version 1.0.1 (2018/03/06)
+===========
+
+| Note on this release :
+|     Fix an issue with colorpicker and export to PreTeXt
+
+CORE
+
+[#] The system colorpicker didn't use the actual color
+
+PRETEXT EXPORT
+
+[/] Changed default indentation to two spaces
+[#] Fix an issue where special characters in equations were converted to XML
+[#] Replace <,>,& with \lt, \gt, \amp in equations
+
+
+Version 1.0 (2018/03/01)
 ===========
 
 | First stable release.
@@ -61,7 +78,7 @@ PRETEXT EXPORT
 
 [+] New PreTeXt export module
 
-Version 0.9.1 BETA
+Version 0.9.1 BETA (2018/01/18)
 ===========
 
 | Note on this release :
