@@ -10,7 +10,12 @@
 		else{
 			html = table.getHTML(cell);
 		}
-		var text = html.replace(/<\s*br\s*\/?\s*>/gi, "\n").replace(/<[^>]+?>/g,"");
+		var text = html.replace(/<\s*br\s*\/?\s*>/gi, "\n").replace(/<[^>]+?>/g,"").replace(/\&(lt|gt|amp|quot);?/gi, function(total, name){
+			if(name == "lt"){ return "<" }
+			if(name == "gt"){ return ">" }
+			if(name == "amp"){ return "&" }
+			if(name == "quot"){ return "quot" }
+		});
 		if(/[\n,"]/.test(text)){
 			text = '"'+text.replace(/"/,"\\\"")+'"';
 		}

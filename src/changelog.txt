@@ -6,7 +6,17 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 1.0.1 (2018/03/06)
+Version 1.0.2 (2018/04/17)
+===========
+
+| Note on this release :
+|     Fix an issue with encoding and CSV export
+
+CSV EXPORT
+
+[#] Fixed encoding issue with <, >, & and " characters
+
+Version 1.0.1 (2018/03/26)
 ===========
 
 | Note on this release :
@@ -52,7 +62,7 @@ LATEX EXPORT
 [#] Fixed an issue where background color could leak inside double borders
 [#] Color of the vertical dashed/dotted left border of the first column could be ignored if it was a named color
 [#] Fixed an issue where the background color was not applied for multiline cells and cells with bullets points
-[#] Fixed useless code when vertical rules from Booktab (lol) were used
+[#] Fixed useless code when vertical rules from Booktabs (lol) were used
 [#] Caption did not work with longtable
 
 IMPORT MODULE
