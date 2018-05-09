@@ -700,7 +700,7 @@ setCellO = function(table, x, y, code, head){
 },
 getHTML = function(code,o){
 	o = o || {}
-	var html="", commentmode = false;
+	var html="", commentmode = false, mathmode = false, mathcontent = "", div = document.createElement("div");
 	for(var i=0, char, sub;i<code.length;i++){
 		char = code.charAt(i);
 		sub = code.substring(i);
@@ -708,8 +708,46 @@ getHTML = function(code,o){
 			continue;
 		}
 		commentmode = false;
+		if(mathmode){
+			if(char == "%"){
+				commentmode = true;
+				continue;
+			}
+			else if(char == "$"){
+				if(sub.charAt(1) == "$"){
+					i++;
+				}
+				mathmode = false;
+				div.textContent = div.innerText = mathcontent;
+				mathcontent = "";
+				html += div.innerHTML + "</span>";
+				continue;
+			}
+			else if(char == "\\"){
+				if(sub.charAt(1) == ")" || sub.charAt(1) == "]"){
+					mathmode = false;
+					div.textContent = div.innerText = mathcontent;
+					mathcontent = "";
+					html += div.innerHTML + "</span>";
+					continue;
+				}
+				mathcontent += char + sub.charAt(1); // Prevent \$ and \\ to change output
+				i++;
+				continue;
+			}
+			else{
+				mathcontent += char;
+			}
+			continue;
+		}
 		if(char == "\\"){
-			if(sub.lastIndexOf("\\begin{",0) === 0){
+			if(sub.charAt(1) == "(" || sub.charAt(1) == "["){
+				i++;
+				mathmode = true;
+				mathcontent = "";
+				html += '<span class="latex-equation">';
+			}
+			else if(sub.lastIndexOf("\\begin{",0) === 0){
 				var env = treatEnv(sub);
 				html += env.html;
 				i += env.env.full.length -1;
@@ -719,6 +757,14 @@ getHTML = function(code,o){
 				html += com.html;
 				i += com.command.full.length -1;
 			}
+		}
+		else if(char == "$"){
+			if(sub.charAt(1) == "$"){
+				i++;
+			}
+			mathmode = true;
+			mathcontent = "";
+			html += '<span class="latex-equation">';
 		}
 		else if(char == "-"){
 			if(sub.lastIndexOf("---",0)===0){

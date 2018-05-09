@@ -6,6 +6,45 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.1
+===========
+
+CORE
+
+[+] Load data from multiple spreadsheet formats with SheetJS
+[+] New dropdown for menus, for easier access to functionnalities that were hidden before
+[+] New function to remove content from cells, but keep formatting
+[/] Selection is faster, and now uses 'onmousedown' event
+[#] Fixed fatal crash with Microsoft Edge
+[#] Improved the editing inside formulas with zero-width spaces
+[#] MWE now add UTF-8 for LaTeX if needed
+
+PASTE IMPORT
+
+[#] Imported tables didn't work with alternate rows background colors
+[#] Scrollbars make it possible to load huge tables
+
+CSV EXPORT
+
+[+] Option to define the separator between a comma and a semicolon
+
+HTML EXPORT
+
+[#] Zero-width spaces are now removed from the output
+
+LATEX EXPORT
+
+[+] Option to choose the way that double borders should intersect (default, combined or merged)
+[/] Similar color names now uses numbers instead of letters (e.g. Rose and Rose1 instead of Rose and RoseA)
+[#] The padding of the lists missed the left margin (i.e 0.5\tabcolsep or 3pt)
+[#] The list now uses \labelitemi instead of \textbullet so it can works even if the user changes the default bullet (or if it uses the 'frenchb' option of babel)
+[#] The color of horizontal rules could be wrong if the first border was dotted or dashed with 'arydshln'
+[#] Fixed issue with background color in unordered lists with 'tabu'
+[#] Fixed an issue where the package 'colortbl' could not be listed when used with 'tabu'
+[#] The character ">" disappeared
+[#] "<" is now replaced by \textless{} and ">" by \textgreater{}
+[#] Zero-width spaces are now removed from the output
+
 Version 1.0.2 (2018/04/17)
 ===========
 

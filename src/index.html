@@ -36,22 +36,45 @@
 
 
 <p class="text-right hide-on-full" style="margin:0"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="help.html" target="_blank">Help</a></p>
-<div style="height:50px;margin-bottom:10px;" class="hide-on-full"><img src="logo.png" alt="Logo." height="50"><span style="
-	font-size:30px;
-	vertical-align:top;
-	display:inline-block;
-	line-height:70px;
-	padding-left:5px;
-">L<span style="    font-size: 75%;
-    vertical-align: 0.45ex;
-    margin-left: -0.36em;
-    margin-right: -0.125em;text-transform:uppercase;">a</span>T<span style="    display: inline-block;
-    font-size: 87%;
-    line-height: 0;
-    text-transform: uppercase;
-    vertical-align: -0.45ex;margin-left:-0.15em;margin-right:-0.07em;">e</span>X Complex Table Editor <small style="font-size:14px;">With <a href="https://github.com/JDMCreator/Table.js" target="_blank">Table.js</a></small></span></div>
+<div style="height:50px;margin-bottom:10px;" class="hide-on-full"><img src="logo.png" alt="Logo." height="50"><span class="latex-logo">L<span class="latex-a">a</span>T<span class="latex-e">e</span>X Complex Table Editor <small style="font-size:14px;">With <a href="https://github.com/JDMCreator/Table.js" target="_blank">Table.js</a></small></span></div>
 		<nav class="nav-latex">
+<div class="dropdown">
+<a class="dropdown-toggle" type="button" id="dropdownMenu1" role="button" data-target="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+File <span class="caret"></span>
+</a>
+<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" id="dropdownMenu2">
+  <li><a href="#" data-target="#myModal" data-toggle="modal">Create table</a></li>
+  <li class="divider"></li>
+  <li><a href="#">Open JSON table</a></li>
+  <li><a href="#" onclick="table.saveToJSON()">Generate JSON</a></li>
+  <li class="divider"></li>
+  <li class="dropdown-submenu">
+    <a tabindex="-1" href="#">Import Table</a>
+    <ul class="dropdown-menu">
+      <li><a href="#" onclick="table.openImportModal('latex')">LaTeX</a></li>
+      <li><a href="#" onclick="table.openImportModal('csv')">CSV</a></li>
+      <li><a href="#" onclick="$('#worksheet-dialog').modal('show')">Excel, LibreOffice, CSV files</a></li>
+      <li><a href="#" onclick="$('#pasteModal').modal('show');">Paste a table</a></li>
+      <li><a href="#" onclick="table.openImportModal('markdown')">Markdown</a></li>
+    </ul>
+  </li>
+  <li class="dropdown-submenu">
+    <a tabindex="-1" href="#">Export File</a>
+    <ul class="dropdown-menu">
+      <li><a href="#" onclick="table.prepareDownload()">LaTeX</a></li>
+    </ul>
+  </li>
+</ul>
+<span>
+<a class="dropdown-toggle" type="button" id="dropdownMenu3" role="button" data-target="dropdownMenu4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+Table <span class="caret"></span>
+</a>
+<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu3" id="dropdownMenu4">
 
+  <li><a href="#" onclick="table.deleteContent()">Delete content</a></li>
+</ul>
+</span>
+</div>
 			<!-- Nav tabs -->
 			<ul class="nav nav-tabs" role="tablist">
 				<li><span class="glyphicon glyphicon-pushpin" data-toggle="tooltip" title="Pin/Unpin the toolbar to the top of the page" style="padding:10px 5px;cursor:pointer;" onclick="table.togglePin()"></span></li>
@@ -65,12 +88,7 @@
 			<div class="tab-content">
 				<div role="tabpanel" class="tab-pane active" id="home">
 					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="Home toolbar">
-						<div class="btn-group" role="group" aria-label="New">
-							<span data-target="#myModal" data-toggle="modal"><button type="button" data-toggle="tooltip" title="New table" class="btn btn-default" data-target="#myModal"><span class="glyphicon glyphicon-file"></span></button></span>
-						</div><div class="btn-group" role="group" aria-label="Export">
-							<button type="button" data-toggle="tooltip" title="Save/Export to JSON" class="btn btn-default" onclick="table.saveToJSON()"><span class="glyphicon glyphicon-floppy-disk"></span></button>
-							<button type="button" data-toggle="tooltip" title="Download LaTeX" class="btn btn-default" data-toggle="tooltip" onclick="table.prepareDownload()"><span class="glyphicon glyphicon-download-alt"></span></button>
-						</div>
+						
 						<div class="btn-group" role="group" aria-label="Undo">
 							<button type="button" data-toggle="tooltip" title="Undo" onclick="table.statesManager.undo()" class="btn btn-default"><span class="glyphicon glyphicon-repeat" style="transform: scale(-1, 1)"></span></button>
 						</div>
@@ -412,7 +430,7 @@ Color of border :
       </div>
       <div class="modal-body">
 <p>Paste here a table from a webpage, a Word document, an Excel document or an OpenOffice document.</p>
-<div class="form-control" contenteditable id="extract-div" style="height:auto;min-height:200px;margin-bottom:2px;max-height:300px;"></div>
+<div class="form-control" contenteditable id="extract-div"></div>
 <div class="text-center">
 			<button type="button" class="btn btn-primary" onclick="table.extract($id('extract-div'));$('#myModal').modal('hide')">Extract content</button></div>
 
@@ -496,6 +514,46 @@ Color of border :
       </div>
       <div class="modal-body">
 		<a href="" download="table.tex" style="line-height:100%" id="link-download">Click to download your .tex file</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="worksheet-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Load From Worksheet <span class="label label-warning">BETA</span></h4>
+      </div>
+      <div class="modal-body">
+		<center><em>This utility allows you to load XLS, XLSX, XLSM, CSV, OSD, SLK files and more. <strong>You can't load LaTeX files yet with this utility. Use the other utility instead.</strong></em></center>
+<div style="padding:4px;">
+<input type="file" id="excel-file" class="form-control-file" accept="<!--Accepted files-->
+.csv,
+.xls,
+.xlsx,
+.xlsm,
+.xlsb,
+.ods,
+.fods,
+.csv,
+.txt,
+.sylk,
+.html,
+.dif,
+.dbf,
+.prn,
+.eth"><button onclick="table.importExcel()" id="excel-button" style="margin:4px;" class="btn btn-primary">OK</button>
+</div>
+<div id="worksheet-loading-status"></div>
+<div id="worksheet-options" style="display:none;">
+<center>One step left. Select the workbook you want to import.
+
+<select id="select-workbook" class="form-control"></select>
+<button id="button-workbook" class="btn-primary btn" style="margin:8px;">Import workbook</button>
+</center>
+</div>
       </div>
     </div>
   </div>
@@ -614,8 +672,21 @@ Color of border :
 									<input type="checkbox" class="input-control" id="blacklist-ulem" value="ulem" checked> <label for="blacklist-ulem">Ulem</label>
 								</div>
 							</div>
+<h5>Double borders interactions</h5>
+
+<div class="row">
+<div class="col-md-4"><label>
+<input type="radio" name="latex-hhline"> <img src="double-default.png" width=29>
+</label></div>
+<div class="col-md-4"><label>
+<input type="radio" name="latex-hhline" id="opt-latex-hhline" default> <img src="double-combined.png" width=29> with <code>hhline</code>
+</label></div>
+<div class="col-md-4"><label>
+<input type="radio" id="opt-latex-hhline-hash" name="latex-hhline"> <img src="double-hash.png" width=29> with <code>hhline</code>
+</label></div>
+</div>
 <h5>Advanced options</h5>
-<div><label><input type="checkbox" id="opt-latex-hhline" checked> Enhance double borders with <code>hhline</code> when possible</div>
+
 <label><input type="checkbox" id="opt-latex-tabu"> Force table to use <code>tabu</code> when possible</label>  
 <!--
 <h5>Colors</h5>
@@ -652,6 +723,8 @@ Color of border :
 						</div>
 						<div class="form-group" data-option-group="csv" style="display:none;">
 							<h4>CSV options</h4>
+							<label for="opt-csv-separator">Separator</label>
+							<select class="form-control" id="opt-csv-separator"><option value=",">Comma</option><option value=";">Semicolon</option></select>
 						</div>
 						<div class="form-group" data-option-group="bbcode" style="display:none;">
 							<h4>BBCode options</h4>
@@ -693,6 +766,7 @@ Color of border :
 container: 'body',
 placement: 'auto top'
 });
+			$('[data-toggle="dropdown"]').dropdown()
 			table.load($id('table'));
 			var json = localStorage.getItem("table");
 			if(json){

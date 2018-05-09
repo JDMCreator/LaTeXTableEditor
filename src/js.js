@@ -15,18 +15,6 @@ function $id(id) {
 				ga('send', 'event', category, action, label);
 			}
 		},
-		// From here : https://codereview.stackexchange.com/questions/16124/
-		//             implement-numbering-scheme-like-a-b-c-aa-ab-aaa-similar-to-converting
-		toZZZ = function(number) {
-			var baseChar = ("A").charCodeAt(0),
-			letters  = "";
-			do {
-				number -= 1;
-				letters = String.fromCharCode(baseChar + (number % 26)) + letters;
-				number = (number / 26) >> 0;
-			} while(number > 0);
-			return letters;
-		},
 		packagesDatabase = {
 			"array" : [],
 			"arydshln" : [],
@@ -102,7 +90,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.0.1";
+			this.version = "1.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -265,6 +253,92 @@ function $id(id) {
 			this.interpret = function(format) {
 				document.getElementById('c')
 					.value = this.interpreters[format].call(this);
+			}
+			this.deleteContent = function(force){
+				force = force || confirm("Are you sure you want to delete the content of your table ?");
+				if(force){
+					this.statesManager.registerState();
+					var div = this.element.querySelectorAll(".outer>div");
+					for(var i=0;i<div.length;i++){
+						div[i].innerHTML = "";
+					}					
+				}
+			}
+			this._importExcel = function(a){
+				document.getElementById('worksheet-loading-status').innerHTML = "";
+				a = JSON.parse(a);
+				var results = a.results,
+				frag = document.createDocumentFragment(),
+				loadWorkbook = function(n){
+					n = Math.max(0,parseInt(n, 10)||0);
+					if(results[n]){
+						var div = document.createElement("div");
+						div.innerHTML = results[n].html;
+						table.extract(div);
+					}
+					$("#worksheet-options").hide()
+					$("#worksheet-dialog").modal("hide");
+				};
+				if(results.length > 1){
+					for(var i=0;i<results.length;i++){
+						var option = document.createElement("option");
+						option.value = i;
+						option.text = results[i].name;
+						frag.appendChild(option);
+					}
+					var select = table._id("select-workbook");
+					while(select.firstChild){
+						select.removeChild(select.firstChild);
+					}
+					select.appendChild(frag);
+					var button = table._id("button-workbook");
+					button.onclick = function(){
+						loadWorkbook(document.getElementById('select-workbook').value);
+					}
+					$("#worksheet-options").show()
+				}
+				else if(results.length > 0){
+					loadWorkbook(0);
+				}
+				table._id("excel-button").disabled = false;
+			}
+			this.importExcel = function(){
+				var file = this._id("excel-file").files[0],
+				elem_status = this._id('worksheet-loading-status');
+				if(file){
+				this._id("excel-button").disabled = true;
+				var excelWorker = function excelWorker(data, cb, th) {
+					var worker = new Worker("js/xlsxworker.js");
+						worker.onmessage = function(e) {
+							switch(e.data.t) {
+								case 'ready': break;
+								case 'e': console.error(e.data.d); break;
+								case 'xlsx': cb(e.data.d);worker.terminate(); break;
+							}
+						};
+						worker.postMessage({d:data,b:'binary'});
+					};
+					var reader = new FileReader(), _this = this;
+					reader.onload = function(e){
+						elem_status.innerHTML = "Converting...";
+						excelWorker(e.target.result, _this._importExcel);
+					};
+					reader.onprogress = function(e){
+						if(e.lengthComputable){
+							var percent = Math.round(e.loaded/e.total*100);
+							elem_status.innerHTML = "Loading "+percent+"%";
+						}
+					}
+					reader.onerror = function(e){
+						elem_status.innerHTML = "An error occured";
+					}
+					reader.readAsBinaryString(file);
+				}
+			}
+			this.openImportModal = function(format){
+				$('#myModal').modal('hide');
+				$id('import_format').value=format;
+				$('#importModal').modal('show');
 			}
 			this.insertRowUnder = function(cell) {
 				this.statesManager.registerState();
@@ -712,7 +786,7 @@ this.getHTML = (function(){
 				return space;
 			}
 			return full;
-		});
+		}).replace(/\u200B/g,'');
 	}
 })();
 			this.setHTML = function(cell, HTML) {
@@ -842,7 +916,7 @@ this.getHTML = (function(){
 				div2.innerHTML = "";
 				div1.appendChild(div2);
 				td.appendChild(div1);
-				td.addEventListener("click", this._clickCellManager, false);
+				td.addEventListener("mousedown", this._clickCellManager, false);
 				return td;
 			}
 			this.createCell = function(classNames) {
@@ -1169,6 +1243,7 @@ this.getHTML = (function(){
 							var eq = document.createElement("span");
 							eq.className = "latex-equation";
 							eq.appendChild(range.extractContents())
+							eq.insertBefore(document.createTextNode("\u200B"),eq.firstChild)
 							range.insertNode(eq);
 							range.selectNodeContents(eq);
 						}
@@ -1467,12 +1542,12 @@ this.getHTML = (function(){
 						lis.push(this.generateFromHTML(liHTML, false, align));
 					}
 					if(align.charAt(0) == "p"){
-						ULs.push("\\begin{tabular}{@{}>{\\textbullet\\hspace{\\labelsep}}"+align+"}"
+						ULs.push("\\begin{tabular}{@{}>{\\labelitemi\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}}"+align+"}"
 							+lis.join("\\\\")+"\\end{tabular}");
 						this.packages["array"] = true;
 					}
 					else{
-						ULs.push("\\begin{tabular}{@{\\textbullet\\hspace{\\labelsep}}"+align+"}"
+						ULs.push("\\begin{tabular}{@{\\labelitemi\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}}"+align+"}"
 							+lis.join("\\\\")+"\\end{tabular}");
 					}
 					while(uli.firstChild){
@@ -1546,13 +1621,16 @@ this.getHTML = (function(){
 							str += "~";
 						}
 						else if(inside == "&lt;"){
-							str += "<";
+							str += "\\textless{}";
 						}
 						else if(inside == "&amp;"){
 							str += "\\&";
 						}
 						else if(inside == "&quot;"){
 							str += '"';
+						}
+						else if(inside == "&gt;"){
+							str += "\\textgreater{}"
 						}
 						i += inside.length-1;
 					}
@@ -1693,7 +1771,8 @@ this.getHTML = (function(){
 				// TODO : Optimize
 				text = leftCorrection + text + rightCorrection;
 				if(background){
-					text = text.replace(/\\begin\{tabular\}[^@\{]*\{@\{(?:\\textbullet\\hspace\{\\labelsep\}|)\}/g, function(full){
+					// TODO : ANALYZE SOMETHING IS WEIRD HERE
+					text = text.replace(/\\begin\{tabular\}[^@\{]*\{@\{(?:\\labelitemi\\hspace\{\\dimexpr\\labelsep\+0\.5\\tabcolsep\}|)\}/g, function(full){
 						return full + ">{\\cellcolor"+getColor(background)+"}";
 					});
 				}
@@ -2156,8 +2235,9 @@ this.getHTML = (function(){
 				src = element.value,
 				format = this._id("format").value;
 				if(format == "latex"){
+					var utf8 = !/^[\x00-\x7F]*$/.test(src);
 					src = src.replace(/^%\s*\\usepack/mg, "\\usepack");
-					src = "\\documentclass{article}\n" + src;
+					src = "\\documentclass{article}\n" + (utf8 ? "\\usepackage[utf8]{inputenc}\n" : "") + src;
 					var lastpackage = src.lastIndexOf("\\usepackage"),
 					endofheader = src.indexOf("}", lastpackage);
 					src = src.substring(0, endofheader+1) + "\n\n\\begin{document}\n"+src.substring(endofheader+1)+"\n\\end{document}";
@@ -2646,7 +2726,7 @@ this.getHTML = (function(){
 					for(var i=0;true;i++){ // infinite loop
 						name = prename
 						if(i>0){
-							name += toZZZ(i);
+							name += i;
 						}
 						if(!this.tabuColorsDic[name]){
 							break;
@@ -2928,6 +3008,9 @@ this.getHTML = (function(){
 						firstPart += "\\ADLnullwidehline\n";
 					}
 				}
+				else if(str.indexOf("\\cellcolor") > -1 || str.indexOf("\\rowcolor") > -1 || str.indexOf("\\columncolor") > -1){
+					this.packages["colortbl"] = true;
+				}
 				if(this.useTabu){
 					// Let see if we have some colors from tabu that we have to declare
 					var tabuColors = this.tabuColors;
@@ -3103,12 +3186,13 @@ this.getHTML = (function(){
 					return css;
 				}
 				function backgroundInfo(cell){
-					var color = window.getComputedStyle(cell,null).getPropertyValue("background-color");
-					if(color == "transparent" || color == "white"){return ""}
+					var color = window.getComputedStyle(cell,null).getPropertyValue("background-color") || cell.style.backgroundColor;
+					if(color == "transparent" || color == "white" || !color){return ""}
 					var rgba = toRGBA(color);
 					if(rgba[3] == 0){
 						return "";
 					}
+					if(!rgba || !rgba.pop){return ""}
 					rgba.pop();
 					if(rgba.join(",") == "255,255,255"){
 						return "";
@@ -3214,7 +3298,7 @@ this.getHTML = (function(){
 							if(!o.sameAsBefore){
 								complete = false;
 							}
-							if(!hasColor && !areSameColors("#000000", o.color)){
+							if(!hasColor && !areSameColors(actualColor, o.color)){
 								hasColor = true;
 							}
 							for (var j = 0; j < cell.colSpan; j++) {
@@ -3297,6 +3381,12 @@ this.getHTML = (function(){
 						}
 					}
 				}
+console.dir({
+					complete: complete,
+					color : hasColor,
+					borders : border,
+					types : types
+				});
 				return callback.call(this, {
 					complete: complete,
 					color : hasColor,
@@ -3410,8 +3500,10 @@ this.getHTML = (function(){
 					borders = o.borders,
 					border = "",
 					enhanceHhline = this._id("opt-latex-hhline").checked && (!this.packages["arydshln"] || this.useTabu),
+					hashHhline = this._id("opt-latex-hhline-hash").checked && (!this.packages["arydshln"] || this.useTabu),
 					insertInHhline = !this.blacklistPackages["colortbl"];
-					if(borders[0].type == "double" && enhanceHhline){
+
+					if(borders[0].type == "double" && (enhanceHhline || hashHhline)){
 						complete = false;
 					}
 					if(complete){
@@ -3481,7 +3573,17 @@ this.getHTML = (function(){
 								    borderLeftColor = (row[i].refCell||row[i]).leftBorderColor,
 								    borderLeftTop = ((toprow[i]||{}).refCell||toprow[i]||{}).leftBorder,
 								    borderLeftTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).leftBorderColor;
-								if(enhanceHhline && (borderLeft == "double" || borderLeftTop == "double")){
+								if(hashHhline && (borderLeft == "double" || borderLeftTop == "double")){
+									if(borders[i].type == "double"){
+										var borderLeftFColor = borderLeftColor || borderLeftTopColor;
+										if(insertInHhline && !areSameColors(insideColor, borderLeftFColor)){
+											insideColor = borderLeftFColor;
+											border += ">{\\arrayrulecolor"+getColor(borderLeftFColor)+"}";
+										}
+										border += "#";
+									}
+								}
+								else if(enhanceHhline && (borderLeft == "double" || borderLeftTop == "double")){
 									var borderLeftFColor = borderLeftColor || borderLeftTopColor;
 									if(insertInHhline && !areSameColors(insideColor, borderLeftFColor)){
 										insideColor = borderLeftFColor;
@@ -3617,7 +3719,27 @@ this.getHTML = (function(){
 								borderRightTop = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorder;
 								borderRightTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorderColor;
 							}
-							if(enhanceHhline && (borderRight == "double" || borderRightTop == "double")){
+							if(hashHhline && (borderRight == "double" || borderRightTop == "double")){
+								if(type == "double" || (borders[i+1] && borders[i+1].type == "double")){
+									var borderRightFColor = borderRightColor || borderRightTopColor;
+									if(insertInHhline){
+										var toadd = "";
+										if(!areSameColors(insideColor, borderRightFColor)){
+											insideColor = borderRightFColor;
+											toadd += "\\arrayrulecolor"+getColor(borderRightFColor);
+										}
+										if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
+											doublerulesepcolor = "FFFFFF";
+											toadd += "\\doublerulesepcolor"+getColor([255,255,255,1]);
+										}
+										if(toadd){
+											border += ">{"+toadd+"}";
+										}
+									}
+									border += "#";				
+								}
+							}
+							else if(enhanceHhline && (borderRight == "double" || borderRightTop == "double")){
 								var borderRightFColor = borderRightColor || borderRightTopColor;
 								if(insertInHhline){
 									var toadd = "";
@@ -3706,7 +3828,7 @@ this.getHTML = (function(){
 						}
 						border += "}";
 						// If the hhline was not a must, we use \hline\hline in the case of full double horizontal borders
-						if(o.complete && !/[:\|]/g.test(border) && borders[0].type == "double"){
+						if(o.complete && !/[:\|#]/g.test(border) && borders[0].type == "double"){
 							border = "\\hline\\hline";
 							if(hasColor){
 								border = "\\arrayrulecolor"+getColor(firstBorder.color)+border;
