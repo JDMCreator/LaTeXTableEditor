@@ -6,8 +6,52 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 1.1
+
+Version 1.1.2 (2018/05/10)
 ===========
+
+| Note on this release :
+|     Bug fixes and WML export
+
+CORE
+
+[#] Selection with CTRL or SHIFT didn't work
+
+PLAIN TEX EXPORT
+
+[#] "<" characters disappeared
+
+WML EXPORT
+
+[+] New WML export module
+
+Version 1.1.1 (2018/05/09)
+===========
+
+| Note on this release :
+|     Improved selection and better tool to import spreadsheets
+
+CORE
+
+[+] Now possible to drag/drop file to load data
+[#] Selection of cells now follows TAB and SHIFT+TAB
+[#] Better management of errors with loading data from files
+
+LATEX EXPORT
+
+[#] Empty formulas are no longer printed
+
+PLAIN TEX EXPORT
+
+[#] Empty formulas are no longer printed
+[#] "~" character is now replaced by "{\char`\~}"
+[#] "\" character is now replaced by "{\char`\\}"
+
+Version 1.1 (2018/05/06)
+===========
+
+| Note on this release :
+|     Load data from spreadsheet, improved access to functionnalities, bug fixes
 
 CORE
 
