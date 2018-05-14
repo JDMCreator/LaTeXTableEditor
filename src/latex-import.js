@@ -512,10 +512,12 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		var row = table[i],
 		pos = 0;
 		for(var j=0;j<row.length;j++){
-			var o = row[j];
+			var o = row[j],
+			o2;
 			if(o.rowSpan && Math.abs(o.rowSpan) != 1){
 				if(o.rowSpan < 0){
 					var span = Math.abs(o.rowSpan);
+					o.rowSpan = span;
 					for(var k=i-span+1;k<i+1;k++){
 						var row2 = table[k];
 						if(row2){
@@ -523,11 +525,19 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 							for(var h=0;h<row2.length;h++){
 								if(pos2 == pos){
 									if(k==i-span+1){
-										row2[h] = o;
+										row2[h] = {};
+										// Copy object
+										for(var f in o){
+											if(o.hasOwnProperty(f)){
+												row2[h][f] = o[f];
+											}
+										}
+										row2[h].rowSpan = span;
+										o2 = row2[h];
 									}
 									else{
 										row2[h].remove = true;
-										row2[h].refCell = o;
+										row2[h].refCell = o2;
 									}
 								}
 								pos2 += row[h].colSpan || 1;

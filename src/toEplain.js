@@ -16,6 +16,7 @@
 		else{
 			latex+="\\hfill";
 		}
+		latex = latex.replace(/\\textbackslash\{\}/g, "{\\char`\\\\}");
 		return latex;
 	},
 	generateFromHTML = function(html, ignoreMultiline, align) {
@@ -71,6 +72,9 @@
 				else if(inside == "&quot;"){
 					str += '"';
 				}
+				else if(inside == "&gt;"){
+					str += "$>$";
+				}
 				i += inside.length-1;
 			}
 			else if(c == "\\"){
@@ -89,7 +93,7 @@
 				str += "\\P{}";
 			}
 			else if(c == "~"){
-				str += "\\textasciitilde{}";
+				str += "{\\char`\\~}";
 			}
 			else{
 				str+= c;
