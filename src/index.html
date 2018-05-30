@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8"> 
 
-<meta name="description" content="A powerful and robust LaTeX, Plain TeX, PreTeXt, EPlain, Markdown, CSV and HTML Table Editor and Generator. Also convert LaTeX tables to Plain TeX, Markdown, CSV or HTML.">
+<meta name="description" content="A powerful and robust LaTeX, Plain TeX, PreTeXt, EPlain, Markdown, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
 	<title>LaTeX Tables Editor</title>
 	<link href="css.css" rel="stylesheet">
 	<link href="css/bootstrap.min.css" rel="stylesheet">
@@ -412,7 +412,7 @@ Color of border :
 					<option value="csv">CSV</option>
 				</select></div>
 			<div class="form-group">
-				<textarea class="form-control" id="import_value" style="min-height:200px;" placeholder="Content of your file to import"></textarea>
+				<textarea class="form-control textarea-wrap" id="import_value" style="min-height:200px;" placeholder="Content of your file to import"></textarea>
 			</div>
 			<div id="latex-import-error" style="display:none;color:red;">Your LaTeX table could not be loaded. Help us and <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">send us the code of your table</a> so we can see what happened.</div>
 			<div class="text-center">
@@ -880,6 +880,8 @@ placement: 'auto top'
 	<script type="text/javascript" src="ntc.js">
 	</script>
 	<script type="text/javascript" src="colorPicker.js">
+	</script>
+	<script type="text/javascript" src="xcolor.js">
 	</script>
 </body>
 

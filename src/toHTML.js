@@ -104,7 +104,7 @@
 			var text = document.createTextNode("$$"+(eq.innerText || eq.textContent)+"$$");
 			eq.parentNode.replaceChild(text, eq);
 		}
-		var html = beautify(container.innerHTML);
+		var html = beautify(container.innerHTML.replace(/<\s*wbr[^>]*>/i,"<br>"));
 		if(document.getElementById("opt-html-remove-tag").checked){
 			html = html.replace(/\s+<\s*\/\s*(?:p|dt|dd|li|option|thead|th|tbody|tr|td|tfoot|colgroup)\s*>/gm, "")
 				   .replace(/[\n\r]{2,}/g, "\n");

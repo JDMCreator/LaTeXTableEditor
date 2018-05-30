@@ -724,8 +724,13 @@ this.getHTML = (function(){
 				newline = false;
 			}
 			else if(tagName == "BR"){
-				cont.appendChild(document.createElement("BR"));
-				newline = false;
+				if(node.parentElement.childNodes[node.parentElement.childNodes.length-1] != node){
+					cont.appendChild(document.createElement("BR"));
+					newline = false;
+				}
+				else{
+					cont.appendChild(document.createElement("WBR"));
+				}
 			}
 			else if(node.className == "latex-equation"){
 				newnode = document.createElement("span");
@@ -1158,7 +1163,7 @@ this.getHTML = (function(){
 				}
 				this.element.appendChild(table);
 			}
-			this.exportToJSON = function() {
+			this.exportToJSON = function(useHTML) {
 				var o = {options:{}},
 					table = this.element;
 				o.autoBooktabs = table.hasAttribute("data-booktabs");
@@ -1185,12 +1190,16 @@ this.getHTML = (function(){
 							}
 						}
 						if (cell.dataset.twoDiagonals){
-							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1), this.getHTML(cell, 2)]
+							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1), this.getHTML(cell, 2)].forEach(function(html){
+								return html.replace(/<\s*wbr[^>]*>/i, "<br>");
+							});
 						}
 						else if (cell.dataset.diagonal) {
-							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1)]
+							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1)].forEach(function(html){
+								return html.replace(/<\s*wbr[^>]*>/i, "<br>");
+							});
 						} else {
-							cellO.html = this.getHTML(cell);
+							cellO.html = this.getHTML(cell).replace(/<\s*wbr[^>]*>/i, "<br>");
 						}
 						if (cellO.dataset.selected) {
 							delete cellO.dataset.selected;
@@ -1283,7 +1292,7 @@ this.getHTML = (function(){
 				}
 			}
 			this.saveToJSON = function() {
-				var o = this.exportToJSON();
+				var o = this.exportToJSON(true);
 				document.getElementById('c')
 					.value = JSON.stringify(o, null, "    ");
 			}
@@ -3226,29 +3235,63 @@ this.getHTML = (function(){
 					}
 					return rows2;
 				}
+				var intersectionPoints = [],
+				rrows = [];
+
+				// First transform into a table that take care of colSpan
 				for(var i=0;i<rows.length;i++){
-					rows2.push("");
-					start.push(0);
-					max.push(0);
-					n = Math.max(n, rows[i].length);
-				}
-				for(var i=0;i<n;i++){
-					var unspace = false;
-					for(var j=0;j<rows.length;j++){
-						var cell = rows[j][i];
-						if(start[j] != i){continue}
-						if(i !== 0){
-							var submax = max[i-1];
-							for(var k=rows2[j].length;k<submax+1;k++){
-								rows2[j]+= " ";
+					var newrow = [];
+					for(var j=0;j<rows[i].length;j++){
+						var cell = rows[i][j];
+						if(cell){
+							for(var h=0;h<Math.max(1,cell.colSpan||1)-1;h++){
+								newrow.push(false);
 							}
-							rows2[j] += "& ";
+							newrow.push(cell);
 						}
-						rows2[j]+= cell.text;
-						max[i] = Math.max(max[i], rows2[j].length);
-						start[j]+= cell.colSpan;
+					}
+					rrows.push(newrow)
+				}
+				// Now we can handle that table to find where to put "&";
+				rows = rrows;
+				for(var j=0;j<rows[0].length;j++){
+					for(var i=0;i<rows.length;i++){
+						var cell = rows[i][j];
+						if(cell){
+							var colspan = Math.max(1,Math.abs(cell.colSpan||1));
+							if(!intersectionPoints[j]){
+								if(j-colspan+1 <= 0){
+									intersectionPoints[j] = cell.text.length+1;
+								}
+								else{
+									intersectionPoints[j] = (intersectionPoints[j-colspan]||0)+2+cell.text.length+1;
+								}
+							}
+							else{
+								intersectionPoints[j] = Math.max(intersectionPoints[j], (j === 0 ? 0 : (intersectionPoints[j-colspan]||0)+2)+cell.text.length+1);
+							}
+						}
 					}
 				}
+console.dir(intersectionPoints);
+				for(var i=0;i<rows.length;i++){
+					var str = "";
+					for(var j=0;j<rows[i].length;j++){
+						var cell = rows[i][j],
+						colspan = Math.max(1,Math.abs(cell.colSpan||1));
+						if(cell){
+							if(j-colspan+1 !== 0){
+								str += "& ";
+							}
+							str += cell.text;
+							for(var h=str.length;h<intersectionPoints[j];h++){
+								str += " ";
+							}
+						}
+					}
+					rows2.push(str);
+				}
+/*
 				max = 0;
 				for(var i=0;i<rows2.length;i++){
 					max = Math.max(max, rows2[i].length);
@@ -3258,6 +3301,7 @@ this.getHTML = (function(){
 						rows2[i]+= " ";
 					}
 				}
+*/
 				return rows2;
 			}
 			this.extract = (function() {
@@ -3368,6 +3412,7 @@ this.getHTML = (function(){
 				}
 			})()
 			this.HBorder = function(n, callback, matrix) {
+//if(n==1){debugger;}
 				var row = matrix[Math.max(0, (n || 0) - 1)],
 				types = {};
 				if (!row) {
@@ -3407,7 +3452,17 @@ this.getHTML = (function(){
 								hasColor = true;
 							}
 							for (var j = 0; j < cell.colSpan; j++) {
-								border.push(o);
+								if(j === 0){
+									border.push(o);
+								}
+								else{
+									border.push({
+										type : o.type,
+										color : o.color,
+										sameAsBefore : true,
+										cellIndex : o.cellIndex
+									});
+								}
 								i++;
 							}
 							i--;
@@ -3466,11 +3521,21 @@ this.getHTML = (function(){
 							if(!o.sameAsBefore){
 								complete = false;
 							}
-							if(!hasColor && !areSameColors("#000000", o.color)){
+							if(!hasColor && !areSameColors(actualColor, o.color)){
 								hasColor = true;
 							}
 							for (var j = 0; j < cell.colSpan; j++) {
-								border.push(o);
+								if(j === 0){
+									border.push(o);
+								}
+								else{
+									border.push({
+										type : o.type,
+										color : o.color,
+										sameAsBefore : true,
+										cellIndex : o.cellIndex
+									});
+								}
 								i++;
 							}
 							i--;
@@ -3486,13 +3551,14 @@ this.getHTML = (function(){
 						}
 					}
 				}
-
-				return callback.call(this, {
+				var o = {
 					complete: complete,
 					color : hasColor,
 					borders : border,
 					types : types
-				});
+				};
+
+				return callback.call(this, o);
 			}
 			this.actualMainColor = "black";
 			this.actualColor = "black";
@@ -3595,7 +3661,6 @@ this.getHTML = (function(){
 					if (arguments.length == 0) {
 						return ""
 					}
-					console.log(o.color);
 					var complete = o.complete,
 					hasColor = o.color,
 					borders = o.borders,

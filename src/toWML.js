@@ -31,9 +31,13 @@
 	function generateFromHTML(html){
 		// TODO : Support unordered list
 		html = html.replace(/<\s*(\/?)\s*([a-z]+)[^>]*>/gi, function(full, open, tagname){
+			tagname = tagname.toLowerCase();
 			if(tagname != "i" && tagname != "b" && tagname != "strong" 
-			   && tagname != "em" && tagname != "u" && tagname != "br"){
+			   && tagname != "em" && tagname != "u" && tagname != "br" && tagname != "wbr"){
 				return "";
+			}
+			if(tagname == "wbr"){
+				return "<br />";
 			}
 			return full;
 		})

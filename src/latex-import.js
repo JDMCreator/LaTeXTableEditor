@@ -1,4 +1,9 @@
 (function(){
+
+var toHex = function(color){
+	return "#"+Math.round((1 << 24) + (color[0] << 16) + (color[1] << 8) + color[2]).toString(16).slice(1);
+};
+
 var latex = {},
    envirn = function(code){
 	var o = {full: ""}
@@ -104,6 +109,24 @@ specialSeparators = {
 		}
 		return false;
 	}
+	else if(realname == "char"){
+		// TODO : Improve `\char` support. Now we just try to prevent bugs
+		if(nextchar == "`"){
+			var nextchar = code.charAt(name.length+1);
+			if(nextchar == "\\"){
+				o.args.push("\\"+code.charAt(name.length+2))
+				o.name = "char";
+				o.full = "\\char`\\"+code.charAt(name.length+2);
+				return o;
+			}
+			else{
+				o.name = "char";
+				o.sp = "`" + nextchar;
+				o.full = "\\char`"+nextchar;
+			}
+		}
+
+	}
 	else if(realname == "\\"){
 		o.asterisk = nextchar == "*";
 		o.name = realname;
@@ -125,7 +148,7 @@ specialSeparators = {
 		o.full="\\"+realname+""+(o.asterisk ? "*" : "")+nextchar;
 		return o;
 	}
-	code = code.substring(name.length) + " ";
+	code = code.substring(name.length+(o.asterisk?1:0)) + " ";
 	var mode = 0, actu = "", nbofbrack=0;
 	for(var i=0;i<code.length;i++){
 		var char = code.charAt(i);
@@ -207,7 +230,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 	if(!tabular){
 		return false;
 	}
-	var type = tabular[1], obj = {}, code2 = code.substring(tabular.index), initEnv = envirn(code2);
+	var type = tabular[1], obj = {}, code2 = code.substring(tabular.index), initEnv = envirn(code2), beforeCode = code.substring(0, tabular.index);
 	code = initEnv.content;
 	if(type == "table" || type == "table*" || type == "sidewaystable"){
 		if(/\\begin{(tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
@@ -223,6 +246,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				return false; // Should not happen
 			}
 			type = tabular[1];
+			beforeCode += code2.substring(0, tabular.index);
 			code2 = code2.substring(tabular.index);
 			initEnv = envirn(code2);			
 		}
@@ -310,6 +334,27 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 			head = header(head);
 		}
 	}
+
+	// We finish to treat header
+	// First, we get the colors of columns
+
+	var columncolors = head.colors;
+
+	// Then, the headers components
+	head = head.components;
+
+	// Here we are looking for functions like \rowcolors or \rowcolors*
+	// TODO : Make it more solid (take care of comments, etc.)
+	var alternateColors;
+	if(beforeCode.indexOf("\\rowcolors")>-1){
+		var alternateCode = beforeCode.substring(beforeCode.lastIndexOf("\\rowcolors")),
+		rowcolors = command(alternateCode);
+		if(rowcolors.name == "rowcolors"){
+			alternateColors = [parseInt(rowcolors.args[0], 10),
+					   rowcolors.args[1] ? xcolor(rowcolors.args[1]) : [255,255,255],
+					   rowcolors.args[2] ? xcolor(rowcolors.args[2]) : [255,255,255]];
+		}		
+	}
 	var count = 0, borderCSS = {
 		"normal" : "1px solid black",
 		"double" : "2px double black",
@@ -323,7 +368,8 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		"dottedline" : "1px dotted black"
 	};
 	var cellpos = 0, commandmode = false, otherseparator = "",
-	table = [[]], cell = "", row = table[0], ignoreSpace = false, actuBorder="", borders = [];
+	table = [[]], cell = "", row = table[0], ignoreSpace = false, actuBorder="", borders = [],
+	backgroundRow = [], actualXColorRowNumber = 1, xcolorRowNumbers = [];
 	for(var i=0, c;i<code.length;i++){
 		c = code.charAt(i);
 		var sub = code.substring(i);
@@ -354,6 +400,8 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 					cell = "";
 					table.push([]);
 					borders.push(actuBorder);
+					xcolorRowNumbers.push(actualXColorRowNumber);
+					actualXColorRowNumber++;
 					actuBorder = "";
 					row = table[table.length-1];
 					ignoreSpace = true;
@@ -399,6 +447,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				i+=com.full.length-1;
 			}
 			else if(name == "tabucline"){
+				actualXColorRowNumber++;
 				// TODO : Implement different styles for tabucline (ex : dotted, dashed)
 				var span = com.args[0];
 				if(span == "-"){
@@ -416,8 +465,15 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				i+=com.full.length-1;
 			}
 			else if(name == "cline" || name == "cmidrule" || name == "cdashline" || name == "Xcline"){
+				actualXColorRowNumber++;
 				if(name == "Xcline"){
 					name = "cline";
+				}
+				if(name == "cmidrule"){
+					var cmidrule = parseInt(com.options[0]||0) || com.options[0] || 0;
+					if(cmidrule == "\\heavyrulewidth" || (cmidrule>=7.5 && cmidrule<=8.5)){
+						name = "toprule";
+					}
 				}
 				if(name == "cdashline" && com.options[0]){
 					if(parseInt(com.options[0].split(/\//)[0],10) <= 1.5){
@@ -434,6 +490,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				i+=com.full.length-1;
 			}
 			else if(name == "hhline"){
+				actualXColorRowNumber++;
 				actuBorder = [];
 				var hhline = com.args[0], hhlinecomment = false, insidehhline = 0, pos = 1;
 				hhlineLoop: for(var j=0, hc;j<hhline.length;j++){
@@ -476,6 +533,11 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				}
 				i+=com.full.length-1;
 			}
+			else if(name == "rowcolor"){
+				console.log(table.length-1);
+				backgroundRow[table.length-1] = xcolor(com.args[0],com.options[0]);
+				i+=com.full.length-1;
+			}
 			else{
 				cell += com.full;
 				i+=com.full.length-1;
@@ -494,10 +556,29 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 	}
 	row.push(cell);
 	borders.push(actuBorder);
+	xcolorRowNumbers.push(actualXColorRowNumber);
+	actualXColorRowNumber++;
 	for(var i=0;i<table.length;i++){
 		var row = table[i];
 		for(var j=0;j<row.length;j++){
-			setCellO(table, j, i, row[j], head[j])
+
+			// Let's determine default background color for this cell
+			// Priority to rowcolor
+			var backgroundCell = backgroundRow[i];
+			
+			if(!backgroundCell && alternateColors){
+				if(Math.max(+alternateColors[0]||1, 1)<= xcolorRowNumbers[i]){
+					if(xcolorRowNumbers[i]%2 === 0){
+						// Even
+						backgroundCell = alternateColors[2];
+					}
+					else{
+						// Odd
+						backgroundCell = alternateColors[1];
+					}
+				}
+			}
+			setCellO(table, j, i, row[j], head[j], backgroundCell, columncolors[j])
 		}
 	}
 	// REMOVE EMPTY CELL AT THE END
@@ -540,7 +621,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 										row2[h].refCell = o2;
 									}
 								}
-								pos2 += row[h].colSpan || 1;
+								pos2 += row2[h].colSpan || 1;
 							}
 						}
 					}
@@ -555,7 +636,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 									row2[h].remove = true;
 									row2[h].refCell = o;
 								}
-								pos2 += row[h].colSpan || 1;
+								pos2 += row2[h].colSpan || 1;
 							}
 						}
 					}
@@ -595,7 +676,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 		else if(border.push){
 			for(var j=0;j<border.length;j++){
 				var subborder = border[j];
-				if(subborder[0]  == "cline" || subborder[0] == "cdouble" || subborder[0] == "cmidrule" || subborder[0] == "cdottedline" || subborder[0] == "cdashline"){
+				if(subborder[0]  == "cline" || subborder[0] == "cdouble" || subborder[0] == "cmidrule" || subborder[0] == "cdottedline" || subborder[0] == "cdashline" || subborder[0] == "toprule"){
 					var end = subborder[1].split(/-+/),
 					start = parseInt(end[0],10)-1;
 					end = (parseInt(end[1],10)||row.length)-1,
@@ -605,7 +686,8 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 						cmidrule : "midrule",
 						cdottedline : "dottedline",
 						cdashline : "hdashline",
-						cdouble: "double"
+						cdouble: "double",
+						toprule: "toprule"
 					}[subborder[0]];
 					for(k=0;k<row.length;k++){
 						var o = row[k];
@@ -631,20 +713,36 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 			}
 		}
 	}
-	var realtable = []
+	var realtable = [];
+	var colLength = 1;
 	for(var i=0;i<table.length;i++){
-		var realrow = [], row = table[i];
+		var rowCount = 0;
 		for(var j=0;j<row.length;j++){
+			rowCount += (row[j].colSpan||1);
+		}
+		colLength = Math.max(colLength, rowCount);
+	}
+	for(var i=0;i<table.length;i++){
+		var realrow = [], row = table[i], rowCount = 0;
+		for(var j=0;j<row.length;j++){
+			rowCount += (row[j].colSpan||1);
 			if(!row[j].remove){
 				realrow.push(row[j]);
 			}
+		}
+		for(var j=rowCount;j<colLength;j++){
+			realrow.push({
+				html:"",
+				css:"",
+				dataset:{align:"l"}
+			});
 		}
 		realtable.push(realrow);
 	}
 	obj.cells = realtable;
 	return obj;
 },
-setCellO = function(table, x, y, code, head){
+setCellO = function(table, x, y, code, head, backgroundRow, columnColor){
 	var o = {html:"", dataset:{}},
 	html = getHTML(code,o);
 	o.html = html;
@@ -652,12 +750,36 @@ setCellO = function(table, x, y, code, head){
 	var span = /\\multicolumn(?:{[ ]*([0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		span = command(code.substring(span.index));
-		head = header(span.args[1])[0];
+		head = header(span.args[1]);
+
+		// We set a new column color
+		columnColor = head.colors[0]
+
+		// Then we get the real head
+		head = head.components[0]
 		o.colSpan = parseInt(span.args[0], 10);
 	}
 	span = /\\multirow(?:cell|thead|)(?:[ ]*\[[^\]]*\]|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		o.rowSpan = parseInt(span[1]||span[2], 10);
+	}
+
+	// Get cell background info from \cellcolor
+	var cellcolor = /\\cellcolor[^a-zA-Z]/.exec(code);
+	if(cellcolor){
+		cellcolor = command(code.substring(cellcolor.index));
+		cellcolor = xcolor(cellcolor.args[0], cellcolor.options[0]);
+	}
+
+	// Now treat background
+	if(cellcolor){
+		css += "background-color:rgb("+cellcolor.join(",")+");";
+	}
+	else if(backgroundRow){
+		css += "background-color:rgb("+backgroundRow.join(",")+");";
+	}
+	else if(columnColor){
+		css += "background-color:rgb("+columnColor.join(",")+");";
 	}
 	
 	// Treat header;
@@ -811,7 +933,7 @@ getHTML = function(code,o){
 		else if(char == "<"){
 			html += "&lt;";
 		}
-		else if(char != "\n" && char != "\t"){
+		else if(char != "\n" && char != "\t" && char != "{" && char != "}"){
 			html += char;
 		}
 	}
@@ -820,85 +942,86 @@ getHTML = function(code,o){
 getHeaderComponent = function(head, i){
 	var c = head.charAt(i),
 	    next = head.charAt(i+1),
-	    
-	    o = {char : c, opts : [], args : [], full: c}
-	if(c == "*" && next != "{"){
-		o.args.push(next);
-		o.full += next;
-		i++;
-		next = head.charAt(i+1);
-	}
-	if(next == "{" || next == "["){
-		var argsN = 0, optsN = 0, actu="",commentmode = false;
-		for(var j=i+1, d;j<head.length;j++){
-			d = head.charAt(j);
-			if(commentmode){
-				if(d == "\n" || d == "\r"){
-					commentmode = false;
-				}
-				continue;
+	    o = {char : c, opts : [], args : [], full: c},
+
+	    // These are special column types which requires more than one argument
+	    // We need this to parse the shorten construction (i.e. *2c instead of *{2}{c}) 
+	    specialColumns = {
+		"*" : 2,
+		"D" : 3, // From 'dcolumn' package
+		"F" : 3, // From 'fcolumn' package
+		"w" : 2, // From 'array'
+		"W" : 2
+	    },
+	    ogI = i;
+
+	var nargs = specialColumns[c] || 0
+	//if(c == "D"){debugger;}
+	i++, commentmode = false, nArg = 0, inOpt = false, actu = "";
+	for(var d;i<head.length;i++){
+		d = head.charAt(i)
+		if(commentmode){
+			if(d == "\n" || d == "\r"){
+				commentmode = false;
 			}
-			else if(d == "%"){
-				commentmode = true;
-				continue;
+			continue;
+		}
+		if(d == "%"){
+			commentmode = true;
+			continue;
+		}
+		else if(nArg>0 || inOpt){
+			// TODO : More robust (aka support `} and \verb)
+			if(d == "\\"){
+				actu += d + (head.charAt(i+1) || ""); 
+				i++;
 			}
-			if(d == "{"){
-				argsN++;
-			}
-			else if(d == "["){
-				if(argsN == 0){
-					optsN++;
-				}
-				else{
-					actu += d;
-				}
-			}
-			else if(d == "\\"){
-				actu += d + head.charAt(j+1);
-				j++
+			else if(d == "]" && inOpt && nArg<=0){
+				o.opts.push(actu);
+				inOpt = false;
+				nArg = 0;
+				actu = "";
 			}
 			else if(d == "}"){
-				if(argsN <= 1 && optsN <= 0){
+				nArg--;
+				if(nArg <= 0 && !inOpt){
 					o.args.push(actu);
-					argsN = optsN = 0;
 					actu = "";
-				}
-				else{
-					argsN--;
-					actu += d;
-				}
-			}
-			else if(d == "]"){
-				if(argsN <=0 && optsN <= 1){
-					o.opts.push(actu);
-					argsN = optsN = 0;
-					actu = "";
-				}
-				else if(optsN > 0){
-					optsN--;
-					actu += d;
+					nArg = 0;
 				}
 				else{
 					actu += d;
 				}
 			}
-			else if(argsN <= 0 && optsN <= 0){
-				o.full += head.substring(i+1, j);
-				return o;				
+			else if(d == "{"){
+				nArg++;
+				actu += d;
 			}
 			else{
 				actu += d;
 			}
 		}
+		else if(d == "{"){
+			nArg++;
+			continue;	
+		}
+		else if(d == "["){
+			inOpt = true;
+			continue;
+		}
+		else if(o.args.length < nargs){
+			o.args.push(d);
+		}
+		else{
+			break;
+		}
 	}
-	else{
-		return o;
-	}
-	o.full += head.substring(i+1);
+	console.dir(o);
+	o.full += head.substring(ogI+1,i);
 	return o;
 },
 header = function(head){
-	var arr=[], actu = "", foundfirst = false, commentmode = false;
+	var arr=[], actu = "", foundfirst = false, commentmode = false, colors = [], nextAlign = "";
 	for(var i=0,c;i<head.length;i++){
 		c = head.charAt(i),
 		info = getHeaderComponent(head, i);
@@ -928,7 +1051,20 @@ header = function(head){
 		}
 		else if(/[a-zA-Z]/.test(c)){
 			c = c.toLowerCase();
-			if(c == "x"){
+			if(nextAlign){
+				c = nextAlign;
+				if(c != "c" && c!= "r"){
+					c = "l";
+				}
+				nextAlign = "";
+			}
+			else if(c == "w"){
+				c = info.args[0];
+				if(c != "c" && c != "r"){
+					c = "l";
+				}
+			}
+			else if(c == "x"){
 				if(info.opts.length == 1){
 					c = (/^[0-9-]/.test(info.opts[0]) ? /([cr])[\s\S]*$/i : /^[\s\S]*([cr])/i).exec(info.opts[0]);
 					c = c ? c[1] : "l";
@@ -967,11 +1103,34 @@ header = function(head){
 				actu += ":";
 			}
 		}
+		else if(c == ">" && info.args.length > 0){
+			var content = info.args[0];
+
+			// Here, we are looking for \columncolor info
+			var columncolor = /\\columncolor[\[\{]/.exec(content);
+			if(columncolor){
+				columncolor = content.substring(columncolor.index);
+				columncolor = command(columncolor)
+				var color = xcolor(columncolor.args[0], columncolor.options[0]);
+				colors[arr.length] = color;
+			}
+
+			// Now we are looking for alignment info
+			if(/\\[cC]entering([^a-zA-Z]|$)/.test(content)){
+				nextAlign = "c";
+			}
+			else if(/\\(raggedleft|RaggedLeft)([^a-zA-Z]|$)/.test(content)){
+				nextAlign = "r";
+			}
+		}
 	}
 	if(actu){
 		arr.push(actu);
 	}
-	return arr;
+	return {
+		components: arr,
+		colors: colors
+	};
 },
 treatEnv = function(code){
 	var env = envirn(code),
@@ -1068,7 +1227,11 @@ treatCom = function(code){
 	else if(name == "multicolumn" || name == "multirow"){
 		html += getHTML(com.args[2]);
 	}
-	else if(name == "multirowcell" || name == "multirowhead" || name == "textcolor"){
+	else if(name == "textcolor"){
+		var color = xcolor(com.args[0], com.options[0]) || [0,0,0];
+		html += '<font color="'+toHex(color)+'">'+ getHTML(com.args[1]) + '</font>';
+	}
+	else if(name == "multirowcell" || name == "multirowhead"){
 		html += getHTML(com.args[1]);
 	}
 	else if(name == "verb"){

@@ -6,6 +6,48 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.2 (2018/05/29)
+===========
+
+| Note on this release :
+|     Support for color (background and text) in import, bug fixes
+
+CORE
+
+[+] Import textarea now uses a monospace font and doesn't wrap
+
+LATEX IMPORT
+
+[+] Support for `xcolor` package syntax with xcolor.js
+[+] Support for commands \cellcolor and \rowcolor
+[+] Support for command \rowcolors (and its bugs) from `xcolor`
+[+] Support for command \columncolor
+[+] Support for commands \raggedleft, \RaggedLeft, \centering, \Centering, \raggedright, \RaggedRight
+[+] Support for minified `w` and `W` column types (e.g. `wc{2cm}`)
+[+] New function to parse preambule components
+[+] Support for `D` and `F` column types and their minified versions
+[+] Basic support for `\char`, a TeX primitive that could cause fatal errors in the parser
+[+] Support for optional argument of \cmidrule
+[#] Support for minified `*` column type (e.g. `*3c` or `*{3}c`)
+[#] "Forgotten" cells are now added, following LaTeX rules
+[#] Group characters (i.e. { and }) are no longer printed
+[#] Better support for starred commands (e.g. `\hspace*{2cm}`)
+[#] Fixed a typo that prevented to load some tables with multiple cells that span columns (#6)
+
+LATEX EXPORT
+
+[+] New function to beautify/align the output. It is now more robust to cells that span columns
+[#] Fixed issue where partial cells could result in multiple commands instead of one because of cells spanning columns
+[#] Useless \arrayrulecolor could appeared sometimes in complete rules
+[#] Fixed issue where newlines were added in the output or empty cells could result in cells with newlines (#1)
+
+HTML EXPORT
+
+[/] Changed part of the code to make it compatible with code change due to the fix to #1
+
+WML EXPORT
+
+[/] Changed part of the code to make it compatible with code change due to the fix to #1
 
 Version 1.1.3 (2018/05/14)
 ===========
@@ -34,7 +76,7 @@ CORE
 
 PLAIN TEX EXPORT
 
-[#] "<" characters disappeared
+[#] ">" characters disappeared
 
 WML EXPORT
 

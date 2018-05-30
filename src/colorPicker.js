@@ -46,15 +46,12 @@ rgbToHsl = function(r, g, b){
             case b: h = ((r - g) / d + 4)*60; break;
         }
     }
-console.log(h);
     return [h, s, l];
 }
 
 		this.actualSettings = null;
 		this.color = function(color){
-			console.log(color);
 			color = toRGBA(color) || [0,0,0,1];
-			console.log(color);
 			color = color.map(function(a){return a||0})
 			color.pop();
 			var rgb = "rgb("+color.map(Math.round).join()+")",

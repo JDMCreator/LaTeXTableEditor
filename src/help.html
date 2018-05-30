@@ -20,6 +20,12 @@ $(function(){
 		frag.appendChild(li);
 	}
 	document.getElementById("ul").appendChild(frag);
+	var supp = document.querySelectorAll(".supp"),
+	howmany = 0;
+	for(var i=0;i<supp.length;i++){
+		howmany += supp[i].querySelectorAll("li").length
+	}
+	count.innerHTML = howmany;
 });
 </script>
 </head>
@@ -34,7 +40,7 @@ $(function(){
 </div>
 <div id="import_latex" class="question">
 <p><strong>How to import a LaTeX table ?</strong>
-<p>Click on the <span class="glyphicon glyphicon-file"></span> "New File" icon. Then, click on "Import a LaTeX table". Paste your code there and click on "Import the content of a file" .
+<p>Under the logo, there's a <kbd>File</kbd> menu. Click on it and then follows <kbd>File</kbd> &gt; <kbd>Import table</kbd> &gt; <kbd>LaTeX</kbd>.
 </div>
 <div id="import" class="question">
 <p><strong>Which format can I use to import a table ?</strong>
@@ -173,16 +179,17 @@ document.write("t")
 <li>xtabular</li>
 <li>mpxtabular</li>
 </ul>
-<h3><a id="Supported_commands_40"></a>Supported commands</h3>
+<h3><a id="Supported_commands_40"></a>Supported commands (<span id="count"></span> commands)</h3>
 
-<ul>
+<ul class="supp">
 <li> $ ... $
 <li> $$ ... $$
 <li> \( ... \)
 <li> \[ ... \]
 </ul>
 
-<ul>
+<ul class="supp">
+<li> ~
 <li> ``
 <li> ''
 <li> !`
@@ -191,7 +198,7 @@ document.write("t")
 <li> ---
 </ul>
 
-<ul>
+<ul class="supp">
 <li>\`</li>
 <li>\&amp;</li>
 <li>\%</li>
@@ -211,9 +218,13 @@ document.write("t")
 <li>\b</li>
 <li>\c</li>
 <li>\cdashline
+<li>\cellcolor
+<li>\centering
+<li>\Centering
 <li>\chapter</li>
 <li>\cline</li>
 <li>\cmidrule</li>
+<li>\columncolor
 <li>\cr</li>
 <li>\crcr
 <li>\d</li>
@@ -251,6 +262,12 @@ document.write("t")
 <li>\part</li>
 <li>\pounds
 <li>\r</li>
+<li>\raggedleft
+<li>\RaggedLeft
+<li>\raggedright
+<li>\RaggedRight
+<li>\rowcolor
+<li>\rowcolors
 <li>\rotcell</li>
 <li>\section</li>
 <li>\ss</li>
@@ -263,6 +280,7 @@ document.write("t")
 <li>\textbackslash</li>
 <li>\textbar</li>
 <li>\textbf</li>
+<li>\textcolor
 <li>\textexclamdown
 <li>\textit</li>
 <li>\textquestionmark
@@ -288,23 +306,65 @@ document.write("t")
 <li>\hbox</li>
 <li>\hrule</li>
 <li>\noalign</li>
-<li>\textcolor
 <li>\vrule</li>
 </ul>
 <h3><a id="Ignored_commands_117"></a>Ignored commands</h3>
 <ul>
-<li>\cellcolor
 <li>\cite</li>
 <li>\hspace</li>
 <li>\label</li>
 <li>\pageref</li>
 <li>\phantom</li>
 <li>\ref</li>
-<li>\rowcolor
 <li>\rule</li>
 <li>\vspace</li>
 </ul>
+<h3><a id="Partially_supported_commands_108"></a>Supported material in preambule</h3>
+
+<p><strong>Supported column types</strong></p>
+
+<ul>
+<li> l
+<li> c
+<li> r
+<li> p
+<li> *
+<li> m
+<li> b 
+<li> w
+<li> W
+<li> L
+<li> C
+<li> R
+<li> J
+</ul>
+
+<p><strong>Partially supported column types</strong></p>
+
+<ul>
+<li> !
+<li> @
+<li> D
+<li> F
+<li> d
+<li> s
+<li> S
+<li> &gt;
+<li> &lt;
 </div>
+
+<p><strong>Supported commands in preambules</strong></p>
+
+<ul>
+<li> \centering
+<li> \Centering
+<li> \columncolor
+<li> \raggedleft
+<li> \RaggedLeft
+<li> \raggedright
+<li> \RaggedRight
+<li> \vdashline
+<li> \vrule
 </div>
 </body>
 </html>

@@ -1,6 +1,6 @@
 		/* Edge hack to have the good white-space value */
 		@supports (-ms-ime-align:auto) {
-			#c {
+			#c, .textarea-wrap {
 				white-space: nowrap !important;
 			}
 		}
@@ -12,6 +12,25 @@
 			font-size:smaller;
 			min-height:300px;
 			font-family:monaco, "Lucida Console", Courier, monospace;
+		}
+		.textarea-wrap{
+			white-space: pre;
+			overflow: auto;
+			font-family:monaco, "Lucida Console", Courier, monospace;
+			font-size:smaller;
+		}
+		#worksheet-drop{
+			padding:10px;
+			margin:5px;
+			border:3px dashed #333;
+			background:whitesmoke;
+			text-align:center;
+		}
+		#worksheet-drop input[type=file]{
+			display:initial;
+		}
+		#worksheet-drop.dragover{
+			border-color:#337ab7;
 		}
 		.glyphicon.glyphicon-dot:before {
 		    content: "\25cf";
@@ -139,6 +158,8 @@
 
 
 		#table td div[contenteditable] {
+			display:inline-block;
+			width:100%;
 			min-height: 1em;
 			min-width: 1ex;
 		}
