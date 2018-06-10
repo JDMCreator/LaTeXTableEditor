@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8"> 
 
-<meta name="description" content="A powerful and robust LaTeX, Plain TeX, PreTeXt, EPlain, Markdown, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
+<meta name="description" content="A powerful and robust LaTeX, ConTeXt, Plain TeX, PreTeXt, EPlain, Markdown, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
 	<title>LaTeX Tables Editor</title>
 	<link href="css.css" rel="stylesheet">
 	<link href="css/bootstrap.min.css" rel="stylesheet">
@@ -72,6 +72,18 @@ Table <span class="caret"></span>
 <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu3" id="dropdownMenu4">
 
   <li><a href="#" onclick="table.deleteContent()">Delete content</a></li>
+</ul>
+</span>
+<span>
+<a class="dropdown-toggle" type="button" id="dropdownMenu5" role="button" data-target="dropdownMenu6" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+Output <span class="caret"></span>
+</a>
+<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu5" id="dropdownMenu6">
+
+  <li><a href="#" onclick="table.generate()">Generate</a></li>
+  <li><a href="#" onclick="table.toMWE()">Convert to MWE</a></li>
+  <li class="divider"></li>
+  <li><a href="#" data-target="#format-settings" data-toggle="modal">Settings</a></li>
 </ul>
 </span>
 </div>
@@ -166,6 +178,7 @@ Table <span class="caret"></span>
 							<select class="form-control" id="format" onchange="table.selectFormat(this.value)">
 <optgroup label="TeX">
 	<option value="latex">LaTeX</option>
+	<option value="context">ConTeXt</option>
 	<option value="plain">Plain TeX</option>
 	<option value="pretext">PreTeXt</option>
 	<option value="eplain">Eplain</option>
@@ -633,6 +646,7 @@ Color of border :
 
 <select class="form-control" id="format-in" onchange="table.selectFormat(this.value)">
 	<option value="latex">LaTeX</option>
+	<option value="context">ConTeXt</option>
 	<option value="plain">Plain TeX</option>
 	<option value="md">Markdown</option>
 	<option value="html">HTML</option>
@@ -640,7 +654,7 @@ Color of border :
 	<option value="csv">CSV</option>
 	<option value="eplain">Eplain</option>
 	<option value="pretext">PreTeXt</option>
-	<option value="wml">PreTeXt</option>
+	<option value="wml">WML</option>
 	</select>
 <div class="form-group" data-option-group="latex">
 							<h4>LaTeX options</h4>
@@ -669,12 +683,13 @@ Color of border :
 									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
 <input type="checkbox" class="input-control" id="blacklist-graphicx" value="graphicx" checked disabled> <label for="blacklist-graphicx">Graphicx</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked> <label for="blacklist-hhline">Hhline</label><br>
+<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
 								</div>
 								<div class="col-md-6">
-									<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-multirow" value="multirow" checked> <label for="blacklist-multirow">Multirow</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-ragged2e" value="ragged2e" checked> <label for="blacklist-ragged2e">Ragged2e</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-siunitx" value="siunitx" checked disabled> <label for="blacklist-siunitx">Siunitx</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label><br>
@@ -752,6 +767,21 @@ Color of border :
 <option value="two" selected>Two spaces</option>
 <option value="four">Four spaces</option></select>
 						</div>
+						<div class="form-group" data-option-group="context" style="display:none;">
+							<h4>ConTeXt options</h4>
+<h5>Table's caracteristics</h5>
+							<div><label><input type="checkbox" id="opt-context-split"> Split table in multiple pages</label></div>
+							<div><label><input type="checkbox" id="opt-context-landscape"> Display table in landscape mode</label></div>
+<div><label><input type="checkbox" id="opt-context-float" checked> Use table as a float</label></div>
+<h5>Indentation</h5>
+<select class="form-control" id="opt-context-indent">
+<option value="none">No indentation</option>
+<option value="two" selected>Two spaces</option>
+<option value="four">Four spaces</option>
+<option value="tab">Tab</option>
+</select>
+						</div>
+
 						<div class="form-group" data-option-group="wml" style="display:none;">
 							<h4>WML options</h4>
 <h5>Indentation</h5>
@@ -882,6 +912,8 @@ placement: 'auto top'
 	<script type="text/javascript" src="colorPicker.js">
 	</script>
 	<script type="text/javascript" src="xcolor.js">
+	</script>
+	<script type="text/javascript" src="toConteXt.js">
 	</script>
 </body>
 

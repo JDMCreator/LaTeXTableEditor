@@ -6,6 +6,29 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.3 (2018/06/10)
+===========
+
+| Note on this release :
+|     ConTeXt export
+
+CORE
+
+[+] New options for ConTeXt
+[+] New "Output" menu
+[+] New "siunitx" package option (disabled)
+[#] It's not possible anymore to convert to MWE a table that was already converted to MWE
+[#] Wrong CSS for cells with two diagonals
+
+LATEX IMPORT
+
+[+] Support for longtabu, longtabu to <dim>, longtabu spread <dim>
+[+] Support for longtabu*, longtabu* to <dim>, longtabu* spread <dim>
+
+CONTEXT EXPORT
+
+[+] New ConTeXt export module
+
 Version 1.2 (2018/05/29)
 ===========
 

@@ -226,14 +226,14 @@ specialSeparators = {
 	}
 },
 importTable = function(code){
-var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code);
+var tabular = /\\begin{((?:long|)tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code);
 	if(!tabular){
 		return false;
 	}
 	var type = tabular[1], obj = {}, code2 = code.substring(tabular.index), initEnv = envirn(code2), beforeCode = code.substring(0, tabular.index);
 	code = initEnv.content;
 	if(type == "table" || type == "table*" || type == "sidewaystable"){
-		if(/\\begin{(tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
+		if(/\\begin{((?:long|)tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
 			var caption = code.indexOf("\\caption");
 			if(caption >=0){
 				caption = command(code.substring(caption));
@@ -241,7 +241,7 @@ var tabular = /\\begin{(tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtab
 				obj.caption.caption = caption.args[0];
 				obj.caption.numbered = caption.asterisk;
 			}
-			tabular = /\\begin{(tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
+			tabular = /\\begin{((?:long|)tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
 			if(!tabular){
 				return false; // Should not happen
 			}

@@ -90,7 +90,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.1.3";
+			this.version = "1.3";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -2344,7 +2344,7 @@ this.getHTML = (function(){
 				var element = this._id("c"),
 				src = element.value,
 				format = this._id("format").value;
-				if(format == "latex"){
+				if(format == "latex" && src.indexOf("\\documentclass")<0){
 					var utf8 = !/^[\x00-\x7F]*$/.test(src);
 					src = src.replace(/^%\s*\\usepack/mg, "\\usepack");
 					src = "\\documentclass{article}\n" + (utf8 ? "\\usepackage[utf8]{inputenc}\n" : "") + src;
@@ -2353,13 +2353,13 @@ this.getHTML = (function(){
 					src = src.substring(0, endofheader+1) + "\n\n\\begin{document}\n"+src.substring(endofheader+1)+"\n\\end{document}";
 					src = src.replace(/\n{3,}/g, "\n\n");
 				}
-				else if(format == "plain" || format == "eplain"){
+				else if((format == "plain" || format == "eplain") && !/\\bye$/.test(src)){
 					src += "\n\\bye";
 				}
-				else if(format == "html"){
+				else if(format == "html" && src.indexOf("<!doctype>")<0){
 					src = "<!doctype>\n<html>\n<head>\n\t<title>Minimal Working Example</title>\n</head>\n<body>\n"+src+"\n</body>\n</html>";
 				}
-				else if(format == "wml"){
+				else if(format == "wml" && src.indexOf("<!DOCTYPE wml")<0){
 					src = '<?xml version="1.0"?>\n<!DOCTYPE wml PUBLIC "-//WAPFORUM//DTD WML 1.3//EN" "http://www.wapforum.org/DTD/wml13.dtd">\n<wml>\n<card id="page" title="Minimal Working Example">\n<p>\n' + src;
 					src += '\n</p>\n</card>\n</wml>';
 				}
@@ -3412,7 +3412,6 @@ console.dir(intersectionPoints);
 				}
 			})()
 			this.HBorder = function(n, callback, matrix) {
-//if(n==1){debugger;}
 				var row = matrix[Math.max(0, (n || 0) - 1)],
 				types = {};
 				if (!row) {

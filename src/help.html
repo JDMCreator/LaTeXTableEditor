@@ -52,7 +52,7 @@ $(function(){
 </div>
 <div id="export" class="question">
 <p><strong>Which format are supported to export a table ?</strong>
-<p>LaTeX, Plain TeX, Markdown, JSON, BBCode, PreTeXt, Eplain and HTML
+<p>LaTeX, ConTeXt, Plain TeX, Markdown, JSON, BBCode, PreTeXt, Eplain, HTML and WML.
 </div>
 <div id="latex" class="question">
 <p><strong>Which features are supported when you import a LaTeX table?</strong>
@@ -74,13 +74,18 @@ $(function(){
 <li>tabu*</li>
 <li>{tabu*} to <i>&lt;dim&gt;</i>
 <li>{tabu*} spread <i>&lt;dim&gt;</i>
+<li>longtabu
+<li>{longtabu} to <i>&lt;dim&gt;</i>
+<li>{longtabu} spread <i>&lt;dim&gt;</i>
+<li>longtabu*</li>
+<li>{longtabu*} to <i>&lt;dim&gt;</i>
+<li>{longtabu*} spread <i>&lt;dim&gt;</i>
 <li>xtabular</li>
 <li>mpxtabular</li>
 <li>longtable</li>
 </ul>
 <p>The following environments will be supported soon (in order of priority)
 <ul>
-<li>longtabu
 <li>tabularht
 <li>supertabular
 <li>xtabular*
@@ -109,11 +114,12 @@ $(function(){
 <div id="confidential" class="question">
 <p><strong>Credits ?</strong>
 
-<p>Most of the code by myself. This project uses many of my own code which is host as separate project :
+<p>Most of the code by myself. This project uses many of my own code which is hosted as separated projects :
 <p><ul>
 <li> <a href="https://github.com/JDMCreator/Table.js">Table.js</a> (by myself) : Complex operations on HTML Tables with JavaScript
 <li> <a href="https://github.com/JDMCreator/toRGBA.js">toRGBA.js</a> (by myself) : Convert any HTML or CSS color to RGBA
 <li> <a href="https://gist.github.com/JDMCreator/c0944e1caab3b913353ac165177b5241">CSVtoArray.js</a> (by myself) : Convert a CSV file to an Array
+<li> <a href="https://github.com/JDMCreator/xcolor.js">xcolor.js</a> (by myself) : Convert a color from <kbd>xcolor</kbd> package to RGB
 </ul>
 
 <p>This project uses four libraries :
@@ -173,6 +179,12 @@ document.write("t")
 <li>tabu*</li>
 <li>{tabu*} to <em>&lt;dim&gt;</em></li>
 <li>{tabu*} spread <em>&lt;dim&gt;</em></li>
+<li>longtabu</li>
+<li>{longtabu} to <em>&lt;dim&gt;</em></li>
+<li>{longtabu} spread <em>&lt;dim&gt;</em></li>
+<li>longtabu*</li>
+<li>{longtabu*} to <em>&lt;dim&gt;</em></li>
+<li>{longtabu*} spread <em>&lt;dim&gt;</em></li>
 </ul>
 <p><strong>From <em>xtabs</em> package :</strong></p>
 <ul>

@@ -205,6 +205,7 @@
 
 		td[data-two-diagonals] div[contenteditable]:not(:last-child) {
 			display: inline-block;
+			width:auto !important;
 		}
 
 		td[data-align="l"] {

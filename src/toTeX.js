@@ -10,6 +10,7 @@
 			useRotate = true;
 			latex = "\\rotatecell{"+latex+"}";
 		}
+		latex = latex.replace(/\\textbackslash\{\}/g, "{\\char`\\\\}");
 		return latex;
 	},
 	generateFromHTML = function(html, ignoreMultiline, align) {
@@ -19,9 +20,15 @@
 		var el = div.querySelectorAll("span.latex-equation");
 		var eq = []
 		for (var i = 0; i < el.length; i++) {
-			var kbd = document.createElement("kbd");
-			eq.push("$" + (el[i].innerText || el[i].textContent) + "$");
-			el[i].parentNode.replaceChild(kbd, el[i]);
+			var text_formula = el[i].innerText || el[i].textContent;
+			if(/\S/.test(text_formula)){
+				var kbd = document.createElement("kbd");
+				eq.push("$" + (el[i].innerText || el[i].textContent) + "$");
+				el[i].parentNode.replaceChild(kbd, el[i]);
+			}
+			else{
+				el[i].parentNode.removeChild(el[i]);
+			}
 		}
 		html = div.innerHTML;
 		var str = "", kbdcount = 0, ulcount = 0, lastcrcr = -1;
@@ -65,10 +72,13 @@
 				else if(inside == "&quot;"){
 					str += '"';
 				}
+				else if(inside == "&gt;"){
+					str += "$>$";
+				}
 				i += inside.length-1;
 			}
 			else if(c == "\\"){
-				str += "\\textbackslash{}";
+				str += "\\textbackslash{}"; // Will be changed later.
 			}
 			else if(c == ">"){
 				str += "$>$";
@@ -83,7 +93,7 @@
 				str += "\\P{}";
 			}
 			else if(c == "~"){
-				str += "\\textasciitilde{}";
+				str += "{\\char`\\~}";
 			}
 			else{
 				str+= c;
@@ -94,6 +104,7 @@
 		}
 		str = str.replace(/[ ]{2,}/g, " ")
 			.replace(/[\n\r]+/g, "");
+
 		return str
 	},
 	nonASCII = false,
@@ -137,7 +148,7 @@
 		var lastchar = "",
 			waiting = false;
 		for (var i = 0, code, char; i < str.length; i++) {
-			code = str.charCodeAt(i),
+			var code = str.charCodeAt(i),
 				char = str.charAt(i);
 			if (waiting) {
 				if (char == "i" || char == "j") {
