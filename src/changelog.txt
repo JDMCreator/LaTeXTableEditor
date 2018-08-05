@@ -6,6 +6,29 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.4 (2018/07/20)
+===========
+
+| Note on this release :
+|     Trimmed borders (booktabs), Textile export and bug fixes
+
+BORDER EDITOR MODULE
+
+[+] New "trimmed" borders with `\cmidrule(lr)`
+[#] Color is updated if the border color change (before, the border was removed)
+
+LATEX EXPORT
+
+[#] The `color` package would be forgotten if the only color in the table was in a vertical rule
+
+TEXTILE EXPORT
+
+[+] New Textile export module
+
+PLAIN TEX EXPORT
+
+[#] Vertical rules could appeared where they were not supposed to be if the cell spanned multiple columns
+
 Version 1.3 (2018/06/10)
 ===========
 

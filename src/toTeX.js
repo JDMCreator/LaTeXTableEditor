@@ -242,7 +242,7 @@
 					if(!vrules[j]){vrules[j]={}}
 					if(!align[j][cell.align]){align[j][cell.align]=0}
 					align[j][cell.align]++
-					var comparable = this.getComparableHeader(cells[j-1],cell,cells[j+1]),
+					var comparable = this.getComparableHeader(cells[j-1],cell,cells[j+cell.cell.colSpan]),
 					rules="";
 					if(cells[j-1]){
 						rules=comparable.replace(/[a-z]+/ig,"");
@@ -422,7 +422,6 @@
 			str +="\\cr\n"+(border ? border + "\n" : "");
 			str += beautifyRows[i];
 		}
-		console.dir(beautifyRows);
 		var bottomborder;
 		if(booktabs){
 			bottomborder = "\\noalign{\\hrule height0.8pt}"

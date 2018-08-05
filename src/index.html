@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8"> 
 
-<meta name="description" content="A powerful and robust LaTeX, ConTeXt, Plain TeX, PreTeXt, EPlain, Markdown, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
+<meta name="description" content="A powerful and robust LaTeX, ConTeXt, Plain TeX, PreTeXt, EPlain, Markdown, Textile, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
 	<title>LaTeX Tables Editor</title>
 	<link href="css.css" rel="stylesheet">
 	<link href="css/bootstrap.min.css" rel="stylesheet">
@@ -185,6 +185,7 @@ Output <span class="caret"></span>
 </optgroup>
 <optgroup label="Markup">
 	<option value="md">Markdown</option>
+	<option value="textile">Textile</option>
 </optgroup>
 <optgroup label="Web">
 	<option value="html">HTML</option>
@@ -283,9 +284,7 @@ Output <span class="caret"></span>
 <option value="toprule">[\toprule] Top rule</option>
 <option value="midrule">[\midrule] Mid rule</option>
 <option value="bottomrule">[\bottomrule] Bottom rule</option>
-<!---
 <option value="trimfull">[\cmidrule(lr)] Trimmed rule</option>
------>
 </optgroup>
 <optgroup label="arydshln">
 <option value="hdashline">[\hdashline] Dashed line</option>
@@ -654,6 +653,7 @@ Color of border :
 	<option value="csv">CSV</option>
 	<option value="eplain">Eplain</option>
 	<option value="pretext">PreTeXt</option>
+	<option value="textile">Textile</option>
 	<option value="wml">WML</option>
 	</select>
 <div class="form-group" data-option-group="latex">
@@ -789,6 +789,9 @@ Color of border :
 <option value="two">Two spaces</option>
 <option value="four" selected>Four spaces</option></select>
 						</div>
+						<div class="form-group" data-option-group="textile" style="display:none;">
+							<h4>Textile options</h4>
+						</div>
       </div>
     </div>
   </div>
@@ -914,6 +917,8 @@ placement: 'auto top'
 	<script type="text/javascript" src="xcolor.js">
 	</script>
 	<script type="text/javascript" src="toConteXt.js">
+	</script>
+	<script type="text/javascript" src="toTextile.js">
 	</script>
 </body>
 
