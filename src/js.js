@@ -3,6 +3,12 @@ function $id(id) {
 }
 (function() {
 	"use strict"
+	function intersectRect(r1, r2) {
+	  return !(r2.left > r1.right || 
+	           r2.right < r1.left || 
+	           r2.top > r1.bottom ||
+	           r2.bottom < r1.top);
+	   }
 	var sameHeader = function(cellHeader, colHeader, rowN) {
 			if (rowN !== 0) {
 				colHeader = (/[a-z].*/i.exec(colHeader) || ["l"])[0];
@@ -676,7 +682,10 @@ this.getHTML = (function(){
 		}
 		else if(node.nodeType == 1){
 			var tagName = node.tagName, newnode;
-			if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "LI" || tagName == "U"){
+			if(tagName == "TITLE" || tagName == "SCRIPT" || tagName == "STYLE" || tagName == "VIDEO" || tagName == "OBJECT"){
+				return false;
+			}
+			else if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "LI" || tagName == "U"){
 				newnode = document.createElement(tagName);
 				cont.appendChild(newnode);
 			}
@@ -719,7 +728,7 @@ this.getHTML = (function(){
 				cont.appendChild(document.createElement("BR"));
 				newline = false;
 			}
-			else if(newline && (tagName == "DIV" || tagName == "P" || tagName == "HEADER" || tagName == "SECTION" || tagName == "FOOTER")){
+			else if(newline && (tagName == "DIV" || tagName == "P" || tagName == "HEADER" || tagName == "SECTION" || tagName == "FOOTER" || tagName == "TR")){
 				cont.appendChild(document.createElement("BR"));
 				newline = false;
 			}
@@ -1320,12 +1329,31 @@ this.getHTML = (function(){
 				return element.getAttribute("data-border-" + where.toLowerCase()) == document.getElementById('border').value
 					&& areSameColors(element.style["border"+where2+"Color"], document.getElementById('border-color').value);
 			}
-			this.setBorder = function(element, where, affect, index){
-				this.statesManager.registerState();
+			this.setBorder = function(element, where, affect, index, othercells, index2){
+				// Okay, this is an ugly fix, but it is way easier to do it
+				// this way instead of rewriting all the other functions
+
+				index = index || index2;
+				if(this.isDrawingBorder){
+					this.statesManager.registerState();
+					this.isDrawingBorder = false;
+				}
 				where = where.toLowerCase();
 				var where2 = where.charAt(0).toUpperCase() + where.substring(1),
 				border = this.borderStyle(null, index, where);
-				var styleAttribute = /^trim/.test(border.name) ? "border" + where2+ "Color" : "border" + where2;
+				var isTrim = /^trim/.test(border.name),
+				    styleAttribute = isTrim ? "border" + where2+ "Color" : "border" + where2;
+
+				if(othercells && othercells.length){
+					for(var i=0;i<othercells.length;i++){
+						this.setBorder(othercells[i], {
+							top:"bottom",
+							bottom:"top",
+							left:"right",
+							right:"left"
+						}[where], isTrim ? false : affect, index);
+					}
+				}
 				if(affect){
 					element.setAttribute("data-border-" + where, border.name);
 					if(element.style.removeProperty){
@@ -1493,7 +1521,7 @@ this.getHTML = (function(){
 				where = where.charAt(0).toUpperCase() + where.substring(1);
 				this.setBorder(element, where, borderType, border, true)
 			}
-			this.editBorder = function(element, x, y) {
+			this.editBorder = function(element, x, y,objcells) {
 				var pos = this._absolutePosition(element),
 					borderType = document.getElementById('border')
 					.value,
@@ -1508,13 +1536,29 @@ this.getHTML = (function(){
 					border = "1px dotted black";
 				}
 				if (y - pos.top < 4) {
-					this.setBorder(element, "top", !this.isBorderSet(element, "top"), -1);
+					var isSet = this.isBorderSet(element, "top");
+					if(!isSet && objcells.up.length){
+						isSet = this.isBorderSet(objcells.up[0], "bottom")
+					}
+					this.setBorder(element, "top", !isSet, -1, objcells.up);
 				} else if (pos.bottom - y < 4) {
-					this.setBorder(element, "bottom", !this.isBorderSet(element, "bottom"), -1);
+					var isSet = this.isBorderSet(element, "bottom");
+					if(!isSet && objcells.down.length){
+						isSet = this.isBorderSet(objcells.down[0], "top")
+					}
+					this.setBorder(element, "bottom", !isSet, -1,objcells.down);
 				} else if (x - pos.left < 4) {
-					this.setBorder(element, "left", !this.isBorderSet(element, "left"));
+					var isSet = this.isBorderSet(element, "left");
+					if(!isSet && objcells.left.length){
+						isSet = this.isBorderSet(objcells.left[0], "right")
+					}
+					this.setBorder(element, "left", !isSet, null, objcells.left);
 				} else if (pos.right - x < 4) {
-					this.setBorder(element, "right", !this.isBorderSet(element, "right"));
+					var isSet = this.isBorderSet(element, "right");
+					if(!isSet && objcells.right.length){
+						isSet = this.isBorderSet(objcells.right[0], "left")
+					}
+					this.setBorder(element, "right", !isSet,null, objcells.right);
 				}
 			}
 			this.loaded = false;
@@ -1522,13 +1566,19 @@ this.getHTML = (function(){
 			this.load = function(table) {
 				this.loaded = true;
 				this.element = table;
+				this.setTouchEvents(table);
 				var _this = this,
 				waitingforpaste = false,
-				waitingfortab = false;
+				waitingfortab = false,
+				improvePaste = false;
 				$id("support-us").addEventListener("animationend",function(){
 					this.classList.remove("active");
 				}, false);
 				table.addEventListener("paste", function(e) {
+					if(improvePaste){
+						improvePaste = false;
+						return true;
+					}
 					var target = e.target || e.srcElement;
 					target = target.nodeType == 3 ? target.parentElement : target;
 					do{
@@ -1536,7 +1586,24 @@ this.getHTML = (function(){
 							break;
 						}
 					}while(target = target.parentElement);
-					waitingforpaste = target;
+					if(e.clipboardData && document.queryCommandEnabled("insertHTML")){
+						var d = document.createElement("div");
+						var plain = e.clipboardData.getData("text/plain");
+console.log(plain);
+						// We get the plain version to determine if we have to trim the HTML
+						var trimLeft = /^\S/.test(plain),
+						trimRight = /\S$/.test(plain);
+						d.innerHTML = e.clipboardData.getData("text/html");
+						var html = _this.getHTML(d);
+console.dir(html);
+						if(trimLeft){html = html.replace(/^\s+/, "")}
+						if(trimRight){html = html.replace(/\s+$/, "")}
+						e.preventDefault();
+						document.execCommand("insertHTML",false, html);
+					}
+					else{
+						waitingforpaste = target;
+					}
 				}, false);
 				table.addEventListener("input", function(e) {
 					var target = e.target || e.srcElement;
@@ -1777,6 +1844,8 @@ this.getHTML = (function(){
 					else if(c == "$" || c == "%" || c == "^" || c == "_" || c == "{" || c == "}" || c == "#"){
 						str += "\\" + c;
 					}
+					else if(c == "`" || c == "^"){
+						str += "\\"+c+"{}";					}
 					else if(c == "|"){
 						str += "\\textbar{}";
 					}
@@ -2089,7 +2158,7 @@ this.getHTML = (function(){
 						/* === LEGACY CODE / Makecell for multirow ===
  						/* if(!_this.blacklistPackages["makecell"]) {
 						/* 	if(_this.shrink && o.shrinkRatio){
-						/* 		content = "\\makecell[{{p{"+o.shrinkRatio+"\\columnwidth}}}]{" + content + "}";
+						/* 		content = "\\makecell[{{p{"+o.shrinkRatio+"\\linewidth}}}]{" + content + "}";
 						/* 	}
 						/* 	else{
 						/* 		var align = o.align;
@@ -2105,7 +2174,7 @@ this.getHTML = (function(){
 						}
 						var ratio = o.switch ? -1 : 1;
 						if(_this.shrink){
-							content = _this.multirow(ratio*cell.rowSpan, content, o.shrinkRatio+"\\columnwidth");
+							content = _this.multirow(ratio*cell.rowSpan, "\\hspace{0pt}"+content, o.shrinkRatio+"\\linewidth");
 						}
 						else{
 							content = _this.multirow(ratio*cell.rowSpan, content);
@@ -2259,21 +2328,29 @@ this.getHTML = (function(){
 			}
 			this.removeRow = function() {
 				this.statesManager.registerState();
-				if (this.selectedCell) {
-					this.Table.removeRow(this.selectedCell.parentElement.rowIndex);
+				var cell = this.selectedCell;
+				do{				
+					if (cell) {
+						this.Table.removeRow(cell.parentElement.rowIndex);
+					}
+					if(!this.selectedCell || !this.selectedCell.parentElement){
+						this.selectedCell = null;
+					}
 				}
-				if(!this.selectedCell || !this.selectedCell.parentElement){
-					this.selectedCell = null;
-				}
+				while(cell = this.element.querySelector("td[data-selected]"))
 			}
 			this.removeCol = function() {
 				this.statesManager.registerState();
-				if (this.selectedCell) {
-					this.Table.removeCol(this.Table.position(this.selectedCell).x);
+				var cell = this.selectedCell;
+				do{
+					if (cell) {
+						this.Table.removeCol(this.Table.position(cell).x);
+					}
+					if(!this.selectedCell || !this.selectedCell.parentElement){
+						this.selectedCell = null;
+					}
 				}
-				if(!this.selectedCell || !this.selectedCell.parentElement){
-					this.selectedCell = null;
-				}
+				while(cell = this.element.querySelector("td[data-selected]"))
 			}
 			this.caption = function() {
 				return {
@@ -2552,7 +2629,7 @@ this.getHTML = (function(){
 								before += "\\RaggedLeft"
 							}
 						}
-						align2 = "p{"+shrinkRatio+"\\columnwidth}";
+						align2 = "p{"+shrinkRatio+"\\linewidth}";
 					}
 					if(rightBorder){
 						rightColor = rightColor || "#000000";
@@ -2575,6 +2652,9 @@ this.getHTML = (function(){
 							}
 						}
 					}
+					if(shrinkRatio){
+						before += "\\hspace{0pt}";
+					}
 					if(before){
 						preambule += ">{"+before+"}";
 						_this.packages["array"] = true;
@@ -2593,6 +2673,7 @@ this.getHTML = (function(){
 				};
 
 			}
+			this.isDrawingBorder = false;
 			this.microfixBorderCorrection = function(size, obj, color){
 				if(size >= obj){
 					return "";
@@ -2989,7 +3070,7 @@ this.getHTML = (function(){
 						firstPart = "\\begin{"+ (rotateTable ? "sidewaystable" : "table") +"}\n";
 					}
 					else{
-						firstPart = "\\begin{minipage}{\\columnwidth}\n";
+						firstPart = "\\noindent\\begin{minipage}{\\linewidth}\n";
 					}
 					if(this._id("table-opt-center").checked){
 						firstPart += "\\centering\n"
@@ -3022,7 +3103,7 @@ this.getHTML = (function(){
 				}
 				if(scale && !useLongtable){
 					this.packages["graphicx"] = true;
-					str += "\\resizebox{\\columnwidth}{!}{%\n";
+					str += "\\resizebox{\\linewidth}{!}{%\n";
 				}
 				if(useTabu){
 					this.packages["tabu"] = true;
@@ -3753,13 +3834,12 @@ console.dir(o);
 					useHHLine = false;
 					for(var i=0;i<row.length;i++){
 						var cell = row[i];
-						if((cell.refCell||cell).cellBackground){
+						if((cell.refCell||cell).cellBackground && borders[i]){
 							useHHLine = true;
 							break;
 						}
 					}
 					if(!this.blacklistPackages["hhline"] && (useHHLine			// If there's a cell with background color
-						|| hasColor							// or colored rules
 						|| (o.types.double && 						// or a double border but
 						   !(o.types.toprule || o.types.midrule ||			// without booktab borders
 							 o.types.bottomrule || o.type.trim))			// ...
@@ -3841,11 +3921,6 @@ console.dir(o);
 										insideColor = color;
 										toadd += "\\arrayrulecolor"+getColor(color);
 									}
-									if(width != thiswidth){
-										width = thiswidth;
-										toadd += "\\setlength{\\arrayrulewidth}{"+thiswidth+"}";
-										this.packages["colortbl"] = true;
-									}
 									if(toadd){
 										border+= ">{"+toadd+"}";
 									}
@@ -3863,10 +3938,6 @@ console.dir(o);
 									if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
 										doublerulesepcolor = "FFFFFF";
 										toadd += "\\doublerulesepcolor"+getColor([255,255,255,1]);
-									}
-									if(width != thiswidth){
-										width = thiswidth;
-										toadd += "\\setlength{\\arrayrulewidth}{"+thiswidth+"}";
 									}
 									if(toadd){
 										border += ">{" + toadd + "}";
@@ -3893,18 +3964,6 @@ console.dir(o);
 										if(!areSameColors(doublerulesepcolor, background)){
 											doublerulesepcolor = background;
 											toadd += "\\doublerulesepcolor"+getColor(background);
-										}
-									}
-									else if(o.types.toprule || o.types.bottomrule || o.types.midrule){
-										if(o.types.toprule || o.types.bottomrule){
-											thiswidth = widthKeys["toprule"];
-										}
-										else{
-											thiswidth = widthKeys["midrule"];
-										}
-										if(width != thiswidth){
-											width = thiswidth;
-											toadd += "\\setlength{\\arrayrulewidth}{"+thiswidth+"}";
 										}
 									}
 									if(toadd){
@@ -4217,6 +4276,308 @@ console.dir(o);
 					return "";
 				}, matrix);
 			}
+			this.borderCellDraw = function(initialX, initialY, pageX, pageY){
+				var mode = -1, arg = null;
+				var should = null,
+					rectangle = {
+						top : Math.min(initialY, pageY),
+						bottom : Math.max(initialY, pageY),
+						left : Math.min(initialX, pageX),
+						right : Math.max(initialX, pageX)
+					}
+				// If we select one cell
+				if(Math.sqrt((rectangle.bottom-rectangle.top)*(rectangle.bottom-rectangle.top)+(rectangle.bottom-rectangle.top)
+				   + (rectangle.right-rectangle.left)*(rectangle.right-rectangle.left))<8){
+					var matrix = table.Table.matrix(),row
+					for(var i=0;i<matrix.length;i++){
+						var row = matrix[i];
+						for(var j=0;j<row.length;j++){
+							var cell = row[j];
+							if(cell.cell){
+								cell = cell.cell;
+								posCell = table._absolutePosition(cell);
+								if(intersectRect(posCell, rectangle)){
+									//we find cell up, down, before and after
+									var objcells = {up:[],down:[],left:[],right:[]}, othercells=[];
+									//up
+									var subrow = matrix[i-1], subcell;
+									if(subrow){
+										for(var h=0;h<cell.colSpan;h++){
+											subcell = subrow[j+h];
+											if(subcell && (subcell.cell || subcell.x == subcell.refCell.x)){
+												othercells.push((subcell.refCell||subcell).cell);
+											}
+										}
+										objcells.up = othercells;
+									}
+									othercells = [];
+									//down
+									var subrow = matrix[i+1], subcell;
+									if(subrow){
+										for(var h=0;h<cell.colSpan;h++){
+											subcell = subrow[j+h];
+											if(subcell && (subcell.cell || subcell.x == subcell.refCell.x)){
+												othercells.push((subcell.refCell||subcell).cell);
+											}
+										}
+										objcells.down = othercells;
+									}
+									othercells = [];
+									//left
+									for(var h=0;h<cell.rowSpan;h++){
+										var subrow = matrix[i+h];
+										if(subrow){
+											var subcell = subrow[j-1];
+											if(subcell && (subcell.cell || subcell.y == subcell.refCell.y)){
+												othercells.push((subcell.refCell||subcell).cell)
+											}
+										}
+										objcells.left = othercells;
+									}
+									othercells = [];
+									//right
+									for(var h=0;h<cell.rowSpan;h++){
+										var subrow = matrix[i+h];
+										if(subrow){
+											var subcell = subrow[j+1];
+											if(subcell && (subcell.cell || subcell.y == subcell.refCell.y)){
+												othercells.push((subcell.refCell||subcell).cell)
+											}
+										}
+										objcells.right = othercells;
+									}
+									mode = 1;
+									arg = [cell, pageX, pageY,objcells]
+									// Force exit
+									j = row.length;
+									i = matrix.length;
+									break;
+								}
+							}
+						}
+					}
+				}
+				// If we select cells in row
+				else if(Math.abs(initialY-pageY)<=10){
+					var matrix = table.Table.matrix(),row, listOfCalls=[];
+					for(var i=0;i<matrix.length;i++){
+						row = matrix[i];
+						for(var j=0,cell,posCell;j<row.length;j++){
+							cell = row[j];
+							cell = (cell.refCell||cell).cell;
+							posCell = table._absolutePosition(cell);
+							if(intersectRect(posCell, rectangle)){
+								var where = (rectangle.top+(rectangle.bottom-rectangle.top)/2 > posCell.top+posCell.height/2) 
+									    ? "bottom" : "top";
+								if(should === null){
+									should = !table.isBorderSet(cell, where);
+								}
+								// Now let's find the cell over or under;
+								var othercells = [], othercell = null,
+								subrow = matrix[where == "top" ? i-1 : i+1];
+								if(subrow){
+									for(var h=0;h<cell.colSpan;h++){
+										othercell = subrow[j+h];
+										if(othercell && (othercell.cell || othercell.x == othercell.refCell.x)){
+											othercells.push((othercell.refCell||othercell).cell);
+										}
+									}
+								} 
+								listOfCalls.push([cell,where,should,null,othercells])
+							}
+						}
+					}
+					// Call all of the results
+					// We need the index for trimmed borders
+					for(var i=0;i<listOfCalls.length;i++){
+						if(listOfCalls.length === 1){
+							listOfCalls[i].push(-1);
+						}
+						else{
+							listOfCalls[i].push(i/(listOfCalls.length-1));
+						}
+					}
+					mode = 2;
+					arg = listOfCalls;
+				}
+				// If we select cells in column
+				else if(Math.abs(initialX-pageX) <= 10){
+					var matrix = table.Table.matrix(),row,listOfCalls=[];
+					for(var i=0;i<matrix.length;i++){
+						row = matrix[i];
+						cellLoop: for(var j=0,cell,posCell;j<row.length;j++){
+							cell = row[j];
+							if(cell.refCell){continue cellLoop;}
+							cell = (cell.refCell||cell).cell;
+							posCell = table._absolutePosition(cell);
+							if(intersectRect(posCell, rectangle)){
+								var where = (rectangle.left+(rectangle.right-rectangle.left)/2 > posCell.left+posCell.width/2)
+									    ? "right" : "left";
+								if(should === null){
+									should = !table.isBorderSet(cell, where);
+								}
+								// Now let's find the cell over or under;
+								var othercells = [];
+								for(var h=0;h<cell.rowSpan;h++){
+									var subrow = matrix[i+h];
+									if(subrow){
+										var subcell = where == "left" ? subrow[j-1] : subrow[j+cell.colSpan];
+										if(subcell && (subcell.cell || subcell.y == subcell.refCell.y)){
+											othercells.push((subcell.refCell||subcell).cell)
+										}
+									}
+								}
+								listOfCalls.push([cell,where,should, null, othercells])
+							}
+						}
+					}
+					// Call all of the results
+					for(var i=0;i<listOfCalls.length;i++){
+						if(listOfCalls.length === 1){
+							listOfCalls[i].push(-1);
+						}
+						else{
+							listOfCalls[i].push(i/(listOfCalls.length-1));
+						}
+					}
+					mode = 3;
+					arg = listOfCalls;
+				}
+				return {mode:mode, arg:arg}
+			};
+			this.setTouchEvents = function(table_element){
+				var initialX = 0,
+				initialY = 0,element, start = false,should=null;
+				function calculate(x, y){
+					if(document.body.hasAttribute("data-border-editor")){
+						element.style.top = initialY + "px";
+						element.style.left = initialX + "px";
+						element.style.width = Math.sqrt((initialY-y)*(initialY-y)+(initialX-x)*(initialX-x))+"px";
+						var angle = Math.atan2(x- initialX,- (y- initialY) )*(180/Math.PI)-90;
+						element.style.transform = "rotate(" + angle + "deg)";
+					}
+				}
+				window.addEventListener("selectstart", function(e){
+					if(start){
+						e.preventDefault();
+						return false;
+					}
+				});
+				function mousedown(x,y,target){
+					if(!element){
+						element = document.getElementById('line');
+					}
+					if(document.body.hasAttribute("data-border-editor") && element){
+						var overElement = target;
+						if(!overElement || (overElement.tagName != "TEXTAREA" && overElement.tagName != "INPUT"
+								    && overElement.tagName != "BUTTON" && overElement.tagName != "SELECT")){
+							element.style.display="block";
+							initialX = x;
+							initialY = y;
+							calculate(initialX, initialY);
+							start = true;
+						}
+					}
+				}
+				window.addEventListener("mousedown", function(e){
+					mousedown(e.pageX,e.pageY, e.target)
+				});
+				table_element.addEventListener("touchstart", function(e){
+					if(e.touches && e.touches.length == 1){
+						e.preventDefault();
+						mousedown(e.touches[0].pageX,e.touches[0].pageY, e.target)
+					}
+				});
+				var allowed = true;
+				function mousemove(x,y){
+					if(start && allowed){
+						allowed = false;
+						setTimeout(function(){allowed=true},40);
+						if(document.body.hasAttribute("data-border-editor") && element){
+							calculate(x, y);
+						}
+						else{
+							start = false;should = null;
+						}
+						var elementsToRemove = table.element.querySelectorAll("td[data-border-preview]");
+						for(var i=0;i<elementsToRemove.length;i++){
+							elementsToRemove[i].removeAttribute("data-border-preview");
+						}
+						var draw = table.borderCellDraw(initialX, initialY, x, y),
+						mode = draw.mode;
+						if(mode == 1){
+						}
+						else if(mode == 2 || mode == 3){
+							for(var i=0;i<draw.arg.length;i++){
+								var arg = draw.arg[i]
+								arg[0].setAttribute("data-border-preview",(arg[0].getAttribute("data-border-preview")||"")+" "+arg[1]);
+								var othercells = arg[4]
+								for(var j=0;j<othercells.length;j++){
+									var othercell = othercells[j];
+									othercell.setAttribute("data-border-preview",(othercell.getAttribute("data-border-preview")||"")+" "+({
+										top:"bottom",
+										bottom:"top",
+										right:"left",
+										left:"right"
+									}[arg[1]]));
+								}
+							}
+						}
+					}
+				}
+				var lastMove = []
+				table_element.addEventListener("touchmove", function(e){
+					if(e.touches && e.touches.length == 1){
+						e.preventDefault();
+						lastMove = [e.touches[0].pageX,e.touches[0].pageY];
+						mousemove(e.touches[0].pageX,e.touches[0].pageY)
+					}
+				});
+				window.addEventListener("mousemove", function(e){
+					mousemove(e.pageX, e.pageY);
+				});
+				function mouseup(x,y){
+					if(document.body.hasAttribute("data-border-editor") && element){
+						table.isDrawingBorder = true;
+						var rectangle = {
+									top : Math.min(initialY, y),
+									bottom : Math.max(initialY, y),
+									left : Math.min(initialX, x),
+									right : Math.max(initialX, x)
+								},
+						tableElement = table.element;
+						element.style.display="none";
+						var elementsToRemove = table.element.querySelectorAll("td[data-border-preview]");
+						for(var i=0;i<elementsToRemove.length;i++){
+							elementsToRemove[i].removeAttribute("data-border-preview");
+						}
+						var draw = table.borderCellDraw(initialX, initialY, x, y);
+						if(draw.mode == 1){
+							table.editBorder.apply(table, draw.arg);
+						}
+						else if(draw.mode == 2 || draw.mode == 3){
+							for(var i=0;i<draw.arg.length;i++){
+								table.setBorder.apply(table, draw.arg[i]);
+							}
+						}
+						start = false;
+						should = null;
+						initialY = initialX = 0;
+						allowed = true;
+						table.isDrawingBorder = false;
+					};
+				}
+			
+				table_element.addEventListener("touchend", function(e){
+					if(e.touches){
+						e.preventDefault();
+						mouseup(lastMove[0],lastMove[1])
+					}
+				});
+				window.addEventListener("mouseup", function(e){
+					mouseup(e.pageX, e.pageY);		
+				});
+			}
 		})()
 	window.table = table;
 })();
@@ -4229,139 +4590,3 @@ window.addEventListener("beforeunload", function() {
 		}
 	}
 }, false);
-(function(){
-	var initialX = 0,
-	initialY = 0,element, start = false;
-	function intersectRect(r1, r2) {
-	  return !(r2.left > r1.right || 
-	           r2.right < r1.left || 
-	           r2.top > r1.bottom ||
-	           r2.bottom < r1.top);
-	   }
-	function calculate(x, y){
-		if(document.body.hasAttribute("data-border-editor")){
-			element.style.top = initialY + "px";
-			element.style.left = initialX + "px";
-			element.style.width = Math.sqrt((initialY-y)*(initialY-y)+(initialX-x)*(initialX-x))+"px";
-			var angle = Math.atan2(x- initialX,- (y- initialY) )*(180/Math.PI)-90;
-			element.style.transform = "rotate(" + angle + "deg)";
-		}
-	}
-	window.addEventListener("selectstart", function(e){
-		if(start){
-			e.preventDefault();
-			return false;
-		}
-	});
-	window.addEventListener("mousedown", function(e){
-		if(!element){
-			element = document.getElementById('line');
-		}
-		if(document.body.hasAttribute("data-border-editor") && element){
-			var overElement = e.target;
-			if(!overElement || (overElement.tagName != "TEXTAREA" && overElement.tagName != "INPUT"
-					    && overElement.tagName != "BUTTON" && overElement.tagName != "SELECT")){
-				element.style.display="block";
-				initialX = e.pageX;
-				initialY = e.pageY;
-				calculate(initialX, initialY);
-				start = true;
-			}
-		}
-	});
-	window.addEventListener("mousemove", function(e){
-		if(start){
-			if(document.body.hasAttribute("data-border-editor") && element){
-				calculate(e.pageX, e.pageY);
-			}
-			else{
-				start = false;should = null;
-			}
-		}
-	});
-	window.addEventListener("mouseup", function(e){
-		if(document.body.hasAttribute("data-border-editor") && element){
-			var rectangle = {
-						top : Math.min(initialY, e.pageY),
-						bottom : Math.max(initialY, e.pageY),
-						left : Math.min(initialX, e.pageX),
-						right : Math.max(initialX, e.pageX)
-					},
-			tableElement = table.element;
-			element.style.display="none";
-			var should = null;
-			// If we select one cell
-			if(Math.sqrt((rectangle.bottom-rectangle.top)*(rectangle.bottom-rectangle.top)+(rectangle.bottom-rectangle.top)
-			   + (rectangle.right-rectangle.left)*(rectangle.right-rectangle.left))<8){
-				for(var i=0;i<tableElement.rows.length;i++){
-					var cells = tableElement.rows[i].cells;
-					for(var j=0;j<cells.length;j++){
-						var cell = cells[j],
-						posCell = table._absolutePosition(cell);
-						if(intersectRect(posCell, rectangle)){
-							table.editBorder(cell, e.pageX, e.pageY)
-							// Force exit
-							j = cells.length;
-							i = tableElement.rows.length;
-							break;
-						}
-					}
-				}
-			}
-			// If we select cells in row
-			else if(Math.abs(initialY-e.pageY)<=10){
-				var matrix = table.Table.matrix(),row, listOfCalls=[];
-				for(var i=0;i<matrix.length;i++){
-					row = matrix[i];
-					for(var j=0,cell,posCell;j<row.length;j++){
-						cell = row[j];
-						cell = (cell.refCell||cell).cell;
-						posCell = table._absolutePosition(cell);
-						if(intersectRect(posCell, rectangle)){
-							var where = (rectangle.top+(rectangle.bottom-rectangle.top)/2 > posCell.top+posCell.height/2) 
-								    ? "bottom" : "top";
-							if(should === null){
-								should = !table.isBorderSet(cell, where);
-							}
-							listOfCalls.push([cell,where,should])
-						}
-					}
-				}
-				// Call all of the results
-				// We need the index for trimmed borders
-				for(var i=0;i<listOfCalls.length;i++){
-					if(listOfCalls.length === 1){
-						listOfCalls[i].push(-1);
-					}
-					else{
-						listOfCalls[i].push(i/(listOfCalls.length-1));
-					}
-					table.setBorder.apply(table,listOfCalls[i])
-				}
-			}
-			// If we select cells in column
-			else if(Math.abs(initialX-e.pageX) <= 10){
-				var matrix = table.Table.matrix(),row;
-				for(var i=0;i<matrix.length;i++){
-					row = matrix[i];
-					for(var j=0,cell,posCell;j<row.length;j++){
-						cell = row[j];
-						cell = (cell.refCell||cell).cell;
-						posCell = table._absolutePosition(cell);
-						if(intersectRect(posCell, rectangle)){
-							var where = (rectangle.left+(rectangle.right-rectangle.left)/2 > posCell.left+posCell.width/2)
-								    ? "right" : "left";
-							if(should === null){
-							should = !table.isBorderSet(cell, where);
-							}
-							table.setBorder(cell, where, should)
-						}
-					}
-				}
-			}
-			start = false;
-			should = null;
-			initialY = initialX = 0;
-		};
-	});
-})();

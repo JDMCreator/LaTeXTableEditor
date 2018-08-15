@@ -898,6 +898,70 @@ getHTML = function(code,o){
 			mathcontent = "";
 			html += '<span class="latex-equation">';
 		}
+		else if(char == '"'){
+			// Here we support german and cyrillic
+			var nextCharacter = sub.charAt(1);
+			if(/^[\|\"\~,]$/.test(nextCharacter)){
+				i++;
+				continue;
+			}
+			else if(nextCharacter == "-" || nextCharacter == "="){
+				html += "-";i++;continue;
+			}
+			else if(/^"--[~*-]/.test(sub)){
+				html += "&mdash;";
+				i += 3;
+				continue;
+			}
+			else if(nextCharacter == "<"){
+				html += "&laquo;";
+				i++;
+				continue;
+			}
+			else if(nextCharacter == ">"){
+				html += "&raquo;";
+				i++;
+				continue;
+			}
+			else if(nextCharacter == "'"){
+				html += "&ldquo;";
+				i++;
+				continue;
+			}
+			else if(nextCharacter == "`"){
+				html += "&bdquo;";
+				i++;
+				continue;
+			}
+			else if(nextCharacter == "s" || nextCharacter == "z"){
+				html += "&szlig;";
+				i++;
+				continue;
+			}
+			else if(nextCharacter == "S"){
+				html += "SS";
+				i++;
+				continue;
+			}
+			else if(nextCharacter == "Z"){
+				html += "SZ";
+				i++;
+				continue;
+			}
+			else if(nextCharacter == "/"){
+				html += "/";
+				i++;
+				continue;
+			}
+			else if(/^[aeiou]$/i.test(nextCharacter)){
+				html += "&"+nextCharacter+"uml;";
+				i++;
+				continue;
+			}
+			else{
+				html += '&quot;';
+			}
+		}
 		else if(char == "-"){
 			if(sub.lastIndexOf("---",0)===0){
 				html += "&mdash;"
@@ -1162,6 +1226,8 @@ graph_table = {
 	"k" : 808,
 	"d" : 803,
 	"b" : 817,
+	"q" : 780,
+	"w" : 778,
  	"OE" : 338,
 	"oe" : 339,
 	"AE" : 198,
@@ -1171,7 +1237,23 @@ graph_table = {
 	"OE" : 338,
 	"L" : 321,
 	"l" : 322,
-	"ss" : 223
+	"ss" : 223,
+	"dq" : 34,
+	"flq" : 8249,
+	"frq" : 8250,
+	"flqq" : 171,
+	"frqq" : 187,
+	"grqq" : 8220,
+	"glqq" : 8222,
+	"TH" : 222,
+	"th" : 254,
+	"DH" : 208,
+	"dh" : 240,
+	"euro" : 8364,
+	"NJ" : 330,
+	"nj" : 331,
+	"aa" : 229,
+	"AA" : 196
 },
 treatCom = function(code){
 	var o = {},
@@ -1246,7 +1328,9 @@ treatCom = function(code){
 		html += "&iexcl;";
 	}
 	else if(name == "textbar"){html += "|"}
-	else if (name == "textbackslash"){html += "\\"}
+	else if (name == "textbackslash" || name == "boi"){html += "\\"}
+	else if(name == "textthreequartersemdash"){html += "&#8210;"}
+	else if(name == "cyrdash" || name == "textemdash"){html += "&mdash;"}
 	else if(name == "textasciitilde"){html += "~"}
 	else if(name == "textasciicircum"){html += "^"}
 	else if(name == "pounds" || name == "textsterling"){html += "&pound;"}

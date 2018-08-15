@@ -6,6 +6,51 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.5
+===========
+
+CORE
+
+[+] Cells are now collapsed together
+[+] When you draw a border, you now see in red which borders will be affected
+[+] You can remove multiple rows and columns at once
+[#] The `Import JSON table` button didn't work
+[#] Pasted tables now have newlines for each row
+[#] Paste now works with Undo
+
+BORDER EDITOR
+
+[+] Rewritten functions to work with the collapsed cells
+[+] You can now draw borders with a touchscreen or a stylus
+[#] The function that draw borders was speed up 8x
+[#] The `Undo` function now works as it should when drawing borders
+
+LATEX EXPORT
+
+[+] Tables in a minipage now uses `\noindent` to remove the indentation
+[/] Changed all references to `\columnwidth` for a more general `\linewidth`
+[/] Partial horizontal borders now no longer uses hhline if they are coloured unless
+    a cell under a border is coloured
+[#] First word now can be hyphenated when using the `shrink` option
+[-] Hhline no longer try to change the value of \arrayrulewidth (it was useless)
+
+LATEX IMPORT
+
+[+] Better support for international languages
+[+] Support for \glqq, \grqq, \euro, \NJ and \nj
+[+] Support for \dq, \flq, \frq, \frqq, \flqq, \glq, \grq (German)
+[+] Support for most cyrillic and german shorthands with `"`
+[+] Support for \TH, \th, \DH, \dh (Icelandic)
+[+] Support for \q and \w (Czech)
+[+] Support for \aa and \AA (Swedish, Danish, Norwegian, Finnish...)
+[+] Support for \boi (French)
+[+] Support for \cyrdash (Cyrillic)
+[+] Support for \textthreequartersemdash and \textemdash
+
+PLAIN TEX EXPORT
+
+[#] The parser no longer crashes when there's a cell that spans multiple rows
+
 Version 1.4 (2018/07/20)
 ===========
 

@@ -91,6 +91,7 @@
 			margin-top:4px;
 			margin-bottom:4px;
 			padding:0;
+			border-collapse:collapse;
 		}
 		#table span.latex-equation{
 			background:rgba(255, 112, 77, 0.3);
@@ -121,7 +122,6 @@
 		#table td {
 			margin: 0;
 		}
-
 		body[data-view-editor] #table {
 			border-collapse: collapse !important;
 			border-spacing:0px !important;
@@ -130,7 +130,9 @@
 		body:not([data-view-editor]) #table td {
 			border: 1px dotted lightgrey;
 		}
-
+		body[data-border-editor] #table td {
+			border: 2px dotted lightgrey;
+		}
 		#table .outer {
 			padding-left: 3px;
 			padding-right: 3px;
@@ -167,11 +169,15 @@
 		em em {
 			font-style: normal;
 		}
-
+		body[data-border-editor] #table{
+			touch-action:none;
+		}
 		body[data-border-editor] #table * {
 			cursor: pointer !important;
 		}
-
+		body[data-border-editor] #table td {
+			border-width:2px;
+		}
 		body[data-view-editor] #table * {
 			cursor: default !important;
 		}
@@ -314,6 +320,52 @@
 		#latex_content {
 			width: 100%;
 		}
+		/* Size of borders */
+		body[data-border-editor] #table td[data-border-top]{
+			border-width:2px !important;
+		}
+		body[data-border-editor] #table td[data-border-top="double"],
+		body[data-border-editor] #table td[data-border-top="toprule"],
+		body[data-border-editor] #table td[data-border-top="bottomrule"]{
+			border-width:3px !important;
+		}
+		body[data-border-editor] #table td[data-border-bottom]{
+			border-width:2px !important;
+		}
+		body[data-border-editor] #table td[data-border-bottom="double"],
+		body[data-border-editor] #table td[data-border-bottom="toprule"],
+		body[data-border-editor] #table td[data-border-bottom="bottomrule"]{
+			border-width:3px !important;
+		}
+		body[data-border-editor] #table td[data-border-left]{
+			border-width:2px !important;
+		}
+		body[data-border-editor] #table td[data-border-left="double"],
+		body[data-border-editor] #table td[data-border-left="toprule"],
+		body[data-border-editor] #table td[data-border-left="bottomrule"]{
+			border-width:3px !important;
+		}
+		body[data-border-editor] #table td[data-border-right]{
+			border-width:2px !important;
+		}
+		body[data-border-editor] #table td[data-border-right="double"],
+		body[data-border-editor] #table td[data-border-right="toprule"],
+		body[data-border-editor] #table td[data-border-right="bottomrule"]{
+			border-width:3px !important;
+		}
+		/* Preview border draw */
+		body[data-border-editor] #table td[data-border-preview~="top"]{
+			border-top-color:red !important;
+		}
+		body[data-border-editor] #table td[data-border-preview~="bottom"]{
+			border-bottom-color:red !important;
+		}
+		body[data-border-editor] #table td[data-border-preview~="left"]{
+			border-left-color:red !important;
+		}
+		body[data-border-editor] #table td[data-border-preview~="right"]{
+			border-right-color:red !important;
+		}
 		/* Trimmed borders */
 		#table td[data-border-bottom^="trim"], #table td[data-border-top^="trim"]{
 			position:relative;
@@ -389,19 +441,31 @@
 		#table td[data-border-right="trimfull"]{
 			border-right:1px solid black !important;
 		}
+		// Booktabs
 		#table tr[data-border-top="toprule"] td,
 		#table td[data-border-top="toprule"] {
 			padding-top: 0.65ex !important;
 		}
-
 		#table[data-booktabs] tr:first-child td {
 			padding-top: 0.65ex !important;
+		}
+		#table[data-booktabs] tr:first-child{
 			border-top: 2px solid black !important;
+		}
+		body[data-border-editor] #table[data-booktabs] tr:first-child{
+			border-top: 3px solid black !important;
 		}
 
 		#table[data-booktabs] tr:last-child td {
 			padding-bottom: 0.4ex;
 			border-bottom: 2px solid black !important;
+		}
+		#table[data-booktabs] tr:last-child {
+			border-bottom: 2px solid black !important;
+		}
+
+		body[data-border-editor] #table[data-booktabs] tr:last-child td {
+			border-bottom: 3px solid black !important;
 		}
 
 		#table tr[data-border-bottom="midrule"] td,
@@ -409,15 +473,12 @@
 			padding-bottom: 0.4ex;
 		}
 
-		#table tr[data-border-bottom="hline"] td,
-		#table td[data-border-bottom="hline"] {
-			//border-bottom:0.4pt solid black;
-		}
 
 		#table tr[data-border-bottom="bottomrule"] td,
 		#table td[data-border-bottom="bottomrule"] {
-			padding-bottom: 0.4ex; //border-bottom:0.08em solid black;
+			padding-bottom: 0.4ex;
 		}
+
 
 		#table td[data-rotated]:not([data-selected]) div[contenteditable],
 		body[data-view-editor] #table td[data-rotated] div[contenteditable] {

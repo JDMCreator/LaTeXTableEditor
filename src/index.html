@@ -35,7 +35,7 @@
 <span class="glyphicon glyphicon-info-sign"></span> <strong>Microsoft Edge.</strong> You seems to be using Microsoft Edge. We are working hard to fix issues with this browser. You will have better results with Firefox or Chrome.</div>
 
 
-<p class="text-right hide-on-full" style="margin:0"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="help.html" target="_blank">Help</a></p>
+<p class="text-right hide-on-full" style="margin:0"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="#" data-target="#help-modal" data-toggle="modal">Help</a></p>
 <div style="height:50px;margin-bottom:10px;" class="hide-on-full"><img src="logo.png" alt="Logo." height="50"><span class="latex-logo">L<span class="latex-a">a</span>T<span class="latex-e">e</span>X Complex Table Editor <small style="font-size:14px;">With <a href="https://github.com/JDMCreator/Table.js" target="_blank">Table.js</a></small></span></div>
 		<nav class="nav-latex">
 <div class="dropdown">
@@ -45,7 +45,7 @@ File <span class="caret"></span>
 <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" id="dropdownMenu2">
   <li><a href="#" data-target="#myModal" data-toggle="modal">Create table</a></li>
   <li class="divider"></li>
-  <li><a href="#">Open JSON table</a></li>
+  <li><a href="#" onclick="table.openImportModal('json')">Open JSON table</a></li>
   <li><a href="#" onclick="table.saveToJSON()">Generate JSON</a></li>
   <li class="divider"></li>
   <li class="dropdown-submenu">
@@ -216,7 +216,7 @@ Output <span class="caret"></span>
 				<input id="caption" class="form-control" placeholder="Caption">
 			</div>
 		</div>
-		<table id="table" style="border-collapse:separate;border-spacing:2px">
+		<table id="table">
 		</table>
 <div>
 <div class="alert alert-info" role="alert" style="display:none;" id="border-editor-info">
@@ -518,6 +518,28 @@ Color of border :
     </div>
   </div>
 </div>
+</div>
+
+<div class="modal fade" id="help-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Help</h4>
+      </div>
+      <div class="modal-body">
+		<h4>Select cells</h4>
+		<p>To select multiple cells, uses <kbd>CTRL + Click</kbd> (or <kbd>&#x2318; + Click</kbd> on Macintosh). Hold <kbd>CTRL</kbd> (or <kbd>&#x2318;</kbd>) and click on all the cells that you want to select.
+		<p>To select multiple adjacent cells, uses <kbd>SHIFT + Click</kbd>. Click on the first cell, then hold <kbd>Shift</kbd> and click on the last cell.
+		<h4>Import LaTeX tables</h4>
+		<p>Under the logo, there's a <kbd>File</kbd> menu. Click on it and then follows <kbd>File</kbd> &gt; <kbd>Import table</kbd> &gt; <kbd>LaTeX</kbd>.
+		<h4>Draw border</h4>
+		<p>On the right panel, click on <kbd>Border editor</kbd> to expand the section. Then, click on <span class="glyphicon glyphicon-pencil"></span>.
+		<h4>More help</h4>
+		If you have more questions, check the <a href="help.html" target="_blank">FAQ</a>.
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="download" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">

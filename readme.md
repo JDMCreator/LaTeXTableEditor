@@ -1,6 +1,6 @@
 ## LaTeX Table Editor ##
 
-**Version 1.4**
+**Version 1.5**
 
 This is the GitHub page of an Open Source WYSIWYG table editor that exports to multiples languages including LaTeX, ConTeXt, Plain TeX, CSV, HTML, BBCode, Eplain, PreTeXt, Markdown and WML.
 
@@ -10,7 +10,7 @@ You can use it [here](http://www.latex-tables.com/).
 
 ### Dependencies
 
-You need Bootstrap 3, ntc.js and JQuery. See the online example.
+You need Bootstrap 3, ntc.js, SheetJS and JQuery. See the online example.
 
 ### Formats supported
 
