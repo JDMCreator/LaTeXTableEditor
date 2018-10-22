@@ -29,6 +29,9 @@
 		var matrix = this.Table.matrix(),
 		str = "";
 		separator = document.getElementById('opt-csv-separator').value;
+		if(separator == "tab"){
+			separator = "\t";
+		}
 		for(var i=0;i<matrix.length;i++){
 			var row = matrix[i];
 			if(i>0){

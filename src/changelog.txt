@@ -6,8 +6,48 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 1.5
+Version 1.6.1 (2018/08/15)
 ===========
+
+| Note on this release :
+|     Fixed fatal issue
+
+CORE
+
+[#] Fixed fatal issue that prevented the generator from working
+
+Version 1.6 (2018/08/14)
+===========
+
+| Note on this release :
+|     Support for touchscreen and smallscreen, better support for LaTeX import
+
+CORE
+
+[+] New version of xcolor.js
+[+] The editor is now responsive to screensize
+[+] Adjusted layout for small screens (width<700px)
+[+] New bottom bar with CTRL/SHIFT emulator and "send to email" button for touchscreen
+[/] Moved the donation text next to the menu to leave more space for small screen users
+[#] Fixed issue where it was impossible to select cells on touchscreen browsers
+
+BORDER EDITOR
+
+[#] Fixed issue where two borders could be drawn instead of one for cells that spanned multiple rows
+
+LATEX IMPORT
+
+[+] Support for \declarecolor, \providecolor and \colorlet
+[+] Support for command `\ctable` and its commands \FL, \NN, \ML and \LL
+[+] Support for environments `tabularht`, `tabularht*`, `tabularhtx` and `tabularkv`
+[+] `\interrowspace` is now ignored
+
+Version 1.5 (2018/08/04)
+===========
+
+| Note on this release :
+|     Major update to the way borders are displayed for a
+|     more intuitive experience and better internationalization
 
 CORE
 

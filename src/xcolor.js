@@ -267,6 +267,66 @@ xcolor.remove = function(name){
 	delete LOCALS[name];
 	return have;
 }
+xcolor.extract = function(code){
+	// We strip comments
+	code = code.replace(/\\(.)/g, function(a,b){
+		if(b == "%"){
+			return "\\{";
+		}
+		return a;
+	}).replace(/%[^\n\r]*[\n\r]*/g,"\n");
+	var reg = /\\(definecolor|colorlet|providecolor)(?:\[([^\]]*)\]|)\{/g,
+	result = null;
+	while ((result = reg.exec(code)) !== null) {
+		var fn = result[1], opt = result[2], arg = [], actualarg = "", substr = code.substring(result.index + result[0].length - 1);
+		var counter = 0;
+		subLoop: for(var i=0;i<substr.length;i++){
+			var c = substr.charAt(i);
+			if(c == "{"){
+				counter++;
+				if(counter > 1){
+					actu += c;
+				}
+			}
+			else if(c == "\\"){
+				actualarg = c + substr.charAt(i+1);
+				i++;
+			}
+			else if(c == "}"){
+				counter--;
+				if(counter === 0){
+					arg.push(actualarg);
+					actualarg = "";
+					if(arg.length === 3 || (fn == "colorlet" && arg.length == 2)){
+						break subLoop;
+					}
+				}
+				else{
+					actualarg += c;
+				}
+			}
+			else{
+				actualarg += c;
+			}
+		}
+		if(arg.length === 3 || (fn == "colorlet" && arg.length == 2)){
+			if(fn == "definecolor"){
+				xcolor.register(arg[0], xcolor(arg[2], arg[1]));
+			}
+			else if(fn == "providecolor"){
+				var value = arg[0]
+				if(!LOCALS.hasOwnProperty(value) && !BASICS.hasOwnProperty(value)
+				   && !X11COLORS.hasOwnProperty(value) && !SVGNAMES.hasOwnProperty(value)
+				   && !DVIPSNAMES.hasOwnProperty(value)){
+					xcolor.register(arg[0], xcolor(arg[2], arg[1]));
+				}
+			}
+			else if(fn == "colorlet"){
+				xcolor.register(arg[0], xcolor(arg[1]));
+			}
+		}
+	}
+}
 xcolor.erase = function(){
 	LOCALS = {};
 	return true;

@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="UTF-8"> 
-
+<meta name="viewport" id="meta-viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="A powerful and robust LaTeX, ConTeXt, Plain TeX, PreTeXt, EPlain, Markdown, Textile, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
 	<title>LaTeX Tables Editor</title>
 	<link href="css.css" rel="stylesheet">
@@ -26,18 +26,26 @@
 <div class="container-fluid">
 <div>
   <div id="left-panel">
-<div class="alert alert-info" role="alert" style="margin:3px;display:none;">
+<div class="alert alert-info return-to-desktop" role="alert" style="margin:3px;">
   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-<span class="glyphicon glyphicon-info-sign"></span> <strong>Preview.</strong> You are now using a preview version of our upcoming Open Source LaTeX table editor. Please report any issues <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues">here</a>.</div>
+<span class="glyphicon glyphicon-info-sign"></span> <strong>Mobile.</strong> You are using a mobile rendering of our LaTeX table editor. <a href="#" onclick="table.requestDesktopSite()">Request desktop site for this session</a>.</div>
 
 <div class="alert alert-info" role="alert" style="margin:3px;display:none;" id="edge-info">
   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 <span class="glyphicon glyphicon-info-sign"></span> <strong>Microsoft Edge.</strong> You seems to be using Microsoft Edge. We are working hard to fix issues with this browser. You will have better results with Firefox or Chrome.</div>
+<div id="mobile-bottom-menu" class="container-fluid">
+<div class="mobile-row">
+<div class="mobile-col" ontouchstart="table.mobileKey(1, this)" id="mobile-ctrl">Select multiple cells</div>
+<div class="mobile-col" ontouchstart="table.mobileKey(2, this)" id="mobile-shift">Select multiple adjacent cells</div>
+<div class="mobile-col-xs" onclick="table.prepareEmail()"><span class="glyphicon glyphicon-envelope" aria-hidden="true"></span></div></div></div>
+
 
 
 <p class="text-right hide-on-full" style="margin:0"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="#" data-target="#help-modal" data-toggle="modal">Help</a></p>
 <div style="height:50px;margin-bottom:10px;" class="hide-on-full"><img src="logo.png" alt="Logo." height="50"><span class="latex-logo">L<span class="latex-a">a</span>T<span class="latex-e">e</span>X Complex Table Editor <small style="font-size:14px;">With <a href="https://github.com/JDMCreator/Table.js" target="_blank">Table.js</a></small></span></div>
 		<nav class="nav-latex">
+<div class="clearfix">
+<div style="float:left">
 <div class="dropdown">
 <a class="dropdown-toggle" type="button" id="dropdownMenu1" role="button" data-target="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 File <span class="caret"></span>
@@ -87,6 +95,11 @@ Output <span class="caret"></span>
 </ul>
 </span>
 </div>
+</div>
+<div style="float:right;">
+<span id="support-us">Like this editor ? <a href="supportus.html" target="_blank">Support us</a>.</span>
+</div>
+</div>
 			<!-- Nav tabs -->
 			<ul class="nav nav-tabs" role="tablist">
 				<li><span class="glyphicon glyphicon-pushpin" data-toggle="tooltip" title="Pin/Unpin the toolbar to the top of the page" style="padding:10px 5px;cursor:pointer;" onclick="table.togglePin()"></span></li>
@@ -94,7 +107,6 @@ Output <span class="caret"></span>
 				<li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Rows/Columns</a></li>
 				<li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Borders</a></li>
 				<li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Export settings</a></li>
-				<li style="width:auto;float:right;line-height: 1.42857143;padding:10px 15px;" id="support-us"><span>Like this editor ? <a href="supportus.html" target="_blank">Support us</a>.</span></li>
 			</ul>
 			<!-- Tab panes -->
 			<div class="tab-content">
@@ -556,6 +568,20 @@ Color of border :
   </div>
 </div>
 
+<div class="modal fade" id="email" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Send by email</h4>
+      </div>
+      <div class="modal-body">
+		<a href="" style="line-height:100%" id="link-email">Open the output in an email</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="worksheet-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -770,7 +796,7 @@ Color of border :
 						<div class="form-group" data-option-group="csv" style="display:none;">
 							<h4>CSV options</h4>
 							<label for="opt-csv-separator">Separator</label>
-							<select class="form-control" id="opt-csv-separator"><option value=",">Comma</option><option value=";">Semicolon</option></select>
+							<select class="form-control" id="opt-csv-separator"><option value=",">Comma</option><option value=";">Semicolon</option><option value="tab">Tabulation</option></select>
 						</div>
 						<div class="form-group" data-option-group="bbcode" style="display:none;">
 							<h4>BBCode options</h4>

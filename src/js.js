@@ -96,7 +96,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.4";
+			this.version = "1.6";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -112,7 +112,7 @@ function $id(id) {
 				format = (format || $id("import_format").value).toLowerCase();
 				if(format == "auto"){
 					var json;
-					if(/(\\begin{|\\halign|\\valign)/.test(content)){
+					if(/(\\begin{|\\halign|\\valign|\\ctable({|\[))/.test(content)){
 						try{
 							this.importFromJSON(this.latex.importTable(content));
 						}
@@ -954,7 +954,6 @@ this.getHTML = (function(){
 				
 			}
 			this.applyToCell = function(td) {
-
 				var div1 = document.createElement("div");
 				div1.className = "outer";
 				var div2 = document.createElement("div");
@@ -1320,7 +1319,10 @@ this.getHTML = (function(){
 			}
 			this._clickCellManager = function(event) {
 				if (table.selectionAllowed) {
-					table.selectCell(this, event.ctrlKey, event.shiftKey);
+					var mobileKey = table.mobileKey(),
+					    ctrlKey = event.ctrlKey || (mobileKey === 1),
+					    shiftKey = event.shiftKey || (mobileKey === 2);
+					table.selectCell(this, ctrlKey, shiftKey);
 				}
 			}
 			this.isBorderSet = function(element, where){
@@ -3672,7 +3674,6 @@ console.dir(html);
 					borders : border,
 					types : types
 				};
-console.dir(o);
 				return callback.call(this, o);
 			}
 			this.actualMainColor = "black";
@@ -3719,6 +3720,17 @@ console.dir(o);
 				fileReader.readAsDataURL(blob);
 				$id("link-download")
 					.href = "";
+			}
+			this.prepareEmail = function(){
+				var format = $id("format").value,
+				result = "";
+				if (format == "latex") {
+					result = this.generateLaTeX();
+				} else {
+					result = this.interpreters[format].call(this)
+				}
+				this._id("link-email").href = "mailto:?subject=Table&body=" + encodeURIComponent(result);
+				$('#email').modal('show');
 			}
 			this.rowColor = function (n, matrix){
 				matrix = matrix || this.matrix();
@@ -3770,6 +3782,32 @@ console.dir(o);
 					}
 				}
 				return "\\rowcolor"+getColor(color);
+			}
+			this.requestDesktopSite = function(){
+				this._id("meta-viewport").setAttribute("content","");
+				document.getElementsByTagName("html")[0].classList.add("prevent-small");
+			}
+			this.mobileKey = function(n, elem){
+				var ctrl = this._id("mobile-ctrl"),
+				    shift = this._id("mobile-shift");
+				if(arguments.length < 2){
+					if(document.getElementsByTagName("html")[0].classList.contains("prevent-small")){
+						return 0;
+					}
+					else if(shift.classList.contains("active")){
+						return 2;
+					}
+					else if(ctrl.classList.contains("active")){
+						return 1;
+					}
+					return 0;
+				}
+				var val = elem.classList.contains("active");
+				ctrl.classList.remove("active");
+				shift.classList.remove("active");
+				if(!val){
+					(n == 1 ? ctrl : shift).classList.add("active");
+				}
 			}
 			this.getBorder = function(n, matrix) {
 				return this.HBorder(n, function(o) {
@@ -4362,8 +4400,10 @@ console.dir(o);
 					var matrix = table.Table.matrix(),row, listOfCalls=[];
 					for(var i=0;i<matrix.length;i++){
 						row = matrix[i];
-						for(var j=0,cell,posCell;j<row.length;j++){
+						cellLoop: for(var j=0,cell,posCell;j<row.length;j++){
 							cell = row[j];
+							if(cell.refCell){continue cellLoop;}
+							var actualY = (cell.refCell||cell).y
 							cell = (cell.refCell||cell).cell;
 							posCell = table._absolutePosition(cell);
 							if(intersectRect(posCell, rectangle)){
@@ -4374,7 +4414,7 @@ console.dir(o);
 								}
 								// Now let's find the cell over or under;
 								var othercells = [], othercell = null,
-								subrow = matrix[where == "top" ? i-1 : i+1];
+								subrow = matrix[where == "top" ? actualY-1 : actualY+cell.rowSpan];
 								if(subrow){
 									for(var h=0;h<cell.colSpan;h++){
 										othercell = subrow[j+h];
@@ -4382,7 +4422,7 @@ console.dir(o);
 											othercells.push((othercell.refCell||othercell).cell);
 										}
 									}
-								} 
+								}
 								listOfCalls.push([cell,where,should,null,othercells])
 							}
 						}
@@ -4484,8 +4524,10 @@ console.dir(o);
 				});
 				table_element.addEventListener("touchstart", function(e){
 					if(e.touches && e.touches.length == 1){
-						e.preventDefault();
-						mousedown(e.touches[0].pageX,e.touches[0].pageY, e.target)
+						if(document.body.hasAttribute("data-border-editor")){
+							e.preventDefault();
+							mousedown(e.touches[0].pageX,e.touches[0].pageY, e.target)
+						}
 					}
 				});
 				var allowed = true;
@@ -4528,9 +4570,11 @@ console.dir(o);
 				var lastMove = []
 				table_element.addEventListener("touchmove", function(e){
 					if(e.touches && e.touches.length == 1){
-						e.preventDefault();
-						lastMove = [e.touches[0].pageX,e.touches[0].pageY];
-						mousemove(e.touches[0].pageX,e.touches[0].pageY)
+						if(document.body.hasAttribute("data-border-editor")){
+							e.preventDefault();
+							lastMove = [e.touches[0].pageX,e.touches[0].pageY];
+							mousemove(e.touches[0].pageX,e.touches[0].pageY)
+						}
 					}
 				});
 				window.addEventListener("mousemove", function(e){
@@ -4569,7 +4613,7 @@ console.dir(o);
 				}
 			
 				table_element.addEventListener("touchend", function(e){
-					if(e.touches){
+					if(e.touches && document.body.hasAttribute("data-border-editor")){
 						e.preventDefault();
 						mouseup(lastMove[0],lastMove[1])
 					}

@@ -226,112 +226,218 @@ specialSeparators = {
 	}
 },
 importTable = function(code){
-var tabular = /\\begin{((?:long|)tabu\*?|sidewaystable|table\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code);
+
+xcolor.erase();
+xcolor.extract(code);
+
+var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin{((?:long|)tabu\*?|sidewaystable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
+var tabular = tabularReg.exec(code);
+	tabularReg.lastIndex = 0;
 	if(!tabular){
 		return false;
 	}
-	var type = tabular[1], obj = {}, code2 = code.substring(tabular.index), initEnv = envirn(code2), beforeCode = code.substring(0, tabular.index);
-	code = initEnv.content;
-	if(type == "table" || type == "table*" || type == "sidewaystable"){
-		if(/\\begin{((?:long|)tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
-			var caption = code.indexOf("\\caption");
-			if(caption >=0){
-				caption = command(code.substring(caption));
-				obj.caption = {}
-				obj.caption.caption = caption.args[0];
-				obj.caption.numbered = caption.asterisk;
-			}
-			tabular = /\\begin{((?:long|)tabu\*?|xtabular|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
-			if(!tabular){
-				return false; // Should not happen
-			}
-			type = tabular[1];
-			beforeCode += code2.substring(0, tabular.index);
-			code2 = code2.substring(tabular.index);
-			initEnv = envirn(code2);			
-		}
-		else{
-			return false;
-		}
-	}
-	code = initEnv.content;
-	if(type == "longtable" || type=="longtabu"){
-		var caption = code.indexOf("\\caption");
-			if(caption >=0){
-				var comcaption = command(code.substring(caption));
-				// Find end of line
-				var comment = false;
-				for(var i=caption + comcaption.full.length;i<code.length;i++){
-					var char = code.charAt(i);
-					if(comment){
-						if(char == "\n"){
-							comment = false;
-						}
-						continue;
+	var type = "", obj = {},  code2 = code.substring(tabular.index),beforeCode = code.substring(0, tabular.index);
+	if(tabular[1]){
+		// We use ctable, so we now to handle this as a special case, because it's a command instead of an environment
+		var initCommand = command(code2);
+		var opt = initCommand.options[0];
+		if(opt){
+			var inComment = false, counter = 0, actuname = "", actus={}, actu = "", actun = 1;
+			for(var i=0;i<opt.length;i++){
+				var c = opt.charAt(i);
+				if(inComment){
+					if(c == "\n" || c == "\r"){
+						inComment = false;
+						actu += c;
 					}
-					if(char == "%"){
-						comment = true;continue;
-					}
-					if(char == "\\"){
-						var subcommand = command(code.substring(i)),
-						scname = subcommand.name;
-						if(scname == "\\" || scname == "tabularnewline" || scname == "cr"){
-							code = code.substring(0, caption) + "" + code.substring(i+subcommand.full.length);
-							break;
-						}
-					}
-				};
-				obj.caption = {}
-				obj.caption.caption = comcaption.args[0];
-				obj.caption.numbered = comcaption.asterisk;
-			}	
-	}
-	var head;
-	if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable"){
-		head = header(initEnv.command.args[1]);
-	}
-	else if(type == "tabular*" || type == "tabularx" || type == "tabulary"){
-		head = header(initEnv.command.args[2]);
-	}
-	else if(type == "tabu" || type == "tabu*"){
-		// Because "tabu" supports "tabu to <dim>" and "tabu spread <dim>", we need to handle these special and rarely used cases
-		if(initEnv.command.args.length == 2){
-			head = header(initEnv.command.args[1]);
-		}
-		else{
-			var totalbracket = 0;
-			head = "";
-			for(var i=0,c;i<code.length;i++){
-				c = code.charAt(i);
-				if(totalbracket>0){
-					if(c == "\\"){
-						head += c + code.charAt(i+1);
-						i++;
-					}
-					else if(c == "{"){
-						head += c;
-						totalbracket++;
-					}
-					else if(c == "}"){
-						if(totalbracket <= 1){
-							code = code.substring(i+1);
-							break;
-						}
-						head += c;
-						totalbracket--;
-					}
-					else{
-						head += c;
-					}
+					continue;
+				}
+				if(c == "%"){
+					inComment = true;
+					continue;
 				}
 				else if(c == "\\"){
+					actu += c + opt.charAt(i+1);
 					i++;
 				}
 				else if(c == "{"){
-					totalbracket++;
+					counter++;
+					if(counter > 1){
+						actu += c;
+					}
+				}
+				else if(c == "}"){
+					counter--;
+					if(counter > 0){
+						actu += c;
+					}
+				}
+				else if(c == "=" && actun == 1 && counter === 0){
+					actuname = actu.trim();
+					actu = "";
+					actun = 2;
+				}
+				else if(c == "," && counter === 0){
+					if(actun == 1){
+						actus[actu.trim()] = true
+					}
+					else if(actun == 2){
+						actus[actuname] = actu.trim();
+					}
+					actuname = actu = "";
+					actun = 1;
+				}
+				else{
+					actu += c;
 				}
 			}
-			head = header(head);
+			if(actu.trim() === "" && actun == 2){
+				actus[actuname] = true;
+			}
+			else if(actu.trim() !== ""){
+				if(actun == 1){
+					actus[actu.trim()] = true;
+				}
+				else if(actun == 2){
+					actus[actuname] = actu.trim();
+				}
+			}
+
+			// Now we treat the options here
+			if(actus.caption){
+				if(!obj.caption){
+					obj.caption = {}
+				}
+				obj.caption.caption = actus.caption;
+			}
+			if(actus.label){
+				if(!obj.caption){
+					obj.caption.caption = actus.caption;
+				}
+				obj.caption.label = actus.label;
+			}
+		}
+		var head = header(initCommand.args[0]);
+		code = initCommand.args[2]+" ";
+		// Here, we replace some ctable specific commands by their equivalent
+		code2 = code = code.replace(/\\(NN|FL|ML|LL)([^a-zA-Z@])/g, function(str, name, c){
+			return {
+				"NN" : "\\tabularnewline",
+				"FL" : "\\toprule",
+				"ML" : "\\tabularnewline\\midrule",
+				"LL" : "\\tabularnewline\\bottomrule"
+			}[name] + c;
+		});
+		console.log(code);
+	}
+	else{
+		type = tabular[2]
+		var initEnv = envirn(code2);
+		code = initEnv.content;
+		if(type == "table" || type == "table*" || type == "sidewaystable"){
+			if(/\\begin{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
+				var caption = code.indexOf("\\caption");
+				if(caption >=0){
+					caption = command(code.substring(caption));
+					obj.caption = {}
+					obj.caption.caption = caption.args[0];
+					obj.caption.numbered = caption.asterisk;
+				}
+				tabular = /\\begin{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
+				if(!tabular){
+					return false; // Should not happen
+				}
+				type = tabular[1];
+				beforeCode += code2.substring(0, tabular.index);
+				code2 = code2.substring(tabular.index);
+				initEnv = envirn(code2);			
+			}
+			else{
+				return false;
+			}
+		}
+		code = initEnv.content;
+		if(type == "longtable" || type=="longtabu"){
+			var caption = code.indexOf("\\caption");
+				if(caption >=0){
+					var comcaption = command(code.substring(caption));
+					// Find end of line
+					var comment = false;
+					for(var i=caption + comcaption.full.length;i<code.length;i++){
+						var char = code.charAt(i);
+						if(comment){
+							if(char == "\n"){
+								comment = false;
+							}
+							continue;
+						}
+						if(char == "%"){
+							comment = true;continue;
+						}
+						if(char == "\\"){
+							var subcommand = command(code.substring(i)),
+							scname = subcommand.name;
+							if(scname == "\\" || scname == "tabularnewline" || scname == "cr"){
+								code = code.substring(0, caption) + "" + code.substring(i+subcommand.full.length);
+								break;
+							}
+						}
+					};
+					obj.caption = {}
+					obj.caption.caption = comcaption.args[0];
+					obj.caption.numbered = comcaption.asterisk;
+				}	
+		}
+		var head;
+		if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable"){
+			head = header(initEnv.command.args[1]);
+		}
+		else if(type == "tabular*" || type == "tabularx" || type == "tabulary" || type == "tabularht" || type == "tabularkv"){
+			head = header(initEnv.command.args[2]);
+		}
+		else if(type == "tabularht*" || type == "tabularhtx"){
+			head = header(initEnv.command.args[3]);
+		}
+		else if(type == "tabu" || type == "tabu*"){
+			// Because "tabu" supports "tabu to <dim>" and "tabu spread <dim>", we need to handle these special and rarely used cases
+			if(initEnv.command.args.length == 2){
+				head = header(initEnv.command.args[1]);
+			}
+			else{
+				var totalbracket = 0;
+				head = "";
+				for(var i=0,c;i<code.length;i++){
+					c = code.charAt(i);
+					if(totalbracket>0){
+						if(c == "\\"){
+							head += c + code.charAt(i+1);
+							i++;
+						}
+						else if(c == "{"){
+							head += c;
+							totalbracket++;
+						}
+						else if(c == "}"){
+							if(totalbracket <= 1){
+								code = code.substring(i+1);
+								break;
+							}
+							head += c;
+							totalbracket--;
+						}
+						else{
+							head += c;
+						}
+					}
+					else if(c == "\\"){
+						i++;
+					}
+					else if(c == "{"){
+						totalbracket++;
+					}
+				}
+				head = header(head);
+			}
 		}
 	}
 
@@ -534,7 +640,6 @@ var tabular = /\\begin{((?:long|)tabu\*?|sidewaystable|table\*?|xtabular|longtab
 				i+=com.full.length-1;
 			}
 			else if(name == "rowcolor"){
-				console.log(table.length-1);
 				backgroundRow[table.length-1] = xcolor(com.args[0],com.options[0]);
 				i+=com.full.length-1;
 			}
@@ -1080,7 +1185,6 @@ getHeaderComponent = function(head, i){
 			break;
 		}
 	}
-	console.dir(o);
 	o.full += head.substring(ogI+1,i);
 	return o;
 },
@@ -1257,6 +1361,19 @@ graph_table = {
 },
 treatCom = function(code){
 	var o = {},
+	bannedCommands = {
+		"cite" : 1,
+		"hhline" : 1,
+		"hspace" : 1,
+		"interrowspace" : 1,
+		"label" : 1,
+		"ref" : 1,
+		"pageref" : 1,
+		"phantom" : 1,
+		"rowcolor" : 1,
+		"rule" : 1,
+		"vspace" : 1
+	},
 	html = "";
 	var com = command(code),
 	topush = ""
@@ -1336,7 +1453,7 @@ treatCom = function(code){
 	else if(name == "pounds" || name == "textsterling"){html += "&pound;"}
 	else if(name == "og"){html+="&laquo;"}
 	else if(name == "fg"){html+="&raquo;"}
-	else if(com.args.length == 1 && name != "label" && name != "ref" && name != "pageref" && name != "hhline" && name != "phantom" && name != "hspace" && name != "vspace" && name != "rule" && name != "cite" && name != "cellcolor" && name != "rowcolor"){
+	else if(com.args.length == 1 && !bannedCommands[name]){
 		html += getHTML(com.args[0]);
 	}
 	
