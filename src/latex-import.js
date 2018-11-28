@@ -1362,6 +1362,7 @@ graph_table = {
 treatCom = function(code){
 	var o = {},
 	bannedCommands = {
+		"cellcolor" : 1,
 		"cite" : 1,
 		"hhline" : 1,
 		"hspace" : 1,

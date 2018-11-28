@@ -96,7 +96,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.6";
+			this.version = "1.6.2";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -1381,7 +1381,7 @@ this.getHTML = (function(){
 			}
 			this.borderStyle = function(style, index, where){
 				style = (style || document.getElementById('border').value).toLowerCase();
-				if(where == "left" || where == "right"){
+				if((where == "left" || where == "right") && style == "trimfull"){
 					style = "normal";
 				}
 				var color = this._id("border-color").value;
@@ -2364,7 +2364,7 @@ console.dir(html);
 						.value
 				}
 			}
-			this.headerBorder = function(type, color, mainColor, preambule, char){
+			this.headerBorder = function(type, color, mainColor, preambule, char, bg){
 				char = char || ">";
 				if(color && mainColor){
 					if(areSameColors(color, mainColor)){
@@ -2382,7 +2382,12 @@ console.dir(html);
 					}
 					else if(type == "hdashline"){
 						if(this.useTabu){
-							return "|[on 4pt off 4pt]";
+							var border = "|[on 4pt off 4pt";
+								if(bg){
+									this.packages["color"] = true;
+									border+= " "+this.tabuColor(bg)
+								}
+							return border + "]";
 						}
 						else{
 							this.packages["arydshln"] = true;
@@ -2391,7 +2396,12 @@ console.dir(html);
 					}
 					else if(type == "dottedline"){
 						if(this.useTabu){
-							return "|[on 1pt off 1pt]";
+							var border = "|[on 1pt off 1pt";
+								if(bg){
+									this.packages["color"] = true;
+									border+= " "+this.tabuColor(bg)
+								}
+							return border + "]";
 						}
 						else{
 							this.packages["arydshln"] = true;
@@ -2428,7 +2438,11 @@ console.dir(html);
 					else if(type == "hdashline"){
 						before = char + "{\\arrayrulecolor"+getColor(color)+"}"
 						if(this.useTabu){
-							return "|["+this.tabuColor(color)+" on 4pt off 4pt]";
+							var border = "|["+this.tabuColor(color)+" on 4pt off 4pt";
+							if(bg){
+								border += " "+this.tabuColor(bg)
+							}
+							return border + "]";
 						}
 						else{
 							this.packages["arydshln"] = true;
@@ -2438,7 +2452,11 @@ console.dir(html);
 					else if(type == "dottedline"){
 						before = char + "{\\arrayrulecolor"+getColor(color)+"}"
 						if(this.useTabu){
-							return "|["+this.tabuColor(color)+" on 1pt off 1pt]";
+							var border = "|["+this.tabuColor(color)+" on 4pt off 4pt";
+							if(bg){
+								border += " "+this.tabuColor(bg)
+							}
+							return border + "]";
 						}
 						else{
 							this.packages["arydshln"] = true;
@@ -2563,7 +2581,7 @@ console.dir(html);
 
 					if(leftBorder){
 						leftColor = leftColor || "#000000";
-						preambule += _this.headerBorder(leftBorder, leftColor, color, isPreambule, "@");
+						preambule += _this.headerBorder(leftBorder, leftColor, color, isPreambule, "@", o.cellBackground);
 						if(preambule.charAt(0) == "@"){
 							color = leftColor;
 							if(isPreambule){
@@ -2669,7 +2687,7 @@ console.dir(html);
 					//	preambule += "@{"+o.rightCorrection+"}"
 					}
 					if(rightBorder){
-						preambule += _this.headerBorder(rightBorder, rightColor, color, isPreambule, ">")
+						preambule += _this.headerBorder(rightBorder, rightColor, color, isPreambule, ">", o.cellBackground)
 					}
 					return preambule;
 				};
@@ -3231,6 +3249,9 @@ console.dir(html);
 					}
 					if(!this.useTabu && this.packages["arydshln"]){
 						firstPart += "\\ADLnullwidehline\n";
+					}
+					if(firstPart.indexOf("\\arrayrulecolor")<0){
+						firstPart += "\\arrayrulecolor"+getColor("#000000")+"\n";
 					}
 				}
 				else if(str.indexOf("\\cellcolor") > -1 || str.indexOf("\\rowcolor") > -1 || str.indexOf("\\columncolor") > -1){
@@ -3844,6 +3865,20 @@ console.dir(html);
 							}
 						}
 						else if(o.types.trim){
+							// We check if there's a cell with a background
+							var row = matrix[n] || matrix[n-1],
+							hasBg = false;
+							for(var i=0;i<row.length;i++){
+								var cell = row[i];
+								if((cell.refCell||cell).cellBackground){
+									hasBg = true;
+									break;
+								}
+							}
+							if(hasBg){
+								// If yes, we remove the gap
+								border+="\\noalign{\\kern-\\cmidrulewidth}";
+							}
 							var lastBorder = borders[borders.length-1];
 							border += "\\cmidrule("
 							if(firstBorder.type == "trimleft" || firstBorder.type == "trimboth"){
@@ -3872,15 +3907,73 @@ console.dir(html);
 					useHHLine = false;
 					for(var i=0;i<row.length;i++){
 						var cell = row[i];
-						if((cell.refCell||cell).cellBackground && borders[i]){
+						if((cell.refCell||cell).cellBackground){
 							useHHLine = true;
 							break;
 						}
 					}
-					if(!this.blacklistPackages["hhline"] && (useHHLine			// If there's a cell with background color
+					var specificTrim = false;
+					if(o.types.trim){
+						specificTrim = true;
+						for(var i in o.types){
+							if(o.types.hasOwnProperty(i) && !/^trim/.test(i)){
+								specificTrim = false;
+								break;
+							}
+						}
+					}
+					if(specificTrim){
+						// We use a special case when there is only trim borders;
+						if(useHHLine){
+							border = "\\noalign{\\kern-\\cmidrulewidth}";
+						}
+						for(var i=0;i<borders.length;i++){
+							if(borders[i]){
+								var type = borders[i].type,
+								color = borders[i].color;
+								if(type == "trimleft" || type == "trimright" || type == "trimboth" || type == "trimfull"){
+									if(!areSameColors(this.actualColor, color)){
+										this.actualColor = color;											border+= "\\arrayrulecolor"+getColor(color);
+									}
+									if(type == "trimboth"){
+										border += "\\cmidrule(lr){"+(i+1)+"-"+(i+1)+"}";
+									}
+									else if(type == "trimright"){
+										border += "\\cmidrule(r){"+(i+1)+"-"+(i+1)+"}";
+									}
+									else if(type == "trimleft" || type == "trimfull"){
+										var hasLeft = type == "trimleft",
+										    hasRight = false, end, start = i+1;
+										while(true){
+											i++;
+											var borderN = borders[i];
+											if(borderN && borderN.type == "trimright"){
+												hasRight = true;
+											}
+											if(!borderN || !borderN.sameAsBefore){
+												end = i;
+												i--;
+												break;
+											}
+										}
+										border += "\\cmidrule";
+										if(hasLeft || hasRight){
+											border += "("+(hasLeft ? "l" : "")+(hasRight ? "r" : "")+")";
+										}
+										border += "{"+start+"-"+end+"}";
+									}
+								}
+								else if(console && console.error){
+									console.error("This shouldn't happen");
+								}
+							}
+						}
+						return border;
+					}
+					else if(!this.blacklistPackages["hhline"] && (useHHLine			// If there's a cell with background color
 						|| (o.types.double && 						// or a double border but
 						   !(o.types.toprule || o.types.midrule ||			// without booktab borders
-							 o.types.bottomrule || o.type.trim))			// ...
+							 o.types.bottomrule || o.types.trim))			// ...
 						) && (!this.packages["arydshln"] || this.useTabu)		// And we don't use arydshln package
 					){
 						// oh oh... We must use a hhline
@@ -4141,6 +4234,10 @@ console.dir(html);
 							}
 						}
 						border += "}";
+						if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
+							doublerulesepcolor = "FFFFFF";
+							border += "\\doublerulesepcolor"+getColor([255,255,255,1]);
+						}
 						// If the hhline was not a must, we use \hline\hline in the case of full double horizontal borders
 						if(o.complete && !/[:\|#]/g.test(border) && borders[0].type == "double"){
 							border = "\\hline\\hline";
@@ -4152,7 +4249,23 @@ console.dir(html);
 						}
 						// Remove useless hhline. Faster this way.
 						border = border.replace(/\\hhline{[^=-]*}$/, "");
+						// We return the color
+						this.actualColor = insideColor
 						if(metAry || metTrim){
+							if(metAry){
+								border+= "\\noalign{\\kern-";
+								if(o.types.double){
+									border+="\\dimexpr\\doublerulesep+2\\arrayrulewith";
+								}
+								else{
+									border+="\\arrayrulewidth";
+								}
+								border+= "}";
+							}
+							else if(metTrim && !border){
+								border = "\\noalign{\\kern-\\cmidrulewidth}";
+							}
+							var firstAry = true;
 							for(var i=0;i<borders.length;i++){
 								if(borders[i]){
 									var type = borders[i].type,
@@ -4191,6 +4304,12 @@ console.dir(html);
 										}
 									}
 									if(metAry && (type == "hdashline" || type == "dottedline")){
+										if(firstAry){	
+											firstAry = false;
+										}
+										else{
+											border += "\\noalign{\\kern-\\arrayrulewidth}";
+										}
 										var colorname = this.tabuColor(color);
 										if(type == "hdashline"){
 											border+="\\tabucline["+colorname+" on 4pt off 4pt]{"+(i+1);

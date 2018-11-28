@@ -6,6 +6,28 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.6.2 (2018/10/21)
+===========
+
+| Note on this release :
+|     Bug fixes
+
+CORE
+
+[#] All vertical border drawn were solid, instead of using the specified style
+
+LATEX EXPORT
+
+[#] Vertical dashed and dotted borders no longer have a white background when the cell has a background
+[#] Fixed issue where successive `\tabucline` could cause white gaps
+[#] Fixed issue where borders could have the wrong color
+[#] Fixed issue where color could leak inside double borders in some cases
+[#] Fixed issue where there could be white gap with trimmed border and cell with background
+
+LATEX IMPORT
+
+[#] The content of `\cellcolor` was imported as text (regression)
+
 Version 1.6.1 (2018/08/15)
 ===========
 
