@@ -6,6 +6,23 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.6.3 (2018/11/28)
+===========
+
+| Note on this release :
+|     Bug fixes
+
+LATEX IMPORT
+
+[+] Support for `wraptable` environment
+[+] Support for `label` command
+[#] Removed useless rows when several line separators commands are used instead of one
+
+LATEX EXPORT
+
+[#] Character "[" could produce fatal error on compilation
+
+
 Version 1.6.2 (2018/10/21)
 ===========
 

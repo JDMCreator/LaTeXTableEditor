@@ -230,7 +230,7 @@ importTable = function(code){
 xcolor.erase();
 xcolor.extract(code);
 
-var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin{((?:long|)tabu\*?|sidewaystable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
+var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin{((?:long|)tabu\*?|sidewaystable|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
 var tabular = tabularReg.exec(code);
 	tabularReg.lastIndex = 0;
 	if(!tabular){
@@ -312,7 +312,7 @@ var tabular = tabularReg.exec(code);
 			}
 			if(actus.label){
 				if(!obj.caption){
-					obj.caption.caption = actus.caption;
+					obj.caption = {}
 				}
 				obj.caption.label = actus.label;
 			}
@@ -334,7 +334,7 @@ var tabular = tabularReg.exec(code);
 		type = tabular[2]
 		var initEnv = envirn(code2);
 		code = initEnv.content;
-		if(type == "table" || type == "table*" || type == "sidewaystable"){
+		if(type == "table" || type == "table*" || type == "sidewaystable" || type == "wraptable"){
 			if(/\\begin{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
 				var caption = code.indexOf("\\caption");
 				if(caption >=0){
@@ -342,6 +342,12 @@ var tabular = tabularReg.exec(code);
 					obj.caption = {}
 					obj.caption.caption = caption.args[0];
 					obj.caption.numbered = caption.asterisk;
+				}
+				var label = code.indexOf("\\label");
+				if(label >= 0){
+					label = command(code.substring(label));
+					if(!obj.caption){ obj.caption = {} }
+					obj.caption.label = label.args[0];
 				}
 				tabular = /\\begin{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
 				if(!tabular){
@@ -358,6 +364,12 @@ var tabular = tabularReg.exec(code);
 		}
 		code = initEnv.content;
 		if(type == "longtable" || type=="longtabu"){
+			var label = code.indexOf("\\label");
+			if(label >= 0){
+				label = command(code.substring(label));
+				if(!obj.caption){ obj.caption = {} }
+				obj.caption.label = label.args[0];
+			}
 			var caption = code.indexOf("\\caption");
 				if(caption >=0){
 					var comcaption = command(code.substring(caption));
@@ -495,18 +507,30 @@ var tabular = tabularReg.exec(code);
 			|| name == "endhead" || name == "endfoot" || name == "endlastfoot" || name == "crcr"){
 				if(name != "crcr" || (row.length > 0 && (row.length > 1 || /\S/.test(row[0])) || actuBorder != "")){
 					row.push(cell);
+					var allowadd = true;
 					if(name == "endfirsthead" || name == "endhead" || name == "endfoot" || name == "endlastfoot"){
 						// Avoid useless cells
 						// TODO : Improve
 						if(row.length == 0 || (row.length == 1 && /^\s*$/.test(row[0]))){
 							table.pop();
 							borders.pop();
+							xcolorRowNumbers.pop();
+						}
+					}
+
+					else{
+						if((row.length == 0 || (row.length == 1 && /^\s*$/.test(row[0]))) &&
+							/^\s*$/.test(actuBorder)){
+							table.pop();
+							allowadd = false;
 						}
 					}
 					cell = "";
 					table.push([]);
-					borders.push(actuBorder);
-					xcolorRowNumbers.push(actualXColorRowNumber);
+					if(allowadd){
+						borders.push(actuBorder);
+						xcolorRowNumbers.push(actualXColorRowNumber);
+					}
 					actualXColorRowNumber++;
 					actuBorder = "";
 					row = table[table.length-1];

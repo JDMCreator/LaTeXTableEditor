@@ -9,7 +9,20 @@ function $id(id) {
 	           r2.top > r1.bottom ||
 	           r2.bottom < r1.top);
 	   }
-	var sameHeader = function(cellHeader, colHeader, rowN) {
+
+
+	/* ==== START CAMPAIGN INFO ==== */
+
+	var campaign = {
+		start: new Date(2018,11,2),
+		end: new Date(2018,11,17),
+		year:2018
+	},
+	campaignUsed = localStorage.getItem("campaign") == campaign.year,
+
+	/* ==== END CAMPAIGN INFO ==== */
+
+	sameHeader = function(cellHeader, colHeader, rowN) {
 			if (rowN !== 0) {
 				colHeader = (/[a-z].*/i.exec(colHeader) || ["l"])[0];
 			}
@@ -1840,6 +1853,14 @@ console.dir(html);
 						}
 						i += inside.length-1;
 					}
+					else if(c == "["){
+						if(/(^\s*$)|(\\(.|[a-zA-Z]+)$)|(\}\s*$)/.test(str)){
+							str+="{[}";
+						}
+						else{
+							str += c;
+						}
+					}
 					else if(c == "\\"){
 						str += "\\textbackslash{}";
 					}
@@ -2790,6 +2811,14 @@ console.dir(html);
 						.toLocaleTimeString()) + ")<hr>" + this.log;
 				var supportus = $id("support-us");
 				supportus.classList.add("active");
+				if(!campaignUsed && start>+campaign.start && start<+campaign.end){
+					$("#campaignModal").modal("show");
+					campaignUsed = true;
+				}
+			}
+			this.campaignClicked = function(){
+				campaignUsed = true;
+				localStorage.setItem("campaign", campaign.year)
 			}
 			this.headers = function(matrix){
 				matrix = matrix || this.matrix();
