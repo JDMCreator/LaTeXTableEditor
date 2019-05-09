@@ -3205,7 +3205,7 @@ console.dir(html);
 					var row = beautifyRows[i];
 					if (i === 0 && booktabs) {
 						if(borderNewLine){
-							border = " \n\\toprule";
+							border = "\n\\toprule";
 						}
 						else{
 							border = " \\toprule";
@@ -3213,7 +3213,7 @@ console.dir(html);
 					} else {
 						border = this.getBorder(i, rg);
 						if(borderNewLine){
-							border = border ? " \n" + border : ""
+							border = border ? "\n" + border : ""
 						}
 						else{
 							border = border ? " " + border : "";
