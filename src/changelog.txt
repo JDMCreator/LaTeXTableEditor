@@ -6,6 +6,24 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.6.4 (2019/03/09)
+===========
+
+| Note on this release :
+|     Bug fixes, support for coloured diagonal line
+
+LATEX EXPORT
+
+[+] Support for coloured diagonal line in cells
+[/] Changed the way placeholder texts in diagonal cells were handled
+[/] Changed the bottom placeholder text from `[TEXT UNDER]` to `[2]`
+[/] Changed the macro used for diagonal cell with diagbox from `\backslashbox` to `\diagbox`
+[#] Swapped the arguments of `\backslashbox` when diagbox package is disabled (#10)
+
+LATEX IMPORT
+
+[#] It was impossible to load a table with \cmidrule when an optional argument and a special argument (e.g. `\cmidrule[3ex](lr)`) were used (#8)
+
 Version 1.6.3 (2018/11/28)
 ===========
 

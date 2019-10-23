@@ -121,6 +121,7 @@
 		}
 		#table td {
 			margin: 0;
+			color:#000;
 		}
 		body[data-view-editor] #table {
 			border-collapse: collapse !important;
@@ -164,6 +165,7 @@
 			width:100%;
 			min-height: 1em;
 			min-width: 1ex;
+			color:#000;
 		}
 
 		em em {
@@ -191,22 +193,24 @@
 			position: absolute;
 			top: 33%;
 			left: 0;
+			color:inherit;
 			right: 0;
 			bottom: 0;
 			z-index: -1;
-			background: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, #000000 50%, #000000 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);
+			background: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, currentcolor 50%, currentcolor 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);
 		}
 
 		td[data-two-diagonals]:after,
 		td[data-two-diagonals]::after {
 			content: "";
+			color:inherit;
 			position: absolute;
 			top: 0;
 			left: 33%;
 			right: 0;
 			bottom: 0;
 			z-index: -1;
-			background: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, #000000 50%, #000000 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);
+			background: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.9%, currentcolor 50%, currentcolor 51%, rgba(255, 255, 255, 0) 51.1%, rgba(255, 255, 255, 0) 100%);
 		}
 
 		td[data-two-diagonals] div[contenteditable]:not(:last-child) {
@@ -233,10 +237,10 @@
 			overflow:auto;
 		}
 		td[data-diagonal], #extract-div td[style*=mso-diagonal-down] {
-			background-image: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.999%, #000000 50%, #000000 51%, rgba(255, 255, 255, 0) 51.0001%, rgba(255, 255, 255, 0) 100%);
+			background-image: linear-gradient(to right top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 49.999%, currentcolor 50%, currentcolor 51%, rgba(255, 255, 255, 0) 51.0001%, rgba(255, 255, 255, 0) 100%);
 		}
 		td[data-diagonal][data-selected]{
-			background-image: linear-gradient(to right top, rgba(50,151,253,0.5) 0%, rgba(50,151,253,0.5) 49.9%, #000000 50%, #000000 51%, rgba(50,151,253,0.5) 51.1%, rgba(50,151,253,0.5) 100%);
+			background-image: linear-gradient(to right top, rgba(50,151,253,0.5) 0%, rgba(50,151,253,0.5) 49.9%, currentcolor 50%, currentcolor 51%, rgba(50,151,253,0.5) 51.1%, rgba(50,151,253,0.5) 100%);
 		}
 		td[data-diagonal] div[contenteditable] {
 			text-align: left;

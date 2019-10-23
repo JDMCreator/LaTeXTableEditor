@@ -197,7 +197,7 @@ specialSeparators = {
 		}
 		else if(mode == 3){
 			if(char == specialSeparators[realname][1]){
-				mode = 1;
+				mode = 0;
 				o.sp.push(actu);
 			}
 			else{

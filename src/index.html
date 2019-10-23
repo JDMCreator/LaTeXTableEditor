@@ -347,6 +347,11 @@ Color of border :
 							<button type="button" class="btn btn-default" id="info-rotated" onclick="table.rotate(true)"><span class="glyphicon glyphicon-font" style="transform: rotate(-90deg);margin-left: -4px;"></span></button>
 						</div>
 					</div>
+<div id="info-diagonal-block" style="display:none;">
+					<h6>Diagonal line color</h6>
+      <input type="color" class="form-control" id="info-diagonal-color" style="display:inline-block;" value="#000000" oninput="table.diagonalColor(this.value)">
+</div>
+
 					<h6>Background</h6>
     <div class="input-group">
       <input type="color" class="form-control" id="info-background-color" style="display:inline-block;" value="#FFFFFF" oninput="table.backgroundColor(this.value)">

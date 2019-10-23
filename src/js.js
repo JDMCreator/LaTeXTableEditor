@@ -109,7 +109,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.6.2";
+			this.version = "1.6.4";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -242,13 +242,19 @@ function $id(id) {
 					$id("info_diag_two")
 						.classList.add("active");
 					this.twoDiagonals();
+
+					$id("info-diagonal-block").style.display="block";
 				} else if (hm == 1) {
 					$id("info_diag_one")
 						.classList.add("active");
 					this.diagonal();
+
+					$id("info-diagonal-block").style.display="block";
 				} else {
 					$id("info_diag_zero")
 						.classList.add("active");
+
+					$id("info-diagonal-block").style.display="none";
 					this.forEachSelectedCell(function(cell) {
 						if (cell.hasAttribute("data-two-diagonals")) {
 							var toDel = cell.querySelector("div[contenteditable]");
@@ -493,8 +499,9 @@ function $id(id) {
 							toDel.parentElement.removeChild(toDel);
 							cell.removeAttribute("data-two-diagonals");
 						} else {
+							if(!(cell.querySelector(".outer > div").innerText||"").trim()){cell.querySelector(".outer > div").innerHTML = "[1]"}
 							cell.querySelector(".outer")
-								.innerHTML += "<div contenteditable>" + (cell.getAttribute("data-diagonal-data") || "[TEXT UNDER]") +
+								.innerHTML += "<div contenteditable>" + (cell.getAttribute("data-diagonal-data") || "[2]") +
 								"</div>";
 						}
 						cell.setAttribute("data-diagonal", "data-diagonal")
@@ -512,6 +519,8 @@ function $id(id) {
 							div.innerHTML = "<div contenteditable>" + (cell.getAttribute("data-two-diagonals-data") || "[1]") +
 								"</div>" + div.innerHTML;
 						} else {
+
+							if(!(cell.querySelector(".outer > div").innerText||"").trim()){cell.querySelector(".outer > div").innerHTML = "[2]"}
 							div.innerHTML = "<div contenteditable>" + (cell.getAttribute("data-two-diagonals-data") || "[1]") +
 								"</div>" + div.innerHTML + "<div contenteditable>" + (cell.getAttribute("data-diagonal-data") ||
 									"[3]") + "</div>";
@@ -641,6 +650,13 @@ function $id(id) {
 				this.statesManager.registerState();
 				this.forEachSelectedCell(function(cell) {
 					cell.style.backgroundColor = color;
+				});
+			}
+			this.diagonalColor = function(color) {
+				this.statesManager.registerState();
+				this.forEachSelectedCell(function(cell) {
+					cell.style.color = color;
+					cell.setAttribute("data-diagonal-color", color);
 				});
 			}
 			this.removeBackgroundColor = function(color) {
@@ -911,15 +927,19 @@ this.getHTML = (function(){
 				$id("info_diag_two")
 					.classList.remove("active");
 				if (element.hasAttribute("data-two-diagonals")) {
+					$id("info-diagonal-block").style.display="block";
 					$id("info_diag_two")
 						.classList.add("active");
 				} else if (element.hasAttribute("data-diagonal")) {
 					$id("info_diag_one")
 						.classList.add("active");
+					$id("info-diagonal-block").style.display="block";
 				} else {
 					$id("info_diag_zero")
 						.classList.add("active");
+					$id("info-diagonal-block").style.display="none";
 				}
+				$id("info-diagonal-color").value = element.getAttribute("data-diagonal-color") || "#000000";
 				// Align
 				this._id("info_align_left")
 					.classList.remove("active");
@@ -1901,16 +1921,25 @@ console.dir(html);
 				rightCorrection = o ? o.rightCorrection : "";
 				if (cell.hasAttribute("data-two-diagonals")) {
 					this.packages["diagbox"] = true;
-					text = "\\diagbox{" + this.generateFromHTML(this.getHTML(cell, 2)) + "}{" + this.generateFromHTML(this.getHTML(cell)) + "}{" +
+					text = "\\diagbox";
+						if(cell.hasAttribute("data-diagonal-color") && cell.getAttribute("data-diagonal-color") != "#000000"){
+	text += "[linecolor="+this.tabuColor(cell.getAttribute("data-diagonal-color"))+"]"						
+						}
+					text += "{" + this.generateFromHTML(this.getHTML(cell, 2)) + "}{" + this.generateFromHTML(this.getHTML(cell)) + "}{" +
 						this.generateFromHTML(this.getHTML(cell, 1)) + "}"
 				} else if (cell.hasAttribute("data-diagonal")) {
 					var ce = cell.querySelectorAll("div[contenteditable]");
 					if (this.blacklistPackages["diagbox"]) {
 						this.packages["slashbox"] = true;
+						text = "\\backslashbox{" + this.generateFromHTML(this.getHTML(cell, 1)) + "}{" + this.generateFromHTML(this.getHTML(cell)) + "}";
 					} else {
 						this.packages["diagbox"] = true;
+						text = "\\diagbox";
+						if(cell.hasAttribute("data-diagonal-color") && cell.getAttribute("data-diagonal-color") != "#000000"){
+	text += "[linecolor="+this.tabuColor(cell.getAttribute("data-diagonal-color"))+"]"						
+						}
+						text += "{" + this.generateFromHTML(this.getHTML(cell, 1)) + "}{" + this.generateFromHTML(this.getHTML(cell)) + "}";
 					}
-					text = "\\backslashbox{" + this.generateFromHTML(this.getHTML(cell)) + "}{" + this.generateFromHTML(this.getHTML(cell, 1)) + "}";
 				} else if (cell.hasAttribute("data-rotated")) {
 					if (cell.rowSpan > 1) {
 						if (this.blacklistPackages["makecell"]) {
@@ -3010,17 +3039,20 @@ console.dir(html);
 						rgb: color,
 						hex : hex
 					}
+					this.useCustomColors = true;
 					this.packages["color"] = true;
 					return name;
 				}
 			}
 			this.tabuColors = {
 			}
+			this.useCustomColors = false;
 			this.tabuColorsDic = {};
 			this.generateLaTeX = function(opt) {
 				this.tabuColors = {};
 				this.tabuColorsDic = {};
 				this.packages = {};
+				this.useCustomColors = false;
 				this.actualMainColor = this.mainColor();
 				this.actualColor = this.actualMainColor;
 				this.useTabu = this.shouldUseTabu(); // Must we use "tabu" package ?
@@ -3286,7 +3318,7 @@ console.dir(html);
 				else if(str.indexOf("\\cellcolor") > -1 || str.indexOf("\\rowcolor") > -1 || str.indexOf("\\columncolor") > -1){
 					this.packages["colortbl"] = true;
 				}
-				if(this.useTabu){
+				if(this.useTabu || this.useCustomColors){
 					// Let see if we have some colors from tabu that we have to declare
 					var tabuColors = this.tabuColors;
 					for(var i in tabuColors){
