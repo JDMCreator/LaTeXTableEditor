@@ -6,6 +6,20 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.6.5 (2019/10/23)
+===========
+
+| Note on this release :
+|     Bug fixes, support for coloured diagonal line
+
+LATEX EXPORT
+
+[#] Bold, italized, underlined and coloured texts didn't work with multiple lines rows (#15)
+
+LATEX IMPORT
+
+[#] Comments were not parsed
+
 Version 1.6.4 (2019/03/09)
 ===========
 

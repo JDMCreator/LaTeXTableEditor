@@ -229,7 +229,6 @@ importTable = function(code){
 
 xcolor.erase();
 xcolor.extract(code);
-
 var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin{((?:long|)tabu\*?|sidewaystable|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
 var tabular = tabularReg.exec(code);
 	tabularReg.lastIndex = 0;
@@ -487,15 +486,25 @@ var tabular = tabularReg.exec(code);
 	};
 	var cellpos = 0, commandmode = false, otherseparator = "",
 	table = [[]], cell = "", row = table[0], ignoreSpace = false, actuBorder="", borders = [],
-	backgroundRow = [], actualXColorRowNumber = 1, xcolorRowNumbers = [];
+	backgroundRow = [], actualXColorRowNumber = 1, xcolorRowNumbers = [], inComment = false;
 	for(var i=0, c;i<code.length;i++){
 		c = code.charAt(i);
 		var sub = code.substring(i);
+		if(inComment){
+			if(c == "\n"){
+				inComment = false;
+			}
+			continue;
+		}
 		if(ignoreSpace && /^\s$/.test(c)){
 			continue;
 		}
 		ignoreSpace = false;
-		if(c == "\\"){
+		if(c == "%"){
+			inComment = true;
+			continue;
+		}
+		else if(c == "\\"){
 			if(sub.lastIndexOf("\\begin{",0) === 0){
 				var env = envirn(sub);
 				cell += env.full;

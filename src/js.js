@@ -14,9 +14,9 @@ function $id(id) {
 	/* ==== START CAMPAIGN INFO ==== */
 
 	var campaign = {
-		start: new Date(2018,11,2),
-		end: new Date(2018,11,17),
-		year:2018
+		start: new Date(2019,11,2),
+		end: new Date(2019,11,17),
+		year:2019
 	},
 	campaignUsed = localStorage.getItem("campaign") == campaign.year,
 
@@ -109,7 +109,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.6.4";
+			this.version = "1.6.5";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -856,12 +856,35 @@ this.getHTML = (function(){
 		for(var i=0;i<div.childNodes.length;i++){
 			_eqHTML(div.childNodes[i], cont)
 		}
-		return cont.innerHTML.replace(/<\/(b|i)\s*>(\s*)<\s*(b|i)\s*>/gi, function(full, close, space, open){
+		var html = cont.innerHTML.replace(/<\/(b|i)\s*>(\s*)<\s*(b|i)\s*>/gi, function(full, close, space, open){
 			if(open.toLowerCase() == close.toLowerCase()){
 				return space;
 			}
 			return full;
 		}).replace(/\u200B/g,'');
+		if(/<br[^a-z>]*>/i.test(html)){
+			var opentags = [], html = html.replace(/<\s*(\/?)\s*(br|b|i|u|font\s+[^>]*)[^a-z>]*>/ig,function(full,close,tag){
+				tag = tag.toLowerCase();
+				if(tag == "br"){
+					var str = "</";
+					opentags.reverse();
+					str += opentags.join("></")+"><br><";
+					opentags.reverse();
+					str += opentags.join("><")+">";
+					str = str.replace(/<\/\s*font[^>]*>/gi,"</font>");
+					return str;
+				}
+				else if(close){
+					opentags.pop();
+					return full;
+				}
+				else{
+					opentags.push(tag);
+					return full;
+				}
+			})
+		}
+		return html;
 	}
 })();
 			this.setHTML = function(cell, HTML) {
@@ -1621,7 +1644,7 @@ this.getHTML = (function(){
 							break;
 						}
 					}while(target = target.parentElement);
-					if(e.clipboardData && document.queryCommandEnabled("insertHTML")){
+					if(e.clipboardData && false && document.queryCommandEnabled("insertHTML")){
 						var d = document.createElement("div");
 						var plain = e.clipboardData.getData("text/plain");
 console.log(plain);
@@ -3237,7 +3260,7 @@ console.dir(html);
 					var row = beautifyRows[i];
 					if (i === 0 && booktabs) {
 						if(borderNewLine){
-							border = "\n\\toprule";
+							border = " \n\\toprule";
 						}
 						else{
 							border = " \\toprule";
@@ -3245,7 +3268,7 @@ console.dir(html);
 					} else {
 						border = this.getBorder(i, rg);
 						if(borderNewLine){
-							border = border ? "\n" + border : ""
+							border = border ? " \n" + border : ""
 						}
 						else{
 							border = border ? " " + border : "";
