@@ -14,8 +14,8 @@ function $id(id) {
 	/* ==== START CAMPAIGN INFO ==== */
 
 	var campaign = {
-		start: new Date(2019,11,2),
-		end: new Date(2019,11,17),
+		start: new Date(2018,11,2),
+		end: new Date(2018,11,17),
 		year:2019
 	},
 	campaignUsed = localStorage.getItem("campaign") == campaign.year,
@@ -109,7 +109,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.6.5";
+			this.version = "1.6.6";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -863,16 +863,22 @@ this.getHTML = (function(){
 			return full;
 		}).replace(/\u200B/g,'');
 		if(/<br[^a-z>]*>/i.test(html)){
+			console.log(html);
 			var opentags = [], html = html.replace(/<\s*(\/?)\s*(br|b|i|u|font\s+[^>]*)[^a-z>]*>/ig,function(full,close,tag){
 				tag = tag.toLowerCase();
 				if(tag == "br"){
-					var str = "</";
-					opentags.reverse();
-					str += opentags.join("></")+"><br><";
-					opentags.reverse();
-					str += opentags.join("><")+">";
-					str = str.replace(/<\/\s*font[^>]*>/gi,"</font>");
-					return str;
+					if(opentags.length > 0){
+						var str = "</";
+						opentags.reverse();
+						str += opentags.join("></")+"><br><";
+						opentags.reverse();
+						str += opentags.join("><")+">";
+						str = str.replace(/<\/\s*font[^>]*>/gi,"</font>");
+						return str;
+					}
+					else{
+						return "<br>";
+					}
 				}
 				else if(close){
 					opentags.pop();

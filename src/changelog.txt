@@ -6,6 +6,16 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.6.6 (2019/12/13)
+===========
+
+| Note on this release :
+|     Bug fixes
+
+CORE
+
+[#] Major issue with the way HTML was generated from each cell when there was newlines and no text formatting (#16)
+
 Version 1.6.5 (2019/10/23)
 ===========
 
