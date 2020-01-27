@@ -148,6 +148,9 @@ Output <span class="caret"></span>
     </div>
     </div>
 </div>
+<div class="btn-group" role="group" aria-label="Footnotes" id="group-footnotes">
+<button type="button" style="position:absolute" class="btn btn-default" data-toggle="tooltip" title="Footnote" onmousedown="event.preventDefault()" onclick="table.insertFootnote();return false;"><span class="glyphicon glyphicon-font"></span><span class="footnote-exp">1</span></button>
+</div>
 					</div>
 				</div>
 				<div role="tabpanel" class="tab-pane" id="profile">
@@ -370,9 +373,26 @@ Color of border :
 
     </div>
   </div>
+  <div class="panel panel-default" id="panel-footnotes">
+    <div class="panel-heading" role="tab">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#right_accordion" href="#right_footnote" aria-expanded="true" aria-controls="right_table">
+          Footnotes
+        </a>
+      </h4>
+    </div>
+    <div id="right_footnote" class="panel-collapse collapse" role="tabpanel">
+      <div class="panel-body">
+<div class="btn-group" role="group">
+<button onclick="table.insertFootnote()" class="btn btn-default">Insert footnote</button>
+<button onclick="table.refreshFootnotes()" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span></button>
+</div>
+							<div id="footnotes-txt"></div>
+     </div>
+    </div>
+  </div>
 </div>
 </div>
-
 
 		</div>
 </div>
@@ -772,6 +792,7 @@ I am the sole developer of this project and I ask for your help. I would like to
 									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-siunitx" value="siunitx" checked disabled> <label for="blacklist-siunitx">Siunitx</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-tablefootnote" value="tablefootnote" checked disabled> <label for="blacklist-tablefootnote">Tablefootnote</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label><br>
 									<input type="checkbox" class="input-control" id="blacklist-ulem" value="ulem" checked> <label for="blacklist-ulem">Ulem</label>
@@ -784,7 +805,7 @@ I am the sole developer of this project and I ask for your help. I would like to
 <input type="radio" name="latex-hhline"> <img src="double-default.png" width=29>
 </label></div>
 <div class="col-md-4"><label>
-<input type="radio" name="latex-hhline" id="opt-latex-hhline" default> <img src="double-combined.png" width=29> with <code>hhline</code>
+<input type="radio" name="latex-hhline" id="opt-latex-hhline" checked> <img src="double-combined.png" width=29> with <code>hhline</code>
 </label></div>
 <div class="col-md-4"><label>
 <input type="radio" id="opt-latex-hhline-hash" name="latex-hhline"> <img src="double-hash.png" width=29> with <code>hhline</code>
@@ -902,6 +923,7 @@ placement: 'auto top'
 			if(json){
 				try{
 					table.importFromJSON(JSON.parse(json));
+					table.loadAllFootnotes();
 				}
 				catch(e){
 					table.create(4, 4);

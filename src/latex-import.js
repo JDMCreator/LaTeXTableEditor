@@ -1422,6 +1422,15 @@ treatCom = function(code){
 	else if(name == "emph"){
 		html+="<i>" + getHTML(com.args[0]) + "</i>";
 	}
+	else if(name == "tablefootnote" || name == "footnote"){
+		var div = document.createElement("div"),
+		span = document.createElement("span");
+		span.className = "tb-footnote";
+		span.innerHTML = "&#x200b;";
+		span.title = getHTML(com.args[0]);
+		div.appendChild(span);
+		html += div.innerHTML;
+	}
 	else if(name == "uline" || name == "underline"){
 		html+="<u>" + getHTML(com.args[0]) + "</u>";
 	}

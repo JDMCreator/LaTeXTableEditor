@@ -54,6 +54,7 @@ function $id(id) {
 			"rotating" : ["graphicx", "ifthen"],
 			"siunitx" : ["expl3","amstext" , "array" , "l3keys2e"],
 			"slashbox" : [],
+			"tablefootnote": ["ltxcmds","letltxmacro","xifthen"],
 			"tabu" : ["array","varwidth"],
 			"tabularx" : ["array"],
 			"ulem" : []
@@ -109,7 +110,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "1.6.6";
+			this.version = "1.7";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -119,6 +120,7 @@ function $id(id) {
 				}
 				this.element.innerHTML = "";
 				this.element.appendChild(fr);
+				this.loadAllFootnotes();
 			};
 			this.importData = function(content, format){
 				content = content || $id("import_value").value;
@@ -209,6 +211,7 @@ function $id(id) {
 						alert("Your CSV file could not be loaded");
 					}
 				}
+				this.loadAllFootnotes();
 			}
 			this.selectFormat = function(format){
 				$("div[data-option-group]").hide();
@@ -714,7 +717,7 @@ this.getHTML = (function(){
 			if(tagName == "TITLE" || tagName == "SCRIPT" || tagName == "STYLE" || tagName == "VIDEO" || tagName == "OBJECT"){
 				return false;
 			}
-			else if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "LI" || tagName == "U"){
+			else if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "SUP" || tagName == "LI" || tagName == "U"){
 				newnode = document.createElement(tagName);
 				cont.appendChild(newnode);
 			}
@@ -770,11 +773,23 @@ this.getHTML = (function(){
 					cont.appendChild(document.createElement("WBR"));
 				}
 			}
+			else if(node.className == "tb-footnote"){
+				newnode = document.createElement("span");
+				newnode.className = node.className;
+				if(node.hasAttribute("data-footnote-id")){
+					var id = node.getAttribute("data-footnote-id");
+					if(document.getElementById(id)){
+						newnode.setAttribute("data-footnote-id", id);
+						newnode.title = document.getElementById(id).querySelector("textarea").value;
+					}
+				}
+				newnode.innerHTML = "&#x200b;";
+				cont.appendChild(newnode);
+			}
 			else if(node.className == "latex-equation"){
 				newnode = document.createElement("span");
-				newnode.className = "latex-equation";
+				newnode.className = node.className;
 				cont.appendChild(newnode);
-				
 			}
 			else{
 				var frag = document.createDocumentFragment(), lastnode;
@@ -1361,6 +1376,9 @@ this.getHTML = (function(){
 					}
 				}
 			}
+			this.insertFootnote = function(){
+				document.execCommand("insertHTML",false, "<span class='tb-footnote'>&#x200b;</span>");
+			}
 			this.saveToJSON = function() {
 				var o = this.exportToJSON(true);
 				document.getElementById('c')
@@ -1627,6 +1645,105 @@ this.getHTML = (function(){
 			}
 			this.loaded = false;
 			this.element = null;
+			this.footnoteObserver = function(mutationsList, observer) {
+				for(let mutation of mutationsList) {
+					if (mutation.type === 'childList') {
+						for(var i=0, m = mutation.addedNodes,n;i<m.length;i++){
+							n = m[i];
+							if(n.className == "tb-footnote"){
+								this.addFootnote(n);
+							}
+						}
+						for(var i=0, m = mutation.removedNodes,n;i<m.length;i++){
+							n = m[i];
+							if(n.className == "tb-footnote"){
+								this.removeFootnote(n);
+							}
+							else if(mutation.target.className == "tb-footnote"){
+								mutation.target.parentElement.removeChild(mutation.target);
+							}
+						}
+					}
+				}
+			}
+			this.refreshFootnotes = function(){
+				var els = document.querySelectorAll(".right-footnote-content");
+				for(var i=0,el;i<els.length;i++){
+					var id = els[i].id;
+					el = document.querySelector(".tb-footnote[data-footnote-id=\""+id+"\"]");
+					if(el){
+						el.title = els[i].querySelector("textarea").value;
+					}
+				}
+				this.loadAllFootnotes();
+			}
+			this.addFootnote = function(el){
+				var position = null,
+				footnotes = this.element.querySelectorAll(".tb-footnote");
+				for(var i=0;i<footnotes.length;i++){
+					if(footnotes[i] === el){break;}
+					var id = footnotes[i].getAttribute("data-footnote-id");
+					if(id){position = id}
+				}
+				var oldid = el.getAttribute("data-footnote-id");
+				var div = document.createElement("div"),
+				nb = document.createElement("div"),
+				txt = document.createElement("textarea");
+				div.className = "input-group right-footnote-content";
+				nb.className = "input-group-addon";
+				txt.className = "form-control";
+				if(oldid){
+					if(document.getElementById(oldid)){
+						txt.value = document.getElementById(oldid).querySelector("textarea").value;
+					}
+				}
+				div.appendChild(nb);div.appendChild(txt);
+				for(;;){
+					var rand = "footnote" + Math.floor(Math.random()*100000);
+					if(!document.getElementById(rand)){break;}
+				}
+				div.id = rand;
+				el.setAttribute("data-footnote-id", rand);
+				var container = document.getElementById("footnotes-txt");
+				if(!position){
+					container.insertBefore(div,container.firstChild)
+				}
+				else{
+					var container = document.getElementById(position);
+					container.parentNode.insertBefore(div, container.nextSibling);
+				}
+			}
+			this.removeFootnote = function(el){
+				var id = el.getAttribute("data-footnote-id"),
+				div = document.getElementById(id || "null");
+				if(id && document.getElementById(id)){
+					div.parentNode.removeChild(div);
+				}
+			}
+			this.loadAllFootnotes = function(){
+				document.getElementById("footnotes-txt").innerHTML = "";
+				var footnotes = this.element.querySelectorAll(".tb-footnote"),
+				frag = document.createDocumentFragment();
+				for(var i=0;i<footnotes.length;i++){
+					var footnote = footnotes[i];
+					var div = document.createElement("div"),
+					nb = document.createElement("div"),
+					txt = document.createElement("textarea");
+					div.className = "input-group right-footnote-content";
+					nb.className = "input-group-addon";
+					txt.className = "form-control";
+					div.appendChild(nb);div.appendChild(txt);
+					for(;;){
+						var rand = "footnote" + Math.floor(Math.random()*100000);
+						if(!document.getElementById(rand)){break;}
+					}
+					div.id = rand;
+					footnote.setAttribute("data-footnote-id", rand);
+					txt.value = footnote.title || "";
+					frag.appendChild(div);
+				}
+				document.getElementById("footnotes-txt").appendChild(frag);
+			}
 			this.load = function(table) {
 				this.loaded = true;
 				this.element = table;
@@ -1638,6 +1755,14 @@ this.getHTML = (function(){
 				$id("support-us").addEventListener("animationend",function(){
 					this.classList.remove("active");
 				}, false);
+				if(window.MutationObserver){
+					var observer = new MutationObserver(_this.footnoteObserver.bind(_this));
+					observer.observe(table, { childList: true, subtree: true});
+				}
+				else{
+					document.getElementById("panel-footnotes").style.display = "none";
+					document.getElementById("group-footnotes").style.display = "none";
+				}
 				table.addEventListener("paste", function(e) {
 					if(improvePaste){
 						improvePaste = false;
@@ -1653,7 +1778,6 @@ this.getHTML = (function(){
 					if(e.clipboardData && false && document.queryCommandEnabled("insertHTML")){
 						var d = document.createElement("div");
 						var plain = e.clipboardData.getData("text/plain");
-console.log(plain);
 						// We get the plain version to determine if we have to trim the HTML
 						var trimLeft = /^\S/.test(plain),
 						trimRight = /\S$/.test(plain);
@@ -1839,6 +1963,15 @@ console.dir(html);
 						else if(tagname == "kbd"){
 							str += eq[kbdcount];
 							kbdcount++;
+						}
+						else if(tagname == "span"){
+							var div = document.createElement("div");
+							div.innerHTML = inside+"</span>";
+							div=div.firstChild;
+							if(div.className == "tb-footnote"){
+								this.packages["tablefootnote"] = true;
+								str += "\\tablefootnote{"+(div.title||"")+"}";
+							}
 						}
 						else if(tagname == "ul"){
 							if(str.length > 0){

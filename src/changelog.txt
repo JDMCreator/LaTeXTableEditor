@@ -6,6 +6,28 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 1.7 (2020/01/26)
+===========
+
+| Note on this release :
+|     Bug fixes
+
+CORE
+
+[+] Support for footnotes
+
+LATEX EXPORT
+
+[+] Support for footnotes (with \tablefootnote)
+
+HTML EXPORT
+
+[+] Support for footnotes
+
+LATEX IMPORT
+
+[+] Support for \footnote and \tablefootnote
+
 Version 1.6.6 (2019/12/13)
 ===========
 

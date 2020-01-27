@@ -104,6 +104,18 @@
 			var text = document.createTextNode("$$"+(eq.innerText || eq.textContent)+"$$");
 			eq.parentNode.replaceChild(text, eq);
 		}
+		var footnotes = container.querySelectorAll("span.tb-footnote");
+		// TODO : SPACE PROBLEMS!!!
+		for(var i=0,ft;i<footnotes.length;i++){
+			ft = footnotes[i];
+			var text = document.createElement("sup");
+			var a = document.createElement("a");
+			a.innerHTML = i+1;
+			a.href = "#";
+			a.title = ft.title;
+			text.appendChild(a)
+			ft.parentNode.replaceChild(text, ft);
+		}
 		var html = beautify(container.innerHTML.replace(/<\s*wbr[^>]*>/i,"<br>"));
 		if(document.getElementById("opt-html-remove-tag").checked){
 			html = html.replace(/\s+<\s*\/\s*(?:p|dt|dd|li|option|thead|th|tbody|tr|td|tfoot|colgroup)\s*>/gm, "")

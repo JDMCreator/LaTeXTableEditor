@@ -1,3 +1,6 @@
+		html{
+			counter-reset:footnote;
+		}
 		/* Edge hack to have the good white-space value */
 		@supports (-ms-ime-align:auto) {
 			#c, .textarea-wrap {
@@ -228,6 +231,23 @@
 
 		td[data-align="r"] {
 			text-align: right;
+		}
+		.tb-footnote:before, .tb-footnote::before{
+			counter-increment:footnote;
+			content:counter(footnote);
+			vertical-align:super;
+			font-size:xx-small;
+		}
+		#footnotes-txt{counter-reset:footnote-content;}
+		.right-footnote-content > div:before, .right-footnote-content > div::before{
+			counter-increment:footnote-content;
+			content:counter(footnote-content);
+		}
+		.right-footnote-content{margin-top:3px;}
+		.footnote-exp{
+			font-size:xx-small;
+			position:relative;
+			top:-1.7ex;
 		}
 		#extract-div{
 			height:auto;
