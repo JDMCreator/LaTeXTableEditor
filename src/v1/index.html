@@ -1,0 +1,1076 @@
+<!doctype html>
+<html>
+
+<head>
+<meta charset="UTF-8"> 
+<meta name="viewport" id="meta-viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A powerful and robust LaTeX, ConTeXt, Plain TeX, PreTeXt, EPlain, Markdown, Textile, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
+<script data-ad-client="ca-pub-5146982563696073" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+	<title>LaTeX Tables Editor</title>
+	<link href="css.css" rel="stylesheet">
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+	<script type="text/javascript" src="js/jquery.min.js">
+	</script>
+	<script type="text/javascript" src="js/bootstrap.min.js">
+	</script>
+	<script type="text/javascript" src="table.js">
+	</script>
+	<script type="text/javascript" src="color.js">
+	</script>
+	<script type="text/javascript" src="js.js"></script>
+</head>
+
+<body>
+<div class="border-line" id="line"></div>
+<div class="container-fluid">
+<div>
+  <div id="left-panel">
+
+<div class="alert alert-info return-to-desktop" role="alert" style="margin:3px;">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<span class="glyphicon glyphicon-info-sign"></span> <strong>Mobile.</strong> You are using a mobile rendering of our LaTeX table editor. <a href="#" onclick="table.requestDesktopSite()">Request desktop site for this session</a>.</div>
+
+<div class="alert alert-info" role="alert" style="margin:3px;display:none;" id="edge-info">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<span class="glyphicon glyphicon-info-sign"></span> <strong>Microsoft Edge.</strong> You seems to be using Microsoft Edge. We are working hard to fix issues with this browser. You will have better results with Firefox or Chrome.</div>
+<div id="mobile-bottom-menu" class="container-fluid">
+<div class="mobile-row">
+<div class="mobile-col" ontouchstart="table.mobileKey(1, this)" id="mobile-ctrl">Select multiple cells</div>
+<div class="mobile-col" ontouchstart="table.mobileKey(2, this)" id="mobile-shift">Select multiple adjacent cells</div>
+<div class="mobile-col-xs" onclick="table.prepareEmail()"><span class="glyphicon glyphicon-envelope" aria-hidden="true"></span></div></div></div>
+
+
+
+<p class="text-right hide-on-full" style="margin:0"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="#" data-target="#help-modal" data-toggle="modal">Help</a></p>
+
+
+<!-- Header
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5146982563696073"
+     data-ad-slot="9054299450"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>-->
+
+
+<div style="height:50px;margin-bottom:10px;" class="hide-on-full"><img src="logo.png" alt="Logo." height="50"><span class="latex-logo">L<span class="latex-a">a</span>T<span class="latex-e">e</span>X Complex Table Editor <small style="font-size:14px;">With <a href="https://github.com/JDMCreator/Table.js" target="_blank">Table.js</a></small></span></div>
+		<nav class="nav-latex">
+<div class="clearfix">
+<div style="float:left">
+<div class="dropdown">
+<a class="dropdown-toggle" type="button" id="dropdownMenu1" role="button" data-target="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+File <span class="caret"></span>
+</a>
+<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" id="dropdownMenu2">
+  <li><a href="#" data-target="#myModal" data-toggle="modal">Create table</a></li>
+  <li class="divider"></li>
+  <li><a href="#" onclick="table.openImportModal('json')">Open JSON table</a></li>
+  <li><a href="#" onclick="table.saveToJSON()">Generate JSON</a></li>
+  <li class="divider"></li>
+  <li class="dropdown-submenu">
+    <a tabindex="-1" href="#">Import Table</a>
+    <ul class="dropdown-menu">
+      <li><a href="#" onclick="table.openImportModal('latex')">LaTeX</a></li>
+      <li><a href="#" onclick="table.openImportModal('csv')">CSV</a></li>
+      <li><a href="#" onclick="$('#worksheet-dialog').modal('show')">Excel, LibreOffice, CSV files</a></li>
+      <li><a href="#" onclick="$('#pasteModal').modal('show');">Paste a table</a></li>
+      <li><a href="#" onclick="table.openImportModal('markdown')">Markdown</a></li>
+    </ul>
+  </li>
+  <li class="dropdown-submenu">
+    <a tabindex="-1" href="#">Export File</a>
+    <ul class="dropdown-menu">
+      <li><a href="#" onclick="table.prepareDownload()">LaTeX</a></li>
+    </ul>
+  </li>
+</ul>
+<span>
+<a class="dropdown-toggle" type="button" id="dropdownMenu3" role="button" data-target="dropdownMenu4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+Table <span class="caret"></span>
+</a>
+<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu3" id="dropdownMenu4">
+
+  <li><a href="#" onclick="table.deleteContent()">Delete content</a></li>
+</ul>
+</span>
+<span>
+<a class="dropdown-toggle" type="button" id="dropdownMenu5" role="button" data-target="dropdownMenu6" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+Output <span class="caret"></span>
+</a>
+<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu5" id="dropdownMenu6">
+
+  <li><a href="#" onclick="table.generate()">Generate</a></li>
+  <li><a href="#" onclick="table.toMWE()">Convert to MWE</a></li>
+  <li class="divider"></li>
+  <li><a href="#" data-target="#format-settings" data-toggle="modal">Settings</a></li>
+</ul>
+</span>
+</div>
+</div>
+<div style="float:right;">
+<span id="support-us">Like this editor ? <a href="supportus.html" target="_blank">Support us</a>.</span>
+</div>
+</div>
+			<!-- Nav tabs -->
+			<ul class="nav nav-tabs" role="tablist">
+				<li><span class="glyphicon glyphicon-pushpin" data-toggle="tooltip" title="Pin/Unpin the toolbar to the top of the page" style="padding:10px 5px;cursor:pointer;" onclick="table.togglePin()"></span></li>
+				<li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Home</a></li>
+				<li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Rows/Columns</a></li>
+				<li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Borders</a></li>
+				<li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Export settings</a></li>
+			</ul>
+			<!-- Tab panes -->
+			<div class="tab-content">
+				<div role="tabpanel" class="tab-pane active" id="home">
+					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="Home toolbar">
+						
+						<div class="btn-group" role="group" aria-label="Undo">
+							<button type="button" data-toggle="tooltip" title="Undo" onclick="table.statesManager.undo()" class="btn btn-default"><span class="glyphicon glyphicon-repeat" style="transform: scale(-1, 1)"></span></button>
+						</div>
+						<div class="btn-group" role="group" aria-label="Modes">
+							<button type="button" data-toggle="tooltip" title="Edit mode" class="btn btn-default active" id="button-mode-edit" onclick="table.mode(0)"><span class="glyphicon glyphicon-pencil"></span></button>
+							<button type="button" data-toggle="tooltip" title="View mode" class="btn btn-default" id="button-mode-view" onclick="table.mode(1)"><span class="glyphicon glyphicon-eye-open"></span></button>
+							<button type="button" data-toggle="tooltip" title="Border editor mode" class="btn btn-default" id="button-mode-border" onclick="table.mode(2)"><span class="glyphicon glyphicon-unchecked"></span></button>
+						</div>
+<div class="btn-group" role="group" aria-label="Unordered List">
+							<button type="button" data-toggle="tooltip" title="Unordered List" class="btn btn-default" onmousedown="event.preventDefault()" onclick="document.execCommand('insertunorderedlist', false, false);return false;"><span class="glyphicon glyphicon-list"></span></button>
+</div>
+						<div class="btn-group" role="group" aria-label="Text formatting">
+							<button type="button" data-toggle="tooltip" title="Bold" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('bold');return false;"><span class="glyphicon glyphicon-bold"></span></button>
+							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Italic" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('italic');return false;"><span class="glyphicon glyphicon-italic"></span></button>
+							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Underline" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('underline');return false;"><span class="icon-underline"></span></button>
+							<button type="button" class="btn btn-default" data-toggle="tooltip" title="Equation" onmousedown="event.preventDefault()" onclick="table.insertEquation();return false;"><span class="glyphicon glyphicon-usd"></span></button>
+						</div>
+<div class="btn-group" role="group" aria-label="Text color">
+							<button type="button" data-toggle="tooltip" title="Text color" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('foreColor', this.getAttribute('data-color')||'#000000');return false;" id="text-color-button"><span class="glyphicon glyphicon-font" style="text-shadow:0 0 1px #000;" id="text-color-span"></span></button>
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <span class="caret"></span>
+    </button>
+    <div class="dropdown-menu" style="padding:3px;width:200px;">
+   <div class="input-group">
+          <input type="color" style="min-width:100px;" class="form-control" oninput="table.textColor(this.value)" id="text-color-input">
+
+      <span class="input-group-btn" style="width:auto;">
+
+<button type="button" data-toggle="tooltip" title="Color Picker" class="btn btn-default" onclick="table.textColorPick()"><span class="glyphicon glyphicon-tint"></span></button>
+
+<button type="button" data-toggle="tooltip" title="Remove text color" class="btn btn-default" onmousedown="event.preventDefault()" onclick="table.toggleExecCommand('foreColor', '#000000');return false;" id="text-color-button"><span class="glyphicon glyphicon-ban-circle"></span></button>
+      </span>
+    </div>
+    </div>
+</div>
+<div class="btn-group" role="group" aria-label="Footnotes" id="group-footnotes">
+<button type="button" style="position:absolute" class="btn btn-default" data-toggle="tooltip" title="Footnote" onmousedown="event.preventDefault()" onclick="table.insertFootnote();return false;"><span class="glyphicon glyphicon-font"></span><span class="footnote-exp">1</span></button>
+</div>
+					</div>
+				</div>
+				<div role="tabpanel" class="tab-pane" id="profile">
+					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="Rows and columns toolbar">
+						<div class="btn-group" role="group" aria-label="Insert rows or columns">
+							<button type="button" class="btn btn-default" onclick="table.insertColBefore()" data-toggle="tooltip" title="Insert a column before"><span class="glyphicon glyphicon-arrow-left"></span></button>
+							<button type="button" class="btn btn-default" onclick="table.insertColAfter()" data-toggle="tooltip" title="Insert a column after"><span class="glyphicon glyphicon-arrow-right"></span></button>
+							<button type="button" class="btn btn-default" onclick="table.insertRowOver()" data-toggle="tooltip" title="Insert a row over"><span class="glyphicon glyphicon-arrow-up"></span></button>
+							<button type="button" class="btn btn-default" onclick="table.insertRowUnder()" data-toggle="tooltip" title="Insert a row under"><span class="glyphicon glyphicon-arrow-down"></span></button>
+						</div>
+						<div class="btn-group" role="group" aria-label="Remove rows or columns">
+							<button type="button" class="btn btn-default" onclick="table.removeCol()" data-toggle="tooltip" title="Delete columns"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-vertical"></span></button>
+							<button type="button" class="btn btn-default" data-toggle="tooltip" onclick="table.removeRow()" title="Delete rows"><span class="glyphicon glyphicon-remove"></span><span class="glyphicon glyphicon-resize-horizontal"></span></button>
+						</div>
+						<div class="btn-group" role="group" aria-label="Merge or split cells">
+							<button type="button" class="btn btn-default" onclick="table.merge()" data-toggle="tooltip" title="Merge cells"><span class="glyphicon glyphicon-resize-small" style="transform:rotate(45deg)"></span></button>
+							<button type="button" class="btn btn-default" onclick="table.split()" data-toggle="tooltip" title="Split cells"><span class="glyphicon glyphicon-resize-full" style="transform:rotate(45deg)"></span></button>
+						</div>
+					</div>
+				</div>
+				<div role="tabpanel" class="tab-pane" id="messages">
+					<div class="btn-toolbar" style="margin:3px" role="toolbar" aria-label="Borders toolbar">
+
+						<div class="btn-group" role="group" aria-label="Draw borders">
+							<button type="button" class="btn btn-default" onclick="table.mode(table.mode() == 2 ? 0 : 2)" data-toggle="tooltip" title="Draw borders" id="button-border-draw"><span class="glyphicon glyphicon-pencil"></span></button>
+						</div>
+						<div class="btn-group" role="group" aria-label="Add or remove borders">
+							<button type="button" class="btn btn-default" onclick="table.setAllBorders()" data-toggle="tooltip" title="Add all borders"><span class="glyphicon glyphicon-unchecked"></span></button>
+							<button type="button" class="btn btn-default" onclick="table.removeBorders()" data-toggle="tooltip" title="Remove all borders"><span class="glyphicon glyphicon-remove"></span></button>
+						</div>
+						<div class="btn-group" role="group" aria-label="Booktabs">
+							<button type="button" class="btn btn-default" onclick="table.autoBooktabs()" data-toggle="tooltip" title="Automatic Booktabs" id="button-booktabs"><span class="glyphicon glyphicon-book"></span></button>
+						</div>
+					</div>
+				</div>
+				<div role="tabpanel" class="tab-pane" id="settings">
+					<div style="max-width:500px">
+						<div class="form-group">
+							<label for="format">Output format</label>
+							<select class="form-control" id="format" onchange="table.selectFormat(this.value)">
+<optgroup label="TeX">
+	<option value="latex">LaTeX</option>
+	<option value="context">ConTeXt</option>
+	<option value="plain">Plain TeX</option>
+	<option value="pretext">PreTeXt</option>
+	<option value="eplain">Eplain</option>
+</optgroup>
+<optgroup label="Markup">
+	<option value="md">Markdown</option>
+	<option value="textile">Textile</option>
+</optgroup>
+<optgroup label="Web">
+	<option value="html">HTML</option>
+	<option value="bbcode">BBCode</option>
+</optgroup>
+<optgroup label="Data">
+	<option value="csv">CSV</option>
+</optgroup>
+<optgroup label="Legacy formats">
+	<option value="wml">WML</option>
+</optgroup>
+	</select>
+<div><a data-target="#format-settings" data-toggle="modal" href="#">Advanced settings</a></div>
+
+						</div>
+						
+					</div>
+
+				</div>
+<hr style="margin:0;margin-bottom:2px;">
+		</nav>
+		<div class="caption-container">
+			<div class="input-group" style="max-width:400px">
+				<div class="input-group-addon"><select id="caption-nb">
+<option value=""></option>
+<option value="*">*</option>
+</select></div>
+				<input id="caption" class="form-control" placeholder="Caption">
+			</div>
+		</div>
+		<div id="table-div-container">
+			<table id="table">
+			</table>
+		</div>
+<div>
+<div class="alert alert-info" role="alert" style="display:none;" id="border-editor-info">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<span class="glyphicon glyphicon-info-sign"></span> You are now using the border editor. You can drag your cursor to draw multiple borders at once or click on any border to activate or deactivate it. You can change the border style on the right panel.</div>
+</div>
+		<hr>
+
+<center><button onclick="table.generate()" style="margin:4px;" class="btn btn-default">Generate</button></center>
+<!-- Before-Generate -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5146982563696073"
+     data-ad-slot="1874006957"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script><!----->
+
+<br>
+<div class="row">
+
+<div class="col-md-9"><textarea id="c" class="form-control">
+</textarea>
+<a href="javascript:;" onclick="table.toMWE();">Convert to Minimal Working Example (MWE)</a>
+</div>
+<div class="col-md-3">
+<div style="width:100%;height:20%;min-height:300px;overflow-y:auto;" id="log" class="form-control">
+<strong>Log</strong>
+<hr>
+</div>
+</div>
+</div>
+<hr>
+<center><a rel="help" href="help.html">Help</a> | <a href="changelog.txt">Changelog</a> | <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues">Github</a> | Our other project : <a href="https://www.timemaths.com">TimeMaths : An Online Time Calculator</a></center>
+		</div>
+  <div id="right">
+<div id="right-controler" onclick="$(document.body).toggleClass('closedPanel')">
+<span>&#9654;</span>
+</div>
+<div id="right-container">
+
+<div class="panel-group" id="right_accordion" role="tablist" aria-multiselectable="true">
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#right_accordion" href="#right_table" aria-expanded="true" aria-controls="right_table">
+          Table properties
+        </a>
+      </h4>
+    </div>
+    <div id="right_table" class="panel-collapse collapse in" role="tabpanel">
+      <div class="panel-body">
+							<div class="input-group">
+								<div class="input-group-addon"><span class="glyphicon glyphicon-tags"></span></div>
+								<input type="text" class="form-control" id="label" placeholder="Label">
+							</div><hr>
+							<div class="input-group">
+								<label style="font-weight:normal"><input type="checkbox" checked id="table-opt-center"> Center table horizontally</label>
+							</div>
+     </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab">
+      <h4 class="panel-title">
+        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#right_accordion" href="#right_border" aria-expanded="false" aria-controls="right_border">
+          Border editor
+        </a>
+      </h4>
+    </div>
+    <div id="right_border" class="panel-collapse collapse" role="tabpanel">
+      <div class="panel-body">
+				Type of border :
+    <div class="input-group">
+<select id="border" class="form-control">
+<option value="normal">[\hline] Default</option>
+<option value="double">[\hline\hline] Double line</option>
+<optgroup label="Booktabs">
+<option value="toprule">[\toprule] Top rule</option>
+<option value="midrule">[\midrule] Mid rule</option>
+<option value="bottomrule">[\bottomrule] Bottom rule</option>
+<option value="trimfull">[\cmidrule(lr)] Trimmed rule</option>
+</optgroup>
+<optgroup label="arydshln">
+<option value="hdashline">[\hdashline] Dashed line</option>
+<option value="dottedline">[\hdashline[1pt/1pt]] Dotted line</option>
+</optgroup>
+</select>
+      <span class="input-group-btn">
+       <button type="button" class="btn btn-default" id="panel-draw-border" onclick="table.mode(table.mode() == 2 ? 0 : 2)" data-toggle="tooltip" title="Draw borders"><span class="glyphicon glyphicon-pencil"></span></button>
+      </span>
+    </div>
+
+Color of border : 
+<div class="input-group">
+<input type="color" class="form-control" value="#000000" id="border-color">
+ <span class="input-group-btn">
+      <button type="button" class="btn btn-default" onclick="table.borderPick()" data-toggle="tooltip" title="Color Picker"><span class="glyphicon glyphicon-tint"></span></button>
+</span>
+</div>
+
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab">
+      <h4 class="panel-title">
+        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#right_accordion" href="#right_cell" aria-expanded="false" aria-controls="right_cell">
+          Cell properties
+        </a>
+      </h4>
+    </div>
+    <div id="right_cell" class="panel-collapse collapse" role="tabpanel">
+      <div class="panel-body">
+						<div class="btn-group" role="group" aria-label="Text alignment">
+							<button type="button" class="btn btn-default active" data-toggle="tooltip" title="Align left" id="info_align_left" onclick="table.setAlign('l')"><span class="glyphicon glyphicon-align-left"></span></button>
+							<button type="button" class="btn btn-default" id="info_align_center" data-toggle="tooltip" title="Align center" onclick="table.setAlign('c')"><span class="glyphicon glyphicon-align-center"></span></button>
+							<button type="button" class="btn btn-default" id="info_align_right" onclick="table.setAlign('r')" data-toggle="tooltip" title="Align right"><span class="glyphicon glyphicon-align-right"></span></button>
+							<button type="button" class="btn btn-default" id="info_align_decimal" data-toggle="tooltip" title="Align with decimal" onclick="table.setAlign('d')"><span class="glyphicon glyphicon-dot"></span></button>
+						</div>
+					<h6>Effects</h6>
+					<div class="btn-toolbar" role="toolbar">
+						<div class="btn-group" role="group" aria-label="Diagonal separators">
+							<button type="button" class="btn btn-default active" id="info_diag_zero" onclick="table.separators(0)"><img src="diag-zero.png"></button>
+							<button type="button" class="btn btn-default" id="info_diag_one" onclick="table.separators(1)"><img src="diag-one.png"></button>
+							<button type="button" class="btn btn-default" id="info_diag_two" onclick="table.separators(2)"><img src="diag-two.png"></button>
+						</div>
+						<div class="btn-group" role="group" aria-label="Cell rotation">
+							<button type="button" class="btn btn-default active" id="info-unrotated" onclick="table.rotate(false)"><span class="glyphicon glyphicon-font"></span></button>
+							<button type="button" class="btn btn-default" id="info-rotated" onclick="table.rotate(true)"><span class="glyphicon glyphicon-font" style="transform: rotate(-90deg);margin-left: -4px;"></span></button>
+						</div>
+					</div>
+<div id="info-diagonal-block" style="display:none;">
+					<h6>Diagonal line color</h6>
+      <input type="color" class="form-control" id="info-diagonal-color" style="display:inline-block;" value="#000000" oninput="table.diagonalColor(this.value)">
+</div>
+
+					<h6>Background</h6>
+    <div class="input-group">
+      <input type="color" class="form-control" id="info-background-color" style="display:inline-block;" value="#FFFFFF" oninput="table.backgroundColor(this.value)">
+      <span class="input-group-btn">
+      <button type="button" class="btn btn-default" onclick="table.backgroundPick()" data-toggle="tooltip" title="Color Picker"><span class="glyphicon glyphicon-tint"></span></button>
+       <button type="button" class="btn btn-default" onclick="table.removeBackgroundColor()" data-toggle="tooltip" title="Remove background color"><span class="glyphicon glyphicon-ban-circle"></span></button>
+      </span>
+    </div>
+<a href="#" class="small" onclick="table.showOddEvenColorsModal()">Alternate Rows Background Colors</a>
+
+					<h6>LaTeX Content</h6>
+					<textarea id="latex_content" class="form-control"></textarea>
+
+     </div>
+
+
+    </div>
+  </div>
+  <div class="panel panel-default" id="panel-footnotes">
+    <div class="panel-heading" role="tab">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#right_accordion" href="#right_footnote" aria-expanded="true" aria-controls="right_table">
+          Footnotes
+        </a>
+      </h4>
+    </div>
+    <div id="right_footnote" class="panel-collapse collapse" role="tabpanel">
+      <div class="panel-body">
+<div class="btn-group" role="group">
+<button onclick="table.insertFootnote()" class="btn btn-default">Insert footnote</button>
+<button onclick="table.refreshFootnotes()" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span></button>
+</div>
+							<div id="footnotes-txt"></div>
+     </div>
+    </div>
+  </div>
+
+
+<!-- Right-Panel -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5146982563696073"
+     data-ad-slot="9752496976"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+</div>
+</div>
+
+		</div>
+</div>
+</div>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Create a new table</h4>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+		<div class="col-md-6 text-center">
+<center><div>
+
+<span id="create_table_x">1</span> x <span id="create_table_y">1</span></div>
+			<table id="create_table">
+			</table></center>
+
+<p>- or -</p>
+<div class="form-inline"><div>
+  <div class="form-group">
+    <input type="number" class="form-control" style="width:80px;" id="col" placeholder="x" min="1">
+  </div> x
+  <div class="form-group">
+    <input type="number" class="form-control" style="width:80px;" id="row" placeholder="y" min="1">
+  </div></div>
+  <button type="button" class="btn btn-primary" onclick="table.create($id('col').value, $id('row').value);$('#myModal').modal('hide')">Create</button>
+</div>
+		</div>
+		<div class="col-md-6">
+			<div class="text-center">
+			<p> - Or use one of these options - </p> 
+			<div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$id('import_format').value='latex';$('#importModal').modal('show');">Import a LaTeX table</button></div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$id('import_format').value='auto';$('#importModal').modal('show');">Import JSON, Markdown or CSV</button></div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$('#pasteModal').modal('show');">Import from Word, Excel or OpenOffice</button></div>
+				<div><button type="button" class="btn btn-primary btn-import" onclick="$('#myModal').modal('hide');$('#pasteModal').modal('show');">Import by pasting a table</button></div>
+			</div>
+			</div>
+			
+		</div>
+	</div>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Import from LaTeX, JSON, Markdown and CSV</h4>
+      </div>
+      <div class="modal-body">
+<div class="form-group">
+				<select class="form-control" id="import_format">
+					<option value="auto">Auto</option>
+					<option value="json">JSON</option>
+					<option value="latex">LaTeX</option>
+					<option value="markdown">Markdown</option>
+					<option value="csv">CSV</option>
+				</select></div>
+			<div class="form-group">
+				<textarea class="form-control textarea-wrap" id="import_value" style="min-height:200px;" placeholder="Content of your file to import"></textarea>
+			</div>
+			<div id="latex-import-error" style="display:none;color:red;">Your LaTeX table could not be loaded. Help us and <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">send us the code of your table</a> so we can see what happened.</div>
+			<div class="text-center">
+			<button type="button" class="btn btn-primary" onclick="table.importData();">Import the content of a file</button></div>
+
+
+	</div>
+	</div>
+      </div>
+</div>
+
+<div class="modal fade" id="pasteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Paste a table</h4>
+      </div>
+      <div class="modal-body">
+<p>Paste here a table from a webpage, a Word document, an Excel document or an OpenOffice document.</p>
+<div class="form-control" contenteditable id="extract-div"></div>
+<div class="text-center">
+			<button type="button" class="btn btn-primary" onclick="table.extract($id('extract-div'));$('#myModal').modal('hide')">Extract content</button></div>
+
+
+	</div>
+	</div>
+      </div>
+</div>
+
+
+<div class="modal fade" id="campaignModal" tabindex="-1" role="dialog" aria-labelledby="campaignLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="campaignLabel">Help us !</h4>
+      </div>
+      <div class="modal-body">
+<div class="text-center">
+
+<p>Since the launch of this site, this utility has generated millions of tables, making life easier for students, scientists, academics and LaTeX enthusiasts. My goal was to create an editor that would be easy to use, that would generate its own code and that would handle all situations to produce clean and neat tables.<p>
+
+I am the sole developer of this project and I ask for your help. I would like to include many more features on this website, so that creating tables can become an even easier task.
+
+<p>To learn more about this annual campaign and make a donation, click on the button below. You can make a donation by credit card, Paypal, Apple Pay and more.
+
+</p>
+			<a class="dbox-donation-button" href="https://donorbox.org/latex-tables-2018" style="background:#2d81c5 url(https://d1iczxrky3cnb2.cloudfront.net/red_logo.png) no-repeat 37px center; color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px 15px 75px; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; box-shadow: 0 1px 0 0 #1f5a89; text-shadow: 0 1px rgba(0, 0, 0, 0.3);" target="_blank" onclick="table.campaignClicked();$('#campaignModal').modal('hide');">Donate</a>
+</div>
+
+
+	</div>
+	</div>
+      </div>
+</div>
+
+
+<div class="modal fade" id="colorpicker" style="z-index:1051;" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" onclick="ColorPicker.cancel()" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Color Picker</h4>
+      </div>
+      <div class="modal-body">
+
+	<div id="colorpicker-container" style="color:red;">
+		<div class="clearfix" style="margin-top:-1rem;">
+			<span style="float:left;color:#000;"id="colorpicker-name1">Sample black text</span>
+			<span style="float:right;color:#fff;" id="colorpicker-name2">Sample white text</span>
+		</div>
+		<div id="colorpicker-name">Red</div>
+	</div>
+	<div class="row" style="text-align:center;">
+		<div class="col-lg-4">
+			<input class="form-control" style="border:none;outline:initial;text-align:center;" id="colorpicker-rgb">
+			<small>RGB</small>
+		</div>
+		<div class="col-lg-4">
+			<input class="form-control" style="border:none;outline:initial;text-align:center;" id="colorpicker-hex">
+			<small>HEX</small>
+		</div>
+		<div class="col-lg-4">
+			<input class="form-control" style="border:none;outline:initial;text-align:center;" id="colorpicker-hsl">
+			<small>HSL</small>
+		</div>
+      </div>
+<div style="text-align:center;">
+<div class="row"><div class="col-lg-3" style="text-align:right";>R :</div><div class="col-lg-9"><input type="range" id="colorpicker-r" min="0" max="255" step="0.01"></div></div>
+<div class="row"><div class="col-lg-3" style="text-align:right";>G :</div><div class="col-lg-9"><input type="range" id="colorpicker-g" min="0" max="255" step="0.01"></div></div>
+<div class="row"><div class="col-lg-3" style="text-align:right";>B :</div><div class="col-lg-9"><input type="range" id="colorpicker-b" min="0" max="255" step="0.01"></div></div>
+</div>
+<h5>Table Color Scheme</h5>
+	<div id="colorpicker-table-scheme" class="color-scheme">
+		
+	</div>
+
+<h5>Default Colors</h5>
+	<div id="colorpicker-default-scheme" class="color-scheme">
+		
+	</div>
+	<div style="text-align:center;">
+		<label>
+		<input type="color" oninput="ColorPicker.color(this.value)" id="colorpicker-system-input" hidden>
+		<a type="button" data-toggle="tooltip" title="Use system colorpicker" class="btn btn-default"><span class="glyphicon glyphicon-tint"></span></a>
+		</label>
+		<div class="btn-group" role="group" aria-label="...">
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(-0.2)">-20%</button>
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(-0.05)">-5%</button>
+  			<button type="button" class="btn btn-default" readonly>Darken/Lighten Color</button>
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(+0.05)">+5%</button>
+  		<button type="button" class="btn btn-default" onclick="ColorPicker.shade(+0.2)">+20%</button>
+		</div>
+		<div style="margin-top:5px;">
+		<button type="button" class="btn btn-primary" onclick="ColorPicker.choose()">Select</button>
+		<button type="button" class="btn btn-default" onclick="ColorPicker.cancel()">Cancel</button></div>
+	</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="modal fade" id="help-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Help</h4>
+      </div>
+      <div class="modal-body">
+		<h4>Select cells</h4>
+		<p>To select multiple cells, uses <kbd>CTRL + Click</kbd> (or <kbd>&#x2318; + Click</kbd> on Macintosh). Hold <kbd>CTRL</kbd> (or <kbd>&#x2318;</kbd>) and click on all the cells that you want to select.
+		<p>To select multiple adjacent cells, uses <kbd>SHIFT + Click</kbd>. Click on the first cell, then hold <kbd>Shift</kbd> and click on the last cell.
+		<h4>Import LaTeX tables</h4>
+		<p>Under the logo, there's a <kbd>File</kbd> menu. Click on it and then follows <kbd>File</kbd> &gt; <kbd>Import table</kbd> &gt; <kbd>LaTeX</kbd>.
+		<h4>Draw border</h4>
+		<p>On the right panel, click on <kbd>Border editor</kbd> to expand the section. Then, click on <span class="glyphicon glyphicon-pencil"></span>.
+		<h4>More help</h4>
+		If you have more questions, check the <a rel="help" href="help.html" target="_blank">FAQ</a>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="download" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Download</h4>
+      </div>
+      <div class="modal-body">
+		<a href="" download="table.tex" style="line-height:100%" id="link-download">Click to download your .tex file</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="email" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Send by email</h4>
+      </div>
+      <div class="modal-body">
+		<a href="" style="line-height:100%" id="link-email">Open the output in an email</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="worksheet-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Load From Worksheet <span class="label label-warning">BETA</span></h4>
+      </div>
+      <div class="modal-body">
+		<center><em>This utility allows you to load XLS, XLSX, XLSM, CSV, OSD, SLK files and more. <strong>You can't load LaTeX files yet with this utility. Use the other utility instead.</strong></em></center>
+<div style="padding:4px;">
+<div id="worksheet-drop">
+<div>Drag a file</div>
+<div>- or -</div>
+<input type="file" id="excel-file" class="form-control-file" accept="<!--Accepted files-->
+.csv,
+.xls,
+.xlsx,
+.xlsm,
+.xlsb,
+.ods,
+.fods,
+.csv,
+.txt,
+.sylk,
+.html,
+.dif,
+.dbf,
+.prn,
+.eth">
+</div>
+<button onclick="table.importExcel()" id="excel-button" style="margin:4px;" class="btn btn-primary">OK</button>
+</div>
+<div id="worksheet-loading-status"></div>
+<div id="worksheet-options" style="display:none;">
+<center>One step left. Select the workbook you want to import.
+
+<select id="select-workbook" class="form-control"></select>
+<button id="button-workbook" class="btn-primary btn" style="margin:8px;">Import workbook</button>
+</center>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="oddevencolors" tabindex="-1" role="dialog" aria-labelledby="oddevencolors-label">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="oddevencolors-label">Alternate Rows Background Colors</h4>
+      </div>
+      <div class="modal-body">
+
+<div class="form-horizontal">
+  <div class="form-group">
+    <label for="oddevencolors-number" class="col-sm-4 control-label">Starting Row</label>
+    <div class="col-sm-8">
+      <input type="number" step="1" min="1" class="form-control" id="oddevencolors-number" value="1">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="oddevencolors-even" class="col-sm-4 control-label">Even color</label>
+    <div class="col-sm-8">
+<div class="input-group" style="width:100%">
+
+      <input type="color" class="form-control" id="oddevencolors-even" value="#FFFFFF">
+
+      <span class="input-group-btn">
+
+<button type="button" data-toggle="tooltip" title="Color Picker" class="btn btn-default" onclick="ColorPicker.get(document.getElementById('oddevencolors-even'))"><span class="glyphicon glyphicon-tint"></span></button>
+	</span>
+	</div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="oddevencolors-odd" class="col-sm-4 control-label">Odd color</label>
+    <div class="col-sm-8"><div class="input-group" style="width:100%">
+
+      <input type="color" class="form-control" id="oddevencolors-odd" value="#FFFFFF">
+
+      <span class="input-group-btn">
+
+<button type="button" data-toggle="tooltip" title="Color Picker" class="btn btn-default" onclick="ColorPicker.get(document.getElementById('oddevencolors-odd'))"><span class="glyphicon glyphicon-tint"></span></button>
+	</span>
+	</div>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-4 col-sm-8">
+      <button type="button" class="btn btn-success" onclick="table.applyOddEvenColors()">Apply</button><button type="button" class="btn btn-danger" onclick="table.oddEvenColors(false)">Remove</button>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="format-settings" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Advanced export settings</h4>
+      </div>
+      <div class="modal-body">
+
+<select class="form-control" id="format-in" onchange="table.selectFormat(this.value)">
+	<option value="latex">LaTeX</option>
+	<option value="context">ConTeXt</option>
+	<option value="plain">Plain TeX</option>
+	<option value="md">Markdown</option>
+	<option value="html">HTML</option>
+	<option value="bbcode">BBCode</option>
+	<option value="csv">CSV</option>
+	<option value="eplain">Eplain</option>
+	<option value="pretext">PreTeXt</option>
+	<option value="textile">Textile</option>
+	<option value="wml">WML</option>
+	</select>
+<div class="form-group" data-option-group="latex">
+							<h4>LaTeX options</h4>
+
+							<div><label><input type="checkbox" id="opt-latex-whitespace"> Remove whitespace</label></div>
+							<div><label><input type="checkbox" id="opt-latex-border" checked> Border commands are on separated lines</label></div>
+<h5>Table's caracteristics</h5>
+							<div><label><input type="checkbox" id="opt-latex-split"> Split table in multiple pages</label></div>
+<!--							<div><label><input type="checkbox" id="opt-latex-columns"> Table spans multiple columns</label></div>-->
+							<div><label><input type="checkbox" id="opt-latex-landscape"> Display table in landscape mode</label></div>
+<div><label><input type="checkbox" id="opt-latex-float" checked> Use table as a float</label></div>
+<h5>Fit table to page method</h5>
+<select id="opt-fit-table" class="form-control"><option value="none">None</option>
+<option value="sc">Scale</option>
+<option value="sh">Shrink columns (BETA)</option>
+<option value="sc-sh">Shrink (BETA) & scale</option></select>
+
+							<h5>Packages</h5>
+							<div class="row">
+								<div class="col-md-6">
+									<input type="checkbox" class="input-control" id="blacklist-array" value="array" checked disabled> <label for="blacklist-array">Array</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-arydshln" value="arydshln" checked> <label for="blacklist-arydshln">Arydshln</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-booktabs" value="booktabs" checked disabled> <label for="blacklist-booktabs">Booktabs</label><br>
+<input type="checkbox" class="input-control" id="blacklist-color" value="color" checked disabled> <label for="blacklist-color">Color</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-colortbl" value="colortbl" checked> <label for="blacklist-colortbl">Colortbl</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-diagbox" value="diagbox" checked> <label for="blacklist-diagbox">Diagbox</label><br>
+<input type="checkbox" class="input-control" id="blacklist-graphicx" value="graphicx" checked disabled> <label for="blacklist-graphicx">Graphicx</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-hhline" value="hhline" checked> <label for="blacklist-hhline">Hhline</label><br>
+<input type="checkbox" class="input-control" id="blacklist-makecell" value="makecell" checked> <label for="blacklist-makecell">Makecell</label><br>
+								</div>
+								<div class="col-md-6">
+									<input type="checkbox" class="input-control" id="blacklist-multirow" value="multirow" checked> <label for="blacklist-multirow">Multirow</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-ragged2e" value="ragged2e" checked> <label for="blacklist-ragged2e">Ragged2e</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-rotating" value="rotating" checked> <label for="blacklist-rotating">Rotating</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-siunitx" value="siunitx" checked disabled> <label for="blacklist-siunitx">Siunitx</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-slashbox" value="slashbox" checked> <label for="blacklist-slashbox">Slashbox</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-tablefootnote" value="tablefootnote" checked disabled> <label for="blacklist-tablefootnote">Tablefootnote</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-tabu" value="tabu" checked> <label for="blacklist-tabu">Tabu</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-tabularx" value="tabularx" checked> <label for="blacklist-tabularx">Tabularx</label><br>
+									<input type="checkbox" class="input-control" id="blacklist-ulem" value="ulem" checked> <label for="blacklist-ulem">Ulem</label>
+								</div>
+							</div>
+<h5>Double borders interactions</h5>
+
+<div class="row">
+<div class="col-md-4"><label>
+<input type="radio" name="latex-hhline"> <img src="double-default.png" width=29>
+</label></div>
+<div class="col-md-4"><label>
+<input type="radio" name="latex-hhline" id="opt-latex-hhline" checked> <img src="double-combined.png" width=29> with <code>hhline</code>
+</label></div>
+<div class="col-md-4"><label>
+<input type="radio" id="opt-latex-hhline-hash" name="latex-hhline"> <img src="double-hash.png" width=29> with <code>hhline</code>
+</label></div>
+</div>
+<h5>Advanced options</h5>
+
+<label><input type="checkbox" id="opt-latex-tabu"> Force table to use <code>tabu</code> when possible</label>  
+<!--
+<h5>Colors</h5>
+<select id="opt-color" class="form-control"><option value="rgb">RGB</option>
+<option value="cmyk">CYMK</option></select>
+-->
+<h5>Microfixes</h5>
+<div><small>Microfixes are features that improves the presentation of your table, but may use a lot of ressources.</small></div>
+<div><label><input type="checkbox" id="opt-latex-microfix-alignment"> Correct alignment with borders <span class="label label-warning">BETA</span></div>
+						</div>
+						<div class="form-group" data-option-group="md" style="display:none;">
+							<h4>Markdown options</h4>
+							<div class="form-group">
+							<label for="md-header">Number of headers' rows</label>
+							<input type="number" value="1" min="0" class="form-control" id="md-header">
+						</div> <div class="form-group">
+							<label><input type="checkbox" id="md-html" checked> Use HTML when needed</label>
+						</div>
+						</div>
+						<div class="form-group" data-option-group="plain" style="display:none;">
+							<h4>Plain TeX options</h4>
+							<label><input type="checkbox" id="opt-tex-escape" checked> Escape accented characters</label><br>
+							<label><input type="checkbox" id="opt-tex-macro" checked> Use macros when needed</label>
+						</div>
+						<div class="form-group" data-option-group="html" style="display:none;">
+							<h4>HTML options</h4>
+<h5>Indentation</h5>
+<select id="opt-html-indent" class="form-control"><option value="tab">Tab</option>
+<option value="two">Two spaces</option>
+<option value="four">Four spaces</option></select>
+<h5>Advanced settings</h5>
+<label><input type="checkbox" id="opt-html-tbody"> Use a <code>TBODY</code tag</label><br>
+<label><input type="checkbox" id="opt-html-remove-tag"> Remove optional closing tags</label>
+						</div>
+						<div class="form-group" data-option-group="csv" style="display:none;">
+							<h4>CSV options</h4>
+							<label for="opt-csv-separator">Separator</label>
+							<select class="form-control" id="opt-csv-separator"><option value=",">Comma</option><option value=";">Semicolon</option><option value="tab">Tabulation</option></select>
+						</div>
+						<div class="form-group" data-option-group="bbcode" style="display:none;">
+							<h4>BBCode options</h4>
+							<div class="form-group">
+							<label for="opt-bbcode-header">Number of headers' rows</label>
+							<input type="number" value="1" min="0" class="form-control" id="opt-bbcode-header">
+							</div> 
+						</div>
+						<div class="form-group" data-option-group="eplain" style="display:none;">
+							<h4>Eplain options</h4>
+						</div>
+						<div class="form-group" data-option-group="pretext" style="display:none;">
+							<h4>PreTeXt options</h4>
+<h5>Indentation</h5>
+<select id="opt-pretext-indent" class="form-control"><option value="tab">Tab</option>
+<option value="two" selected>Two spaces</option>
+<option value="four">Four spaces</option></select>
+						</div>
+						<div class="form-group" data-option-group="context" style="display:none;">
+							<h4>ConTeXt options</h4>
+<h5>Table's caracteristics</h5>
+							<div><label><input type="checkbox" id="opt-context-split"> Split table in multiple pages</label></div>
+							<div><label><input type="checkbox" id="opt-context-landscape"> Display table in landscape mode</label></div>
+<div><label><input type="checkbox" id="opt-context-float" checked> Use table as a float</label></div>
+<h5>Indentation</h5>
+<select class="form-control" id="opt-context-indent">
+<option value="none">No indentation</option>
+<option value="two" selected>Two spaces</option>
+<option value="four">Four spaces</option>
+<option value="tab">Tab</option>
+</select>
+						</div>
+
+						<div class="form-group" data-option-group="wml" style="display:none;">
+							<h4>WML options</h4>
+<h5>Indentation</h5>
+<select id="opt-wml-indent" class="form-control"><option value="tab">Tab</option>
+<option value="two">Two spaces</option>
+<option value="four" selected>Four spaces</option></select>
+						</div>
+						<div class="form-group" data-option-group="textile" style="display:none;">
+							<h4>Textile options</h4>
+						</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+		<script type="text/javascript">
+		$(function(){
+			var isIE = /*@cc_on!@*/false || !!document.documentMode;
+			var isEdge = !isIE && !!window.StyleMedia;
+			if(isEdge){
+				$("#edge-info").show();
+			}
+			$('nav ul > a')
+				.click(function(e) {
+					e.preventDefault()
+					$(this)
+						.tab('show')
+				})
+			
+			$('[data-toggle="tooltip"]').tooltip({
+container: 'body',
+placement: 'auto top'
+});
+			$('[data-toggle="dropdown"]').dropdown()
+			table.load($id('table'));
+			var json = localStorage.getItem("table");
+			if(json){
+				try{
+					table.importFromJSON(JSON.parse(json));
+					table.loadAllFootnotes();
+				}
+				catch(e){
+					table.create(4, 4);
+				}
+			}
+			else{
+				table.create(4, 4);
+			}
+			var format = localStorage.getItem("table_format")
+			if(format){
+				table.selectFormat(format);
+			}
+			function createTableCreater(){
+				var table = $id("create_table"),
+				frag = document.createDocumentFragment();
+				for(var i=0;i<8;i++){
+					var tr = document.createElement("tr");
+					for(var j=0;j<8;j++){
+						var td = document.createElement("td");
+						td.dataset.row = i+1;
+						td.dataset.col = j+1;
+						td.addEventListener("mouseenter", createTableHover, false);
+						td.addEventListener("click", function(){
+							window.table.create(this.dataset.col, this.dataset.row);
+							$("#myModal").modal('hide')
+						}, false);
+						tr.appendChild(td);
+					}
+					frag.appendChild(tr);
+				}
+				table.appendChild(frag);
+			}
+			function createTableHover(){
+				var row = this.dataset.row;
+				var col = this.dataset.col;
+				var selected = document.querySelectorAll("#create_table td");
+				$id("create_table_x").innerHTML = col;
+				$id("create_table_y").innerHTML = row;
+				for(var i=0;i<selected.length;i++){
+					var elem = selected[i];
+					if(elem.dataset.row <= row && elem.dataset.col <= col){
+						elem.classList.add("selected");
+					}
+					else{
+						elem.classList.remove("selected");
+					}
+				}
+			}
+			createTableCreater();
+		});
+		document.addEventListener("keydown", function(e){
+			e = window.event || e;
+			if(e.keyCode == 90 && (e.ctrlKey || e.metaKey) && table.statesManager && table.statesManager.undo){
+				table.statesManager.undo();
+				e.preventDefault();
+			}
+		}, true);
+
+		window.isProduction = (function(){
+			return /\b(github|latex-tables)\b/.test(location.hostname||"");
+		})();
+		if(isProduction){
+		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+		  ga('create', 'UA-102898458-1', 'auto');
+ 		  ga('send', 'pageview');
+		}
+		</script>
+	<script type="text/javascript" src="toMarkdown.js">
+	</script>
+	<script type="text/javascript" src="toTeX.js">
+	</script>
+	<script type="text/javascript" src="toHTML.js">
+	</script>
+	<script type="text/javascript" src="toCSV.js">
+	</script>
+	<script type="text/javascript" src="toBBCode.js">
+	</script>
+	<script type="text/javascript" src="toEplain.js">
+	</script>
+	<script type="text/javascript" src="toPreTeXt.js">
+	</script>
+	<script type="text/javascript" src="toWML.js">
+	</script>
+	<script type="text/javascript" src="latex-import.js">
+	</script>
+	<script type="text/javascript" src="ntc.js">
+	</script>
+	<script type="text/javascript" src="colorPicker.js">
+	</script>
+	<script type="text/javascript" src="xcolor.js">
+	</script>
+	<script type="text/javascript" src="toConteXt.js">
+	</script>
+	<script type="text/javascript" src="toTextile.js">
+	</script>
+</body>
+
+</html>

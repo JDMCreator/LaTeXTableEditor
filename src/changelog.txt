@@ -6,6 +6,165 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+
+Version 2.0.2 (2020/10/08)
+==========
+
+| Note on this release:
+|     Bug fixes
+
+CORE
+
+[#] An alert dialog could show up in some cases
+
+LATEX EXPORT
+
+[#] Issue with middle-aligned cells when using `Shrink` option (#26)
+
+LATEX IMPORT
+
+[#] Impossible to load `longtabu* to <dim>` and `longtabu* spread <dim>` environments
+[#] Impossible to load `longtabu to <dim>` and `longtabu spread <dim>` environments (#29)
+
+Version 2.0.1 (2020/06/29)
+==========
+
+| Note on this release:
+|     Bug fixes
+
+CORE
+
+[/] Changed style of selected cells because of changes of the Chrome core styling
+[#] Impossible to select font color for other browser than Firefox (#25)
+
+Version 2.0 (2020/05/31)
+==========
+
+| Note on this release:
+|     Vertical alignment of cells, new interface and Wikicode export
+
+CORE
+
+[+] New look for the toolbar, with new icons and new labels
+[+] Better accessibility for the toolbar
+[+] New "Find & Replace" function
+[+] Rows and columns are now numbered. You can click on the letter/number to
+    select it.
+[+] The webpage now scrolls to the textarea when the code is generated
+[+] New "vcell" and "adjustbox" package options ("adjustbox" is disabled)
+[+] New icons for diagonal cells
+[+] New "caret" and transitions to hide the right toolbar
+[/] Output format and settings moved next to the "Generate" button
+[/] "Undo" and "Generate" icons moved next to the `File` dropdown
+[/] "Tables properties" section moved in a modal dialog
+[/] "Borders" section moved to the toolbar
+[#] It's now impossible to remove a row/column if it's the only one
+
+LATEX EXPORT
+
+[+] Support for vertical alignment with `vcell`
+[+] `Shrink` option is now supported with decimal-aligned cells
+[+] New algorithm for the header of the table now try to use the longest "header" of the column
+    when there's a tie to avoid long `multicolumn`
+[+] Rotated table without float are now supported
+[+] Warning when `tabu` is used (not recommanded anymore by the LaTeX3 Project Team) 
+[#] Fixed a bug where dotted borders could appeared dashed with `tabu`
+
+LATEX IMPORT
+
+[+] Support for vertical alignment with `vcell`
+
+WIKICODE EXPORT
+
+[+] New module
+
+HTML EXPORT
+
+[+] Support for vertical alignment
+
+Version 1.9.1 (2020/05/04)
+==========
+
+| Note on this release:
+|     Fixes
+
+CORE
+
+[#] The "Remove all borders" button didn't work
+[#] Saving cells that spanned several columns didn't work (regression)
+
+Version 1.9 (2020/05/01)
+==========
+
+| Note on this release:
+|     Support for longer tables, Fixes
+
+CORE
+
+[+] The update to the engine core allows to edit even bigger tables now (still limited to 25MB, but now compression might be used)
+
+LATEX EXPORT
+
+[#] New bullets in unordered lists did not work when the 'shrink' option was activated
+
+Version 1.8.3 (2020/04/28)
+==========
+
+| Note on this release:
+|     Fixes
+
+CORE
+
+[#] Fixes issues where FONT tags were not removed even if they were duplicate
+
+LATEX EXPORT
+
+[#] `textcolor` commands were duplicated in cells with multiple lines of texts (#20)
+
+LATEX IMPORT
+
+[#] `longtabu` tables were not loaded even if they were technically supported
+
+Version 1.8.2 (2020/04/02)
+===========
+
+| Note on this release:
+|     Fixes
+
+CORE
+
+[+] New alert for 2.0 alpha 1
+[/] Cursor changed in border mode
+
+LATEX EXPORT
+
+[#] Text color didn't appear when a color name was used in HTML instead of an hex code
+
+Version 1.8.1 (2020/03/22)
+===========
+
+| Note on this release:
+|     Fix for encoding of special characters in LaTeX
+
+LATEX EXPORT
+
+[#] In some cases, characters were not encoded (regression).
+
+Version 1.8 (2020/03/12)
+===========
+
+| Note on this release:
+|     Improved speed for large table, improved layout for large table
+
+CORE
+
+[+] Scrollbar for large tables
+[#] Improved speed for `getHTML()` and `hasBorderType()` functions
+
+LATEX EXPORT
+
+[#] Improved speed for `generateFromHTML()`
+
 Version 1.7 (2020/01/26)
 ===========
 

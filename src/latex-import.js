@@ -409,7 +409,7 @@ var tabular = tabularReg.exec(code);
 		else if(type == "tabularht*" || type == "tabularhtx"){
 			head = header(initEnv.command.args[3]);
 		}
-		else if(type == "tabu" || type == "tabu*"){
+		else if(type == "tabu" || type == "tabu*" || type == "longtabu" || type == "longtabu*"){
 			// Because "tabu" supports "tabu to <dim>" and "tabu spread <dim>", we need to handle these special and rarely used cases
 			if(initEnv.command.args.length == 2){
 				head = header(initEnv.command.args[1]);
@@ -696,29 +696,58 @@ var tabular = tabularReg.exec(code);
 	borders.push(actuBorder);
 	xcolorRowNumbers.push(actualXColorRowNumber);
 	actualXColorRowNumber++;
+	var thisRowVCell = false,
+	nextRowVCell = false,
+	vcellIndex = [],
+	newTable = [],
+	realBorders = []
 	for(var i=0;i<table.length;i++){
 		var row = table[i];
+		nextRowVCell = false;
+		if(!thisRowVCell){
+			newTable.push([]);
+			realBorders.push(borders[i]);
+		}
 		for(var j=0;j<row.length;j++){
-
-			// Let's determine default background color for this cell
-			// Priority to rowcolor
-			var backgroundCell = backgroundRow[i];
-			
-			if(!backgroundCell && alternateColors){
-				if(Math.max(+alternateColors[0]||1, 1)<= xcolorRowNumbers[i]){
-					if(xcolorRowNumbers[i]%2 === 0){
-						// Even
-						backgroundCell = alternateColors[2];
-					}
-					else{
-						// Odd
-						backgroundCell = alternateColors[1];
-					}
+			if(thisRowVCell){
+				var code = row[j];
+				if(code.indexOf("\\printcelltop")>=0){
+					newTable[newTable.length-1][j].dataset.verticalAlign="t";
+				}
+				else if(code.indexOf("\\printcellbottom")>=0){
+					newTable[newTable.length-1][j].dataset.verticalAlign="b";
+				}
+				else{
+					newTable[newTable.length-1][j].dataset.verticalAlign="m";
 				}
 			}
-			setCellO(table, j, i, row[j], head[j], backgroundCell, columncolors[j])
+			else{
+				// Let's determine default background color for this cell
+				// Priority to rowcolor
+				var backgroundCell = backgroundRow[i];
+				
+				if(!backgroundCell && alternateColors){
+					if(Math.max(+alternateColors[0]||1, 1)<= xcolorRowNumbers[i]){
+						if(xcolorRowNumbers[i]%2 === 0){
+							// Even
+							backgroundCell = alternateColors[2];
+						}
+						else{
+							// Odd
+							backgroundCell = alternateColors[1];
+						}
+					}
+				}
+				setCellO(newTable, j, newTable.length-1, row[j], head[j], backgroundCell, columncolors[j])
+				if(newTable[newTable.length-1][j].vcell){
+					nextRowVCell = true;
+					delete newTable[newTable.length-1][j].vcell;
+				}
+			}
 		}
+		thisRowVCell = nextRowVCell;
 	}
+	table = newTable;
 	// REMOVE EMPTY CELL AT THE END
 	if(table[table.length-1].length == 1){
 		var lastCell = table[table.length-1][0];
@@ -783,6 +812,7 @@ var tabular = tabularReg.exec(code);
 			pos += o.colSpan || 1;
 		}
 	}
+	borders = realBorders;
 	// HORIZONTAL BORDERS
 	obj.autoBooktabs = false;
 	if(borders){
@@ -855,8 +885,8 @@ var tabular = tabularReg.exec(code);
 	var colLength = 1;
 	for(var i=0;i<table.length;i++){
 		var rowCount = 0;
-		for(var j=0;j<row.length;j++){
-			rowCount += (row[j].colSpan||1);
+		for(var j=0;j<table[i].length;j++){
+			rowCount += (table[i][j].colSpan||1);
 		}
 		colLength = Math.max(colLength, rowCount);
 	}
@@ -900,6 +930,10 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor){
 	span = /\\multirow(?:cell|thead|)(?:[ ]*\[[^\]]*\]|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		o.rowSpan = parseInt(span[1]||span[2], 10);
+	}
+
+	if(/\\(?:vcell|savecellbox)\s*(?:\{|\\)/.test(code)){
+		o.vcell = true;
 	}
 
 	// Get cell background info from \cellcolor
