@@ -64,7 +64,7 @@ function $id(id) {
 			var c = 1 - r/255,
 			y = 1 - g/255,
 			m = 1 - b/255,
-			k = Math.min(c,y,m,k);
+			k = Math.min(c,y,m);
 			c = Math.min(1, Math.max(0, c-k));
 			y = Math.min(1, Math.max(0, y-k));
 			m = Math.min(1, Math.max(0, m-k));
@@ -108,10 +108,14 @@ function $id(id) {
 			if(defaultColors[sep]){
 				return "{"+defaultColors[sep]+"}";
 			}
+			if(document.getElementById("opt-latex-color").checked){
+				var cymk = rgb2cymk(arr[0]*255,arr[1]*255,arr[2]*255);
+				return "[cymk]{"+cymk.join(",")+"}";
+			}
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "2.0.2";
+			this.version = "2.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -759,9 +763,24 @@ this.getHTML = (function(){
 			if(tagName == "TITLE" || tagName == "SCRIPT" || tagName == "STYLE" || tagName == "VIDEO" || tagName == "OBJECT"){
 				return false;
 			}
-			else if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "SUP" || tagName == "LI" || tagName == "U"){
+			else if(tagName == "B" || tagName == "I" || tagName == "UL" || tagName == "SUP"
+				 || tagName == "U" || tagName == "STRIKE"){
 				newnode = document.createElement(tagName);
 				cont.appendChild(newnode);
+			}
+			else if(tagName == "LI"){
+				newnode = document.createElement(tagName);
+				if(cont.tagName == "UL"){
+					cont.appendChild(newnode);
+				}
+				else if(cont.lastElementChild && cont.lastElementChild.tagName == "UL"){
+					cont.lastElementChild.appendChild(newnode);
+				}
+				else{
+					var ul = document.createElement("UL");
+					cont.appendChild(ul);
+					ul.appendChild(newnode);
+				}
 			}
 			else if((tagName == "FONT" && node.hasAttribute("color")) || node.style.color){
 				var rgba = toRGBA(node.color || node.style.color) || [0,0,0,1],
@@ -788,8 +807,16 @@ this.getHTML = (function(){
 					cont.appendChild(newnode);
 				}
 			}
+			else if(tagName == "OL"){
+				newnode = document.createElement("UL");
+				cont.appendChild(newnode);
+			}
 			else if(tagName == "STRONG"){
 				newnode = document.createElement("B");
+				cont.appendChild(newnode);
+			}
+			else if(tagName == "S" || tagName == "DEL"){
+				newnode = document.createElement("STRIKE");
 				cont.appendChild(newnode);
 			}
 			else if(tagName == "EM"){
@@ -806,8 +833,10 @@ this.getHTML = (function(){
 				cont.appendChild(document.createElement("BR"));
 				newline = false;
 			}
-			else if(newline && (tagName == "DIV" || tagName == "P" || tagName == "HEADER" || tagName == "SECTION" || tagName == "FOOTER" || tagName == "TR")){
-				cont.appendChild(document.createElement("BR"));
+			else if(newline && (tagName == "DIV" || tagName == "P" || tagName == "HEADER" || tagName == "SECTION" || tagName == "FOOTER" || tagName == "TR" || tagName == "BLOCKQUOTE")){
+				if(!node.previousElementSibling || node.previousElementSibling.tagName != "UL"){
+					cont.appendChild(document.createElement("BR"));
+				}
 				newline = false;
 			}
 			else if(tagName == "BR"){
@@ -837,9 +866,15 @@ this.getHTML = (function(){
 				newnode.className = node.className;
 				cont.appendChild(newnode);
 			}
-			else{
+			if(true){
 				var frag = document.createDocumentFragment(), lastnode;
-				newnode = frag;
+				if(newnode){
+					frag.appendChild(newnode);
+				}
+				else{
+					newnode = frag;
+				}
+				
 				if(node.style.fontWeight == "bold" || node.style.fontWeight == "bolder" || (+node.style.fontWeight)>= 700){
 					lastnode = document.createElement("B");
 					newnode.appendChild(lastnode);
@@ -850,8 +885,13 @@ this.getHTML = (function(){
 					newnode.appendChild(lastnode);
 					newnode = lastnode;
 				}
-				if(node.style.textDecoration && node.style.textDecoration.indexOf("underline")){
+				if(node.style.textDecoration && node.style.textDecoration.indexOf("underline") > -1){
 					lastnode = document.createElement("U");
+					newnode.appendChild(lastnode);
+					newnode = lastnode;
+				}
+				if(node.style.textDecoration && node.style.textDecoration.indexOf("line-through") > -1){
+					lastnode = document.createElement("STRIKE");
 					newnode.appendChild(lastnode);
 					newnode = lastnode;
 				}
@@ -1933,6 +1973,41 @@ this.getHTML = (function(){
 					div.parentNode.removeChild(div);
 				}
 			}
+			this.indentList = function(outdent){
+				var selObj = window.getSelection();
+    				var selRange = selObj.getRangeAt(0);
+				if(selRange){
+					var target = selRange.commonAncestorContainer;
+					var listN = 0;
+					var td = false;
+					do{
+						if(target.tagName == "TD" || target.tagName == "TH"){
+							td = target;break;
+						}
+						else if(target.tagName == "UL" || target.tagName == "OL"){
+							listN++;
+						}
+					}
+					while(target = target.parentElement);
+					if(listN > 0){
+						if(outdent){
+							document.execCommand("outdent",false,false);
+							return true;
+						}
+						else if(listN < 4){
+							document.execCommand("indent",false,false);
+							if(td.innerHTML.indexOf("<blockquote") > -1){
+								document.execCommand("undo",false,false);
+								return false;
+							}
+							else{
+								return true;
+							}
+						}
+					}
+				}
+				return false;
+			}
 			this.loadAllFootnotes = function(){
 				document.getElementById("footnotes-txt").innerHTML = "";
 				var footnotes = this.element.querySelectorAll(".tb-footnote"),
@@ -2023,18 +2098,29 @@ this.getHTML = (function(){
 							break;
 						}
 					}while(target = target.parentElement);
-					if(e.clipboardData && false && document.queryCommandEnabled("insertHTML")){
+					if(e.clipboardData){
 						var d = document.createElement("div");
 						var plain = e.clipboardData.getData("text/plain");
 						// We get the plain version to determine if we have to trim the HTML
 						var trimLeft = /^\S/.test(plain),
 						trimRight = /\S$/.test(plain);
-						d.innerHTML = e.clipboardData.getData("text/html");
+						var dataHtml = e.clipboardData.getData("text/html");
+						d.innerHTML = dataHtml;
 						var html = _this.getHTML(d);
 						if(trimLeft){html = html.replace(/^\s+/, "")}
 						if(trimRight){html = html.replace(/\s+$/, "")}
 						e.preventDefault();
-						document.execCommand("insertHTML",false, html);
+						if(document.queryCommandEnabled("insertHTML")){
+							document.execCommand("insertHTML",false, html);
+							//return false;
+						}
+						else if(document.queryCommandEnabled("paste")){
+							document.execCommand("paste",false, html);
+							//return false;
+						}
+						else{
+							waitingforpaste = target;
+						}
 					}
 					else{
 						waitingforpaste = target;
@@ -2047,11 +2133,11 @@ this.getHTML = (function(){
 						waitingforpaste = false;
 						target.innerHTML = _this.getHTML(target);
 					}
+					var td = (target.parentElement || {}).parentElement;
 					if (_this.selectedCell === (target.parentElement || {})
 						.parentElement) {
 						_this.updateLaTeXInfoCell();
 					}
-					var td = (target.parentElement || {}).parentElement;
 					if(td.hasAttribute("data-rotated")){
 						_this.refreshRotatedCellSize(td)
 					}
@@ -2081,7 +2167,13 @@ this.getHTML = (function(){
 				table.addEventListener("keydown", function(e){
 					e = window.event || e;
 					if(e.keyCode == 9 && !e.ctrlKey){
-						waitingfortab = true;
+						var resp = _this.indentList(e.shiftKey);
+						if(resp){
+							e.preventDefault();
+						}
+						else{
+							waitingfortab = true;
+						}
 					}
 				}, false);
 				this._id("worksheet-drop").addEventListener("drop", function(e){
@@ -2278,8 +2370,14 @@ this.getHTML = (function(){
 				range.selectNodeContents(td.querySelector("div[contenteditable]"));
 				var size = range.getBoundingClientRect();
 				range.detach() // We don't need the range anymore
-				td.style.height=(size.width+6)+"px";
-				td.style.width=(size.height+6)+"px";
+				if(td.getAttribute("data-rotated") == "45"){
+					td.style.width = (Math.abs(size.width * Math.sin(-45*Math.PI/180)) + Math.abs(size.height * Math.cos(-45*Math.PI/180)) + 6) + "px";
+					td.style.height = (Math.abs(size.width * Math.cos(-45*Math.PI/180)) + Math.abs(size.height * Math.sin(-45*Math.PI/180)) + 6) + "px";
+				}
+				else{
+					td.style.height=(size.width+6)+"px";
+					td.style.width=(size.height+6)+"px";
+				}
 			}
 			this.fastGenerateFromHTML = function(html, ignoreMultiline, align){
 				return html.replace(/(?:&([^;]+);|[_\\$%^_\{\}#\[`\|\xb6~])/g, function(full, inside){
@@ -2311,15 +2409,165 @@ this.getHTML = (function(){
 					}
 				});
 			}
-			this.generateFromHTML = function(html, ignoreMultiline, align) {
+			this.calculateCommand = function(command){
+				var content = "\\",
+				after = "",
+				inHTML = false,
+				foundName = false,
+				name = "",
+				mode = 0,
+				braces = 0,
+				foundHTMLName = false,
+				htmlName = "",
+				verbChar = "";
+				var index = 1;
+				if(command.length == 1){return false;}
+				for(var i=1;i<command.length;i++){
+					index = i;
+					var c = command[i];
+					if(inHTML){
+						if(c == ">"){
+							inHTML = false;
+							after += c;
+							htmlName = htmlName.toLowerCase();
+							if(htmlName != "b" && htmlName != "i" && htmlName != "u" &&
+							   htmlName != "sup" && htmlName != "strike" && htmlName != "font"){
+								break;
+							}
+						}
+						else{
+							after += c;
+							if(!foundHTMLName){
+								if(/^[a-zA-Z]$/.test(c)){
+									htmlName += c;
+								}
+								else if(c != "/" && htmlName){
+									foundHTMLName = true;
+								}
+							}
+						}
+					}
+					else if(c == "<"){
+						inHTML = true;
+						foundHTMLName = false;
+						htmlName = "";
+						after += c;
+					}
+					else if(!foundName){
+						if(/^[a-zA-Z]$/.test(c)){
+							name += c;
+							content += c;
+						}
+						else if(!name){
+							name = c;
+							content += c;
+							foundName = true;
+							if(c == "("){
+								mode = 4;
+							}
+						}
+						else{
+							foundName = true;
+							if(name == "verb"){
+								verbChar = c;
+								content+= c;
+								mode = 5;
+							}
+							else if(c == "{"){
+								content += c;
+								mode = 1;
+								braces = 1;
+							}
+							else if(c == "["){
+								content += c;
+								mode = 2;
+							}
+							else{
+								index--;
+								break;
+							}
+						}
+					}
+					else if(mode == 1){
+						if(c == "{"){
+							braces++;
+						}
+						if(c == "}"){
+							braces--;
+							if(braces <= 0){mode = 0}
+						}
+						content += c;
+					}
+					else if(mode == 2){
+						if(c == "]"){mode = 0}
+						content += c;
+					}
+					else if(mode == 4){
+						// Mode for mathematical expressions surrounded by \(...\)
+						if(c == "\\" && command[i+1] == ")"){
+							content += "\\)";
+							index++;
+							mode = 0;
+							break;
+						}
+						else{
+							content += c;
+						}
+					}
+					else if(mode == 5){
+						// Mode for \verb+d+
+						if(c == verbChar){
+							content += c;
+							mode = 0;
+							break;
+						}
+						else{
+							content += c;
+						}
+					}
+					else if(c == "{"){
+						content += c;
+						mode = 1;
+						braces = 1;
+					}
+					else if(c == "["){
+						content += c;
+						mode = 2;
+					}
+					else{
+						index--;
+						break;
+					}
+				}
+				var cont = true;
+				if(mode == 4 || mode == 5){
+					// If the mode is still 4, that means that the mathemical expression
+					// is not completed. We send an error, otherwise it won't compile.
+					// If the mode is still 5, that means \verb is not completed.
+					return false;
+				}
+				while(cont){
+					cont = false;
+					after = after.replace(/<\s*([^\s>]+)\s*[^>]*>\s*<\s*\/\s*([^\s>]+)\s*[^>]*>/g, function(full, a, b){
+						if(a.toLowerCase() == b.toLowerCase()){
+							cont = true;
+							return "";
+						}
+						return full;
+					})
+				}
+				return [content,after, index-1]
+			}
+			this.generateFromHTML = function(html, ignoreMultiline, align, oldEq) {
 				align = align || "l";
-				if(html.indexOf("<")<0 && html.indexOf("[")<0){
+				var useLatex = document.getElementById("opt-latex-command").checked;
+				if(html.indexOf("<")<0 && html.indexOf("[")<0 && (!useLatex || html.indexOf("\\")<0)){
 					return this.fastGenerateFromHTML(html, ignoreMultiline, align);
 				}
 				var div = document.createElement("div"), hasMultiline;
-				div.innerHTML = html;
+				div.innerHTML = html.trim();
 				var el = div.querySelectorAll("span.latex-equation");
-				var eq = []
+				var eq = oldEq || []
 				for (var i = 0; i < el.length; i++) {
 					var equation_text = (el[i].innerText || el[i].textContent);
 					if(/\S/.test(equation_text)){
@@ -2332,13 +2580,23 @@ this.getHTML = (function(){
 					}
 				}
 				var ul = div.querySelectorAll("ul");
-				var ULs = []
+				var ULs = [],
+				maxLevel = 1;
 				for (var i = 0; i < ul.length; i++) {
 					var uli = ul[i];
+					if(!uli.parentElement || uli.parentElement.tagName == "LI" || uli.parentElement.tagName == "UL"){continue;}
 					var ins = document.createElement("ins"),
 					    li = ul[i].querySelectorAll("li"),
 					    lis = [];
 					for(var j=0;j<li.length;j++){
+						var c = li[j],level=0;
+						levelLoop:while(c = c.parentElement){
+							if(c.tagName == "UL" || c.tagName == "OL"){level++}
+							else if(c.tagName != "LI"){
+								break levelLoop;
+							}
+						}
+						if(level>4){level = 4;}
 						var liHTML = li[j].innerHTML, continueWhile = true;
 						// Let's remove weird <br> tags at the end of <li>
 						// TODO : Move this to the function that normalize HTML (getHTML)
@@ -2350,16 +2608,37 @@ this.getHTML = (function(){
 								continueWhile = false;
 							}
 						}
-						lis.push(this.generateFromHTML(liHTML, false, align));
+						if(level>maxLevel){maxLevel = level;}
+						lis.push({html:this.generateFromHTML(liHTML, false, align, eq),level:level});
 					}
-					if(align.charAt(0) == "p"){
-						ULs.push("\\begin{tabular}{@{}>{\\labelitemi\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}}"+align+"}"
-							+lis.join("\\\\")+"\\end{tabular}");
-						this.packages["array"] = true;
+					var licode = "";
+					if(maxLevel == 1){
+						for(var j=0;j<lis.length;j++){
+							if(j>0){licode += "\\\\"}
+							licode += lis[j].html;
+						}
+						if(align.charAt(0) == "p"){
+							ULs.push("\\begin{tabular}{@{}>{\\labelitemi\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}}"+align+"@{}}"
+								+licode+"\\end{tabular}");
+							this.packages["array"] = true;
+						}
+						else{
+							ULs.push("\\begin{tabular}{@{\\labelitemi\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}}"+align+"@{}}"
+								+licode+"\\end{tabular}");
+						}
 					}
 					else{
-						ULs.push("\\begin{tabular}{@{\\labelitemi\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}}"+align+"}"
-							+lis.join("\\\\")+"\\end{tabular}");
+						for(var j=0,li;j<lis.length;j++){
+							li = lis[j]
+							if(j>0){licode += "\\\\"}
+							if(li.level > 1){
+								licode+="\\hspace{"+(li.level-1)/2+"\\leftmargin}"
+							}
+							licode += "{\\labelitem"+["i","ii","iii","iv"][li.level-1]+"}";
+							licode += "\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}"+li.html;
+						}
+						ULs.push("\\begin{tabular}{@{}"+align+"@{}}"
+							+licode+"\\end{tabular}");
 					}
 					while(uli.firstChild){
 						uli.removeChild(uli.firstChild);
@@ -2400,10 +2679,16 @@ this.getHTML = (function(){
 							str += ULs[ulcount] + "\\\\";
 							lastcrcr = str.length;
 							ulcount++;
-							
 						}
 						else if(tagname == "b"){
 							str += "\\textbf{";
+						}
+						else if(tagname == "sup"){
+							str += "\\textsuperscript{"
+						}
+						else if(tagname == "strike" && useU){
+							str += "\\sout{"
+							this.packages["ulem"] = true;
 						}
 						else if(tagname == "i"){
 							str += "\\textit{";
@@ -2426,7 +2711,8 @@ this.getHTML = (function(){
 							}
 							else{str += "{"}
 						}
-						else if(tagname == "/b" || tagname == "/i" || (tagname == "/font" && useColor)){
+						else if(tagname == "/b" || tagname == "/strike" || tagname == "/sup" || tagname == "/i"
+						 || (tagname == "/font" && useColor)){
 							str += "}";
 						}
 						else if(tagname == "/u" && useU){
@@ -2463,7 +2749,21 @@ this.getHTML = (function(){
 						}
 					}
 					else if(c == "\\"){
-						str += "\\textbackslash{}";
+						if(useLatex){
+							var command = this.calculateCommand(html.substring(i));
+							if(command){
+								html = html.substring(0,i) + "" + command[1] + "" + html.substring(i+command[2]+2);
+								i--;
+								str += command[0];
+								this.uniqueLog("The editor detected LaTeX commands in your text and did not escape those. You can change this behaviour in the settings.", "warning");
+							}
+							else{
+								str += "\\textbackslash{}";
+							}
+						}
+						else{
+							str += "\\textbackslash{}";
+						}
 					}
 					else if(c == "$" || c == "%" || c == "^" || c == "_" || c == "{" || c == "}" || c == "#"){
 						str += "\\" + c;
@@ -2486,9 +2786,12 @@ this.getHTML = (function(){
 				if(str.length == lastcrcr){
 					str = str.slice(0,-2);
 				}
+				else if(lastcrcr>0){
+					hasMultiline = true;
+				}
 				str = str.replace(/[ ]{2,}/g, " ")
 					.replace(/[\n\r]+/g, "");
-				if ((hasMultiline || str.indexOf("\\\\") > -1) && !ignoreMultiline) {
+				if (hasMultiline && !ignoreMultiline) {
 					str = "\\begin{tabular}[c]{@{}"+ align +"@{}}" + str + "\\end{tabular}";
 				}
 				return str

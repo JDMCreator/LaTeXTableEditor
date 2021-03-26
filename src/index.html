@@ -41,9 +41,8 @@
                         <div class="mobile-col-xs" onclick="table.prepareEmail()"><span class="glyphicon glyphicon-envelope" aria-hidden="true"></span></div>
                     </div>
                 </div>
-<!--
 <center>
-<!-- Header
+<!-- Header----->
 <ins class="adsbygoogle"
      style="display:inline-block;width:728px;height:90px"
      data-ad-client="ca-pub-5146982563696073"
@@ -51,7 +50,7 @@
 <script>
      (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
-</center>-->
+</center>
 
                 <nav class="nav-latex" id="nav-latex">
                     <div class="clearfix">
@@ -131,6 +130,8 @@ Output <span class="caret"></span>
 						<div class="group-col">
 							<div class="group-row">
 								<button title="Unordered list" onclick="table.toggleExecCommand('insertunorderedlist');return false;"><img src="icons/list-ul.svg"></button>
+								<button title="Indent" onclick="table.indentList();return false;"><img src="icons/indent.svg"></button>
+								<button title="Outdent" onclick="table.indentList(true) ;return false;"><img src="icons/outdent.svg"></button>
 								<button title="Text color" onclick="table.setTextColor(this.getAttribute('data-color'));return false;" data-color="red" id="text-color-button"><span class="glyphicon" style="border-bottom:3px solid red;padding:2px;height:auto;width:auto;font-size:1.2rem;margin-bottom:2px;" id="text-color-span"><span class="glyphicon-font"></span></span></button>
 								<button type="button" class="btn-caret dropdown-toggle" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></button>
 
@@ -152,6 +153,8 @@ Output <span class="caret"></span>
 								<button title="Bold" onclick="table.toggleExecCommand('bold');return false;"><img src="icons/type-bold.svg"></button>
 								<button title="Italic" onclick="table.toggleExecCommand('italic');return false;"><img src="icons/type-italic.svg"></button>
 								<button title="Underline" onclick="table.toggleExecCommand('underline');return false;"><img src="icons/type-underline.svg"></button>
+								<button title="Strikethrough" onclick="table.toggleExecCommand('strikethrough');return false;"><img src="icons/strikethrough.svg"></button>
+								<button title="Superscript" onclick="table.toggleExecCommand('superscript');return false;"><img src="icons/superscript.svg"></button>
 							</div>
 						</div>
 						<div class="group-col">
@@ -244,7 +247,7 @@ Output <span class="caret"></span>
                 <hr>
 
                 <center>
-<div class="btn-group" role="group">
+<div class="btn-group" role="group" style="margin-bottom:25px">
 	<button onclick="table.generate()" class="btn btn-primary" data-toggle="tooltip" title="Generate code">Generate</button>
 	<div class="btn-group dropdown">
         	<button title="Output language" type="button" id="format-btn" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">LaTeX <span class="caret"></span></button>
@@ -265,17 +268,17 @@ Output <span class="caret"></span>
        		   <li data-value="bbcode"><a href="#">BBCode</a></li>
        		   <li data-value="wikicode"><a href="#">Wikicode</a></li>
  	      	   <li role="separator" class="divider"></li>
-		  <li class="dropdown-header">Data</a></li>
+		  <li class="dropdown-header">Data</li>
 	          <li data-value="csv"><a href="#">CSV</a></li>
         	  <li role="separator" class="divider"></li>
 	  	<li class="dropdown-header">Legacy formats</li>
          	 <li data-value="wml"><a href="#">WML</a></li>
         	</ul>
 	</div>
-	<button title="Settings" class="btn btn-default" data-target="#format-settings" data-toggle="modal"><span class="glyphicon glyphicon-cog"></span></button>
+	<button title="Settings" class="btn btn-default" data-target="#format-settings" data-toggle-second="tooltip" data-toggle="modal"><span class="glyphicon glyphicon-cog"></span></button>
 </div>
 
-<!-- Before-Generate -->
+<!-- Before-Generate
 <ins class="adsbygoogle"
      style="display:block"
      data-ad-client="ca-pub-5146982563696073"
@@ -284,7 +287,7 @@ Output <span class="caret"></span>
      data-full-width-responsive="true"></ins>
 <script>
      (adsbygoogle = window.adsbygoogle || []).push({});
-</script><!----->
+</script>--->
 
                 </center>
                 <br>
@@ -337,13 +340,13 @@ Output <span class="caret"></span>
                                         <h6>Effects</h6>
                                         <div class="btn-toolbar" role="toolbar">
                                             <div class="btn-group" role="group" aria-label="Diagonal separators">
-                                                <button type="button" class="btn btn-default active" id="info_diag_zero" onclick="table.separators(0)"><img src="diag-zero.png"></button>
-                                                <button type="button" class="btn btn-default" id="info_diag_one" onclick="table.separators(1)"><img src="svg/diag-one.svg"></button>
-                                                <button type="button" class="btn btn-default" id="info_diag_two" onclick="table.separators(2)"><img src="svg/diag-two.svg"></button>
+                                                <button type="button" class="btn btn-default active" id="info_diag_zero" data-toggle="tooltip" title="No diagonal line" onclick="table.separators(0)"><img src="diag-zero.png"></button>
+                                                <button type="button" class="btn btn-default" id="info_diag_one" data-toggle="tooltip" title="Diagonal line" onclick="table.separators(1)"><img src="svg/diag-one.svg"></button>
+                                                <button type="button" class="btn btn-default" id="info_diag_two" data-toggle="tooltip" title="Two diagonal lines" onclick="table.separators(2)"><img src="svg/diag-two.svg"></button>
                                             </div>
                                             <div class="btn-group" role="group" aria-label="Cell rotation">
-                                                <button type="button" class="btn btn-default active" id="info-unrotated" onclick="table.rotate(false)"><span class="glyphicon glyphicon-font"></span></button>
-                                                <button type="button" class="btn btn-default" id="info-rotated" onclick="table.rotate(true)"><span class="glyphicon glyphicon-font" style="transform: rotate(-90deg);margin-left: -4px;"></span></button>
+                                                <button type="button" class="btn btn-default active" id="info-unrotated" onclick="table.rotate(false)" data-toggle="tooltip" title="Horizontal text"><span class="glyphicon glyphicon-font"></span></button>
+                                                <button type="button" class="btn btn-default" id="info-rotated" onclick="table.rotate(true)" data-toggle="tooltip" title="Vertical text"><span class="glyphicon glyphicon-font" style="transform: rotate(-90deg);margin-left: -4px;"></span></button>
                                             </div>
                                         </div>
                                         <div id="info-diagonal-block" style="display:none;">
@@ -622,13 +625,13 @@ Output <span class="caret"></span>
                 </div>
                 <div class="modal-body">
                     <h4>Select cells</h4>
-                    <p>To select multiple cells, uses <kbd>CTRL + Click</kbd> (or <kbd>&#x2318; + Click</kbd> on Macintosh). Hold <kbd>CTRL</kbd> (or <kbd>&#x2318;</kbd>) and click on all the cells that you want to select.
-                        <p>To select multiple adjacent cells, uses <kbd>SHIFT + Click</kbd>. Click on the first cell, then hold <kbd>Shift</kbd> and click on the last cell.
+                    <p style="margin-left:2em;">To select multiple cells, uses <kbd>CTRL + Click</kbd> (or <kbd>&#x2318; + Click</kbd> on Macintosh). Hold <kbd>CTRL</kbd> (or <kbd>&#x2318;</kbd>) and click on all the cells that you want to select.</p>
+                        <p style="margin-left:2em;">To select multiple adjacent cells, uses <kbd>SHIFT + Click</kbd>. Click on the first cell, then hold <kbd>Shift</kbd> and click on the last cell.</p>
                             <h4>Import LaTeX tables</h4>
-                            <p>Under the logo, there's a <kbd>File</kbd> menu. Click on it and then follows <kbd>File</kbd> &gt; <kbd>Import table</kbd> &gt; <kbd>LaTeX</kbd>.
+                            <p style="margin-left:2em;">Under the logo, there's a <kbd>File</kbd> menu. Click on it and then follows <kbd>File</kbd> &gt; <kbd>Import table</kbd> &gt; <kbd>LaTeX</kbd>.</p>
                                 <h4>My table is too wide ! What can I do ?</h4>
-                                <p>You can fix the issue if you are generating LaTeX code. To do so, select the menu items <kbd>Output &gt; Settings</kbd>. Then, choose an option under <kbd>Fit table to page method</kbd></span>.
-                                    <h4>More help</h4> If you have more questions, check the <a rel="help" href="help.html" target="_blank">FAQ</a>.
+                                <p style="margin-left:2em;">You can fix the issue if you are generating LaTeX code. To do so, select the menu items <kbd>Output &gt; Settings</kbd>. Then, choose an option under <kbd>Fit table to page method</kbd></span>.</p>
+                                    <h4>More help</h4><p  style="margin-left:2em;"> If you have more questions, check the <a rel="help" href="help.html" target="_blank">FAQ</a>.</p>
                 </div>
             </div>
         </div>
@@ -856,6 +859,15 @@ Output <span class="caret"></span>
                             <label>
                                 <input type="checkbox" id="opt-latex-border" checked> Border commands are on separated lines</label>
                         </div>
+			<div>
+                            <label>
+                                <input type="checkbox" id="opt-latex-command"> Don't escape L<span class="latex-a">a</span>T<span class="latex-e">e</span>X commands</label> 
+				<span class="label label-warning">BETA</span>
+				<a title="The editor will try to detect LaTeX commands in your text and won't encode those. Special care is taken for \verb
+and \(...\)" data-toggle="tooltip">
+					<span class=" glyphicon glyphicon-question-sign "></span>
+				</a>
+                        </div>
                         <h5>Table's caracteristics</h5>
                         <div>
                             <label>
@@ -962,19 +974,17 @@ Output <span class="caret"></span>
                         </div>
                         <h5>Advanced options</h5>
 
-                        <label>
+                        <div><label>
                             <input type="checkbox" id="opt-latex-tabu"> Force table to use <code>tabu</code> when possible</label> <span class="label label-danger">not recommanded</span>
-			    <a href="https://github.com/tabu-issues-for-future-maintainer/tabu" target="_blank"><span class=" glyphicon glyphicon-question-sign "></span></a>
-                        <!--
-<h5>Colors</h5>
-<select id="opt-color" class="form-control"><option value="rgb">RGB</option>
-<option value="cmyk">CYMK</option></select>
--->
+			    <a href="https://github.com/tabu-issues-for-future-maintainer/tabu" target="_blank"><span class=" glyphicon glyphicon-question-sign "></span></a></label></div>
+			<div><label>
+                            <input type="checkbox" id="opt-latex-color"> Use a substractive color model (CMYK) instead of RGB
+			    <a title="RGB colors will be converted to CMYK which might not be always accurate." data-toggle="tooltip"><span class=" glyphicon glyphicon-question-sign "></span></a></label></div>
                         <h5>Microfixes</h5>
                         <div><small>Microfixes are features that improves the presentation of your table, but may use a lot of ressources.</small></div>
                         <div>
                             <label>
-                                <input type="checkbox" id="opt-latex-microfix-alignment"> Correct alignment with borders <span class="label label-warning">BETA</span></div>
+                                <input type="checkbox" id="opt-latex-microfix-alignment"> Correct alignment with borders</label> <span class="label label-warning">BETA</span></div>
                     </div>
                     <div class="form-group" data-option-group="md" style="display:none;">
                         <h4>Markdown options</h4>
@@ -1077,7 +1087,7 @@ Output <span class="caret"></span>
 						.tab('show')
 				})
 
-			$('[data-toggle="tooltip"]').tooltip({
+			$('[data-toggle="tooltip"],[data-toggle-second="tooltip"]').tooltip({
 container: 'body',
 placement: 'auto top'
 });
@@ -1103,12 +1113,13 @@ placement: 'auto top'
 			function createTableCreater(){
 				var table = $id("create_table"),
 				frag = document.createDocumentFragment();
-				for(var i=0;i<8;i++){
+				for(var i=0;i<16;i++){
 					var tr = document.createElement("tr");
-					for(var j=0;j<8;j++){
+					for(var j=0;j<16;j++){
 						var td = document.createElement("td");
 						td.dataset.row = i+1;
 						td.dataset.col = j+1;
+						td.title = (j+1) + " x " + (i+1);
 						td.addEventListener("mouseenter", createTableHover, false);
 						td.addEventListener("click", function(){
 							window.table.create(this.dataset.col, this.dataset.row);
@@ -1121,8 +1132,8 @@ placement: 'auto top'
 				table.appendChild(frag);
 			}
 			function createTableHover(){
-				var row = this.dataset.row;
-				var col = this.dataset.col;
+				var row = +this.dataset.row;
+				var col = +this.dataset.col;
 				var selected = document.querySelectorAll("#create_table td");
 				$id("create_table_x").innerHTML = col;
 				$id("create_table_y").innerHTML = row;

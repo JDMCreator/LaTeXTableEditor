@@ -384,6 +384,28 @@
 		body[data-border-editor] #table td[data-border-right="bottomrule"]{
 			border-width:3px !important;
 		}
+		/* List */
+
+			/* Level 2 */
+			:not(ul, li) > ul > li > ul > li::marker,
+			:not(ul, li) > ul > ul > li::marker{
+				content:"\2014";
+			}
+			:not(ul, li) > ul > ul li, :not(ul, li) > ul > li > ul li{padding-left:0.6ex;}
+			
+
+			/* Level 3 */
+			:not(ul, li) > ul > ul > ul > li::marker
+			{
+				content:"\2217";
+			}
+			/* Level 4 */
+			:not(ul, li) > ul > ul > ul > ul > li::marker
+			{
+				content:"\00B7";
+			}
+
+
 		/* Preview border draw */
 		body[data-border-editor] #table td[data-border-preview~="top"]{
 			border-top-color:red !important;
@@ -516,6 +538,11 @@
 			transform: rotate(-90deg);
 		}
 		
+
+		#table td[data-rotated="45"]:not([data-selected]) div[contenteditable],
+		body[data-view-editor] #table td[data-rotated="45"] div[contenteditable] {
+			transform: rotate(-45deg);
+		}
 		body:not([data-view-editor]) #table td[data-selected]{
 			//overflow:hidden;
 }

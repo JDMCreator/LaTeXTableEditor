@@ -67,12 +67,18 @@ getLength = function(code){
 	}
 },
 commandNumbers = {
+	emph:1,
 	multicolumn : 3,
 	multirow : 3,
 	multirowcell : 2,
 	multirowthead : 2,
 	tabucline : 1,
-	taburowcolors : 2
+	taburowcolors : 2,
+	textbf:1,
+	textit:1,
+	textsl:1,
+	texttt:1,
+	uline:1
 },
 specialSeparators = {
 	cmidrule : ["(", ")"],
@@ -133,6 +139,11 @@ specialSeparators = {
 		o.full = "\\\\"+(o.asterisk ? "*" : "");
 		return o;
 	}
+	else if(realname == "$" || realname == "%" || realname == "_" || realname == "&" || realname == "#"){
+		o.name = realname;
+		o.full = "\\"+realname;
+		return o;
+	}
 	else if(nextchar == "*"){
 		o.asterisk = true;
 		nextchar = code.charAt(name.length+1);
@@ -162,6 +173,9 @@ specialSeparators = {
 				nbofbrack = 0;
 				actu = "";
 			}
+			else if(char == " " && i < code.length - 1){
+				continue;
+			}
 			else if(specialSeparators[realname] && char == specialSeparators[realname][0]){
 				mode = 3;
 				actu = "";
@@ -171,7 +185,7 @@ specialSeparators = {
 			}
 			else{
 				o.name = realname;
-				o.full = "\\"+realname+code.substring(0,i);
+				o.full = ("\\"+realname+code.substring(0,i)).trim();
 				return o;
 			}
 		}
@@ -229,7 +243,7 @@ importTable = function(code){
 
 xcolor.erase();
 xcolor.extract(code);
-var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin{((?:long|)tabu\*?|sidewaystable|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
+var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
 var tabular = tabularReg.exec(code);
 	tabularReg.lastIndex = 0;
 	if(!tabular){
@@ -334,7 +348,7 @@ var tabular = tabularReg.exec(code);
 		var initEnv = envirn(code2);
 		code = initEnv.content;
 		if(type == "table" || type == "table*" || type == "sidewaystable" || type == "wraptable"){
-			if(/\\begin{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
+			if(/\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
 				var caption = code.indexOf("\\caption");
 				if(caption >=0){
 					caption = command(code.substring(caption));
@@ -348,7 +362,7 @@ var tabular = tabularReg.exec(code);
 					if(!obj.caption){ obj.caption = {} }
 					obj.caption.label = label.args[0];
 				}
-				tabular = /\\begin{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
+				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
 				if(!tabular){
 					return false; // Should not happen
 				}
@@ -553,7 +567,7 @@ var tabular = tabularReg.exec(code);
 				i+= reg[0].length-1;				
 			}
 			else if(name == "noalign"){
-				if(name.args[0].indexOf("\\hrule",0)>-1){
+				if(com.args[0].indexOf("\\hrule",0)>-1){
 					actuBorder = "normal";
 				}
 				i+=com.full.length-1;				
@@ -1429,8 +1443,10 @@ graph_table = {
 treatCom = function(code){
 	var o = {},
 	bannedCommands = {
+		"arrayrulecolor" : 1,
 		"cellcolor" : 1,
 		"cite" : 1,
+		"doublerulesepcolor" : 1,
 		"hhline" : 1,
 		"hspace" : 1,
 		"interrowspace" : 1,
@@ -1453,9 +1469,6 @@ treatCom = function(code){
 	else if(name == "textbf"){
 		html+="<b>" + getHTML(com.args[0]) + "</b>";
 	}
-	else if(name == "emph"){
-		html+="<i>" + getHTML(com.args[0]) + "</i>";
-	}
 	else if(name == "tablefootnote" || name == "footnote"){
 		var div = document.createElement("div"),
 		span = document.createElement("span");
@@ -1465,10 +1478,16 @@ treatCom = function(code){
 		div.appendChild(span);
 		html += div.innerHTML;
 	}
-	else if(name == "uline" || name == "underline"){
+	else if(name == "uline" || name == "underline" || name == "ul"){
 		html+="<u>" + getHTML(com.args[0]) + "</u>";
 	}
-	else if(name == "url" || name == "underline" || name == "part" || name == "chapter" || name == "subsection" || name == "section" ||
+	else if(name == "sout" || name == "st"){
+		html+="<strike>"+getHTML(com.args[0])+"</strike>";
+	}
+	else if(name == "textsuperscript" || name == "up"){
+		html+="<sup>"+getHTML(com.args[0])+"</sup>";
+	}
+	else if(name == "url" || name == "part" || name == "chapter" || name == "subsection" || name == "section" ||
 		name == "caption"){
 		html+= getHTML(com.args[0]);
 	}
@@ -1522,6 +1541,15 @@ treatCom = function(code){
 		html += "&iexcl;";
 	}
 	else if(name == "textbar"){html += "|"}
+	else if(name == "textordfeminine"){html+="<sup>a</sup>"}
+	else if(name == "ier"){html+="<sup>er</sup>"}
+	else if(name == "iere"){html+="<sup>re</sup>"}
+	else if(name == "iers"){html+="<sup>ers</sup>"}
+	else if(name == "ieres"){html+="<sup>res</sup>"}
+	else if(name == "ieme"){html+="<sup>e</sup>"}
+	else if(name == "iemes"){html+="<sup>es</sup>"}
+	else if(name == "textordmasculine"){html+="<sup>o</sup>"}
+	else if(name == "texttrademark"){html="&#8482;"}
 	else if (name == "textbackslash" || name == "boi"){html += "\\"}
 	else if(name == "textthreequartersemdash"){html += "&#8210;"}
 	else if(name == "cyrdash" || name == "textemdash"){html += "&mdash;"}

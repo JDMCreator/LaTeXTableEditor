@@ -108,7 +108,16 @@
 						str += "{";
 					}
 				}
-				else if(tagname == "/b" || tagname == "/i" || tagname == "/u" || tagname == "/font"){
+				else if(tagname == "strike"){
+					str += "\inframed[frame=off]{\overstrike{";
+				}
+				else if(tagname == "/strike"){
+					str += "}}";
+				}
+				else if(tagname == "sup"){
+					str += "\\high{";
+				}
+				else if(tagname == "/b" || tagname == "/i" || tagname == "/u" || tagname == "/font" || tagname == "/sup"){
 					str += "}";
 				}
 				else if(tagname == "u"){

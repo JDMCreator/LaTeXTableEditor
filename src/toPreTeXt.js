@@ -68,7 +68,7 @@
 				return "<m>"+contentMath+"</m>";
 			}
 			return "<"+name+">";
-		});
+		}).replace(/\&nbsp\;/gi,"<nbsp></nbsp>");
 		var frag = document.createDocumentFragment(),
 		div = document.createElement("div");
 		div.innerHTML = text;
@@ -127,11 +127,27 @@
 		nbofcols = matrix[0].length,
 		booktabs = this.element.hasAttribute("data-booktabs"),
 		tabular = document.createElement("tabular");
-		indent = document.getElementById('opt-pretext-indent').value || "tab";
+		indent = document.getElementById('opt-pretext-indent').value || "two";
 		// Caption
 		if(caption){
-			var captionE = tableContainer.createCaption();
-			captionE.innerHTML = caption;
+			var captionE = document.createElement("title");
+			tabular.appendChild(captionE);
+			captionE.innerHTML = caption.replace(/[\#\$\%\^\&\_\{\}\\\~\<\>]/g, function(char){
+				return "<"+{
+					"#" : "hash",
+					"$" : "dollar",
+					"%" : "percent",
+					"^" : "circumflex",
+					"&" : "ampersand",
+					"_" : "underscore",
+					"{" : "lbrace",
+					"}" : "rbrace",
+					"~" : "tilde",
+					"\\" : "backslash",
+					"<" : "less",
+					">" : "greater"
+				}[char]+">";
+			});
 		}
 		// Let's start by defining attributes for tabular
 		var tabular_align = getMax(matrix, function(cell){
@@ -237,10 +253,10 @@
 		var div = document.createElement("div");
 		div.appendChild(tableContainer);
 		// Remove useless end of elements
-		var text = div.innerHTML.replace(/<\s*(\/?)\s*(hash|dollar|percent|circumflex|ampersand|underscore|lbrace|rbrace|tilde|backslash|less|greater)[^>]*>/gi, function(full, close, name){
+		var text = div.innerHTML.replace(/\&nbsp\;/gi,"<nbsp></nbsp>").replace(/<\s*(\/?)\s*(hash|dollar|percent|circumflex|nbsp|ampersand|underscore|lbrace|rbrace|tilde|backslash|less|greater)[^>]*>/gi, function(full, close, name){
 	if(close){return ""}
 	return "<" + name + " />";
 });
-		return beautify(text);
+		return beautify(text).replace(/\u200B/g,"");
 	});
 })();

@@ -6,6 +6,89 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 2.1 (2021/03/26)
+==========
+
+| Note on this release:
+|     Accessibility and layout
+
+CORE
+
+[+] Support for multilevel unordered lists, up to four levels (#37)
+[+] Support for strikethrough text
+[+] Support for superscript text (#24)
+[+] Easier to create large tables with the "New table" tool
+[#] Pasting values broke the undo stack (#9)
+[#] Bold/Italic/Underline was not pasted if there was color
+
+LATEX EXPORT
+
+[+] Option (on by default) to disable escaping of LaTeX commands in text (#28)
+[+] Support for multilevel unordered lists, strikethrough text and superscript text
+[+] Option to use CMYK color model instead of RGB
+[#] Right margins in cells with lists were too large
+[#] Lists were sometimes in two tabular environments instead of one
+
+LATEX IMPORT
+
+[+] Support for strikethrough text (\sout and \st)
+[+] Support for superscript text (\textsuperscript and \up)
+[+] Support for \textordfeminine and \textordmasculine
+[+] Support for underline text (\ul from `soul` package)
+[+] Support for several french commands (\ieme, \iemes, \ier, \iers, \iere, \ieres)
+[#] Better handling of spaces before groups in commands and environments (#23)
+[#] \noalign caused fatal errors (#39)
+
+CONTEXT EXPORT
+
+[+] Support for strikethrough text and superscript text
+
+BBCODE EXPORT
+
+[+] Support for underline, colored and strikethrough text
+
+Version 2.0.6 (2021/03/17)
+==========
+
+| Note on this release:
+|     Accessibility and layout
+
+CORE
+
+[/] Better accessibility and tooltips
+
+Version 2.0.5 (2021/02/26)
+==========
+
+| Note on this release:
+|     Bug fixes for PreTeXt
+
+PRETEXT EXPORT
+
+[/] Use `<title>` tag instead of `<caption>` for captions (#35)
+[#] Non breaking space characters were not correctly encoded (#36)
+[#] Zero-width space characters were not elimited (#36)
+[#] Special characters were not encoded inside captions
+
+Version 2.0.4 (2021/02/17)
+==========
+
+| Note on this release:
+|     Bug fixes
+
+LATEX IMPORT
+
+[#] Issue with some character commands (\$, \%, \#, \_ and \&) (#33)
+
+Version 2.0.3 (2020/10/20)
+==========
+
+| Note on this release:
+|     Bug fixes
+
+LATEX EXPORT
+
+[#] Issue with mathematical expressions inside unordered lists (#31)
 
 Version 2.0.2 (2020/10/08)
 ==========

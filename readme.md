@@ -1,6 +1,6 @@
 ## LaTeX Table Editor ##
 
-**Version 2.0.2**
+**Version 2.1**
 
 This is the GitHub page of an Open Source WYSIWYG table editor that exports to multiples languages including LaTeX, ConTeXt, Plain TeX, CSV, HTML, BBCode, Eplain, PreTeXt, MediaWiki, Markdown and WML.
 
@@ -24,7 +24,6 @@ You need Bootstrap 3, ntc.js, SheetJS and JQuery. See the online example.
  - BBCode
  - Textile
  - Eplain
- - PreTeXt
  - WML
  - MediaWiki
  - Text (coming soon)

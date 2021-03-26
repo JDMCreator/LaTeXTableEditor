@@ -18,7 +18,9 @@
 			html = html.replace(/(<\s*(?:p|br|div)[^>]*>)/g," $1");
 		}
 		html = html.replace(/(\\|\||\*|_|#)/g,"\\$1").replace(/(\d)\./,"$1\\.");
-		html = html.replace(/<\s*\/?\s*(b|(strong))((\s+[^>]*)|)>/ig,"**").replace(/<\s*\/?\s*(i|(em))[^>]*>/ig,"*")
+		html = html.replace(/<\s*\/?\s*(b|(strong))((\s+[^>]*)|)>/ig,"**")
+			.replace(/<\s*\/?\s*(i|(em))[^>]*>/ig,"*")
+			.replace(/<\s*\/?\s*(strike|(s))[^>]*>/ig,"~~")
 		var div = document.createElement("div");
 		div.innerHTML = html;
 		var text = (div.textContent||div.innerText||"").replace(/\n\r ?/g, " ")

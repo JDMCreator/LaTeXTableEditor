@@ -3,7 +3,7 @@
 		var html = this.getHTML(cell);
 		html = html.replace(/[\n\r]+/g, "");
 		html = html.replace(/<\s*br\s*\/?\s*>/gi, "\n");
-		html = html.replace(/<\s*(\/?)\s*([a-z]+)[^>]*>/gi,function(full,close,name){
+		html = html.replace(/<\s*(\/?)\s*([a-z]+)([^>]*)>/gi,function(full,close,name,content){
 			name = name.toLowerCase();
 			if(name == "b"){
 				if(close){
@@ -19,6 +19,36 @@
 				}
 				else{
 					return "[i]";
+				}
+			}
+			else if(name == "u"){
+				if(close){
+					return "[/u]"
+				}
+				else{
+					return "[u]";
+				}
+			}
+			else if(name == "strike"){
+				if(close){
+					return "[/s]"
+				}
+				else{
+					return "[s]";
+				}
+			}
+			else if(name == "font"){
+				if(close){
+					return "[/color]"
+				}
+				else{
+					var color = /\#[a-z0-9]{6}/i.exec(content);
+					if(color){
+						return "[color="+color+"]";
+					}
+					else{
+						return "[color=#000000]";
+					}
 				}
 			}
 			else {
