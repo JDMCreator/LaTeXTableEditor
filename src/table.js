@@ -189,12 +189,23 @@ Table = function(table){
 			}
 			// Then, we expand the colspan of cells if there are empty cells
 			for(var i=0, cells;i<matrix.length;i++){
-				if(rows[i]){
-					cells = rows[i].cells;
+				var row = rows[i+(this.shadowFirstRow?1:0)]
+				if(row){
+					cells = row.cells;
 					if(matrix[i].length < colLength && cells && cells[0]){
 						cells[cells.length-1].colSpan += colLength-cells.length;
 						change = true;
 					}
+				}
+			}
+			if(change && this.shadowFirstRow){
+				var row = rows[0];
+				for(var i=row.cells.length;i<matrix.length;i++){
+					row.appendChild(document.createElement("TD"));
+				}
+
+				for(var i=matrix.length-1;i<row.cells.length;i++){
+					row.removeChild(row.cells[i]);
 				}
 			}
 			return true;

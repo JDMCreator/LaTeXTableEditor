@@ -14,9 +14,9 @@ function $id(id) {
 	/* ==== START CAMPAIGN INFO ==== */
 
 	var campaign = {
-		start: new Date(2020,10,2),
-		end: new Date(2020,11,20),
-		year:2020
+		start: new Date(2021,10,2),
+		end: new Date(2021,11,20),
+		year:2021
 	},
 	campaignUsed = localStorage.getItem("campaign") == campaign.year,
 
@@ -115,7 +115,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "2.1";
+			this.version = "2.2.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -577,10 +577,10 @@ function $id(id) {
 				this.updateLaTeXInfoCell();
 			}
 			this.selectedCell = null;
-			this.merge = function() {
+			this.merge = function(name) {
 				this.statesManager.registerState();
 				var _this = this;
-				this.Table.merge(document.querySelectorAll("#table td[data-selected]"), function(colspan, rowspan, keep, removed) {
+				this.Table[name||"merge"](document.querySelectorAll("#table td[data-selected]"), function(colspan, rowspan, keep, removed) {
 					var html = _this.getHTML(keep);
 					for (var i = 0; i < removed.length; i++) {
 						html += " " + _this.getHTML(removed[i])
@@ -909,10 +909,10 @@ this.getHTML = (function(){
 		var div;
 		if(cell.tagName == "TD" || cell.tagName == "TH"){
 			if(!n){
-				div = cell.firstElementChild.firstElementChild;
+				div = cell.querySelector("div[contenteditable]");
 			}
 			else{
-				div = cell.firstElementChild.children[n]
+				div = cell.querySelectorAll("div[contenteditable]")[n]
 			}
 		}
 		else{
@@ -2105,7 +2105,12 @@ this.getHTML = (function(){
 						var trimLeft = /^\S/.test(plain),
 						trimRight = /\S$/.test(plain);
 						var dataHtml = e.clipboardData.getData("text/html");
-						d.innerHTML = dataHtml;
+						if(dataHtml){
+							d.innerHTML = dataHtml;
+						}
+						else{
+							d.innerText = plain;
+						}
 						var html = _this.getHTML(d);
 						if(trimLeft){html = html.replace(/^\s+/, "")}
 						if(trimRight){html = html.replace(/\s+$/, "")}
@@ -2116,6 +2121,10 @@ this.getHTML = (function(){
 						}
 						else if(document.queryCommandEnabled("paste")){
 							document.execCommand("paste",false, html);
+							//return false;
+						}
+						else if(document.queryCommandEnabled("insertText")){
+							document.execCommand("insertText",false, plain);
 							//return false;
 						}
 						else{
@@ -2164,6 +2173,22 @@ this.getHTML = (function(){
 						}
 					}
 				}, false);
+				table.addEventListener("mouseup", function(e){
+					// Tooltip helper
+					// Upcoming feature
+					return;
+					e = window.event || e;
+					var sel = window.getSelection();
+					var range = sel.getRangeAt(0);
+					var tooltip = document.getElementById("tooltip-helper");
+					if(range && !range.collapsed){
+						var coo = range.getBoundingClientRect();
+						tooltip.style.display = "block";
+						var ht = tooltip.offsetHeight;
+						tooltip.style.top = (coo.top + window.scrollY - ht - 10) + "px";
+						tooltip.style.left = (coo.right + window.scrollX + 10) + "px";
+					}
+				});
 				table.addEventListener("keydown", function(e){
 					e = window.event || e;
 					if(e.keyCode == 9 && !e.ctrlKey){
@@ -2227,6 +2252,7 @@ this.getHTML = (function(){
 					// New code
 					var toolbarContainer = document.querySelector(".toolbar-group-container");
 					var caretFont = toolbarContainer.querySelector(".btn-caret");
+					var caretMerge = toolbarContainer.querySelector(".btn-caret-merge");
 					toolbarContainer.addEventListener("keydown", function(e){
 						if(e.keyCode == 37){ // Left
 							var focus = toolbarContainer.querySelector(":focus");
@@ -2267,14 +2293,26 @@ this.getHTML = (function(){
 						that.toggleFontColorPicker(this);
 						e.stopPropagation();
 					}, false);
+					caretMerge.addEventListener("click", function(e){
+						that.toggleMergePicker(this);
+						e.stopPropagation();
+					}, false);
 					document.addEventListener("click", function(e){
 						if(caretFont.getAttribute("aria-expanded") == "true"){
 							that.toggleFontColorPicker(caretFont);
 						}
+						else if(caretMerge.getAttribute("aria-expanded") == "true"){
+							that.toggleMergePicker(caretMerge);
+						}
 					}, false);
 					document.addEventListener("keydown", function(e){
-						if(e.keyCode == 27 && caretFont.getAttribute("aria-expanded") == "true"){
-							that.toggleFontColorPicker(caretFont);
+						if(e.keyCode == 27){
+							if(caretFont.getAttribute("aria-expanded") == "true"){
+								that.toggleFontColorPicker(caretFont);
+							}
+							else if(caretMerge.getAttribute("aria-expanded") == "true"){
+								that.toggleMergePicker(caretMerge);
+							}
 						}
 					},false);
 					var tdFont = toolbarContainer.querySelectorAll("td[data-color]");
@@ -2326,6 +2364,19 @@ this.getHTML = (function(){
 				}
 				else{
 					this.toggleExecCommand('foreColor', color)
+				}
+			}
+			this.toggleMergePicker = function(el){
+				var mergePicker = document.getElementById("merge-picker");
+				if(el.getAttribute("aria-expanded") == "false"){
+					el.setAttribute("aria-expanded", "true");
+					mergePicker.style.display = "block";
+					mergePicker.style.left = (el.offsetLeft - document.querySelector(".toolbar-group-container").scrollLeft) + "px";
+					mergePicker.style.top = (el.offsetTop + el.offsetHeight) + "px";
+				}
+				else{
+					el.setAttribute("aria-expanded", "false");
+					mergePicker.style.display = "none";
 				}
 			}
 			this.toggleFontColorPicker = function(el){
@@ -2419,6 +2470,8 @@ this.getHTML = (function(){
 				braces = 0,
 				foundHTMLName = false,
 				htmlName = "",
+				inEq = false,
+				eqName = "",
 				verbChar = "";
 				var index = 1;
 				if(command.length == 1){return false;}
@@ -2447,11 +2500,26 @@ this.getHTML = (function(){
 							}
 						}
 					}
+					else if(inEq){
+						if(c == ";"){
+							var div = document.createElement("div");
+							div.innerHTML="&"+eqName+";";
+							var sym = div.innerText;
+							if(!foundName){
+								name += sym;
+							}
+							content += sym;
+						}
+						else{eqName+=c;}
+					}
 					else if(c == "<"){
 						inHTML = true;
 						foundHTMLName = false;
 						htmlName = "";
 						after += c;
+					}
+					else if(c == "&"){
+						inEq = true;
 					}
 					else if(!foundName){
 						if(/^[a-zA-Z]$/.test(c)){
@@ -2481,6 +2549,22 @@ this.getHTML = (function(){
 							else if(c == "["){
 								content += c;
 								mode = 2;
+							}
+							else if(c == "*"){
+								content+= c;
+								c = command[index+1]
+								if(c == "{"){
+									index++;
+									mode =1;
+									braces=1;
+								}
+								else if(c == "["){
+									index++;
+									mode = 2;
+								}
+								else{
+									break;
+								}
 							}
 							else{
 								index--;
@@ -4360,9 +4444,7 @@ this.getHTML = (function(){
 					}
 				}
 				if(useLongtable){
-					if(!useTabu){
-						this.packages["longtable"] = true;
-					}
+					this.packages["longtable"] = true;
 					str += "\n\\end{"+(useTabu ? "longtabu" : "longtable")+"}\n"
 					if(booktabColor && !rotateTable){
 						str += "}\n";
@@ -4440,6 +4522,9 @@ this.getHTML = (function(){
 					if (this.packages.hasOwnProperty(i)) {
 						if(i == "ulem"){
 							packages += "% \\usepackage[normalem]{ulem}\n";
+						}
+						else if(i == "longtable" && useTabu){
+							packages += "% \\usepackage{longtable}[=v4.13]\n";
 						}
 						else if(i == "multirow" && useLongtable){
 							packages += "% \\usepackage[longtable]{multirow}\n";

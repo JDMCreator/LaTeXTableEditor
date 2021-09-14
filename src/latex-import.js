@@ -84,6 +84,202 @@ specialSeparators = {
 	cmidrule : ["(", ")"],
 	taburulecolor : ["|", "|"]
 },
+getCellsTblrOptions = function(x,y,o, all){
+	x++;y++;
+	var arr = [];
+	var cells = o.cell;
+	for(var i=0;i<cells.length;i++){
+		var cell = cells[i];
+		var type = cell[0];
+		if(type == "cells" && all){
+			arr.push(cell[1]);
+		}
+		else if(type == "cell" || (type == "column" || type == "row" && all)){
+			var col, row;
+			if(type == "cell"){
+				col = cell[2];
+				row = cell[1];
+			}
+			else if(type == "column"){
+				col = cell[1];
+				row = "-";
+			}
+			else if(type == "row"){
+				row = cell[1];
+				col = "-";
+			}
+
+			//Let's start with col
+			var cols = col.split(/,/);
+			var hasCol = false;
+			inCol:for(var j=0;j<cols.length;j++){
+				var coli = cols[j];
+				if(coli == "odd"){
+					if(x%2 == 1){
+						hasCol=true;break inCol;
+					}
+				}
+				else if(coli == "even"){
+					if(x%2 == 0){hasCol=true;break inCol;}
+				}
+				else if(coli == x || coli == "-"){hasCol=true;break inCol;}
+				else if(coli.indexOf("-")>-1){
+					var start = +coli.substring(0,coli.indexOf("-"));
+					var end = +coli.substring(coli.indexOf("-")+1);
+					if(x>= start && x<= end){hasCol = true;break inCol;}
+				}
+			}
+			if(!hasCol){continue;}
+			//Let's continue with row
+			var rows = row.split(/,/);
+			var hasRow = false;
+			inRow:for(var j=0;j<rows.length;j++){
+				var rowi = rows[j];
+				if(rowi == "odd"){
+					if(y%2 == 1){
+						hasRow=true;break inRow;
+					}
+				}
+				else if(rowi == "even"){
+					if(y%2 == 0){hasRow=true;break inRow;}
+				}
+				else if(rowi == y || rowi == "-"){hasRow=true;break inRow;}
+				else if(rowi.indexOf("-")>-1){
+					var start = +rowi.substring(0,rowi.indexOf("-")) || -1;
+					var end = +(rowi.substring(rowi.indexOf("-")+1) || "99999999");
+					if(y>= start && y<= end){hasRow = true;break inRow;}
+				}
+			}
+			if(hasRow){
+				if(type == "cell"){
+					arr.push(cell[3]);
+				}
+				else{
+					arr.push(cell[2]);
+				}
+			}
+		}
+	}
+	return arr;
+},
+tblrOptions = null,
+tblrkeyval = function(str){
+	str = str + ",";
+	var o = {cell:[]};
+	var name = "";
+	var content = "",
+	inName = true,
+	inComment = false;
+	par=0;
+	for(var i=0;i<str.length;i++){
+		var c = str[i];
+		if(inComment){
+			if(c == "\n"){inComment = false}
+			continue;
+		}
+		if(inName){
+			if(/\s/.test(c)){continue;}
+			if(c == "=" && name && par <= 0){
+				inName = false;
+			}
+			else if(c == "{"){
+				par++;
+				name +=c;
+			}
+			else if(c == "}"){
+				par--;
+				name += c;
+			}
+			else if(c=="," && name && par <= 0){
+				if(!o[name]){o[name]=[]}
+				o[name].push("");
+				name = "";
+			}
+			else{
+				name+=c;
+			}
+			continue;
+		}
+		else{
+			if(par>0){
+				if(c == "}"){
+					par--;
+					content+=c;
+				}
+				else if(c == "{"){
+					par++;content+=c;
+				}
+				else if(c == "\\"){
+					content+=c+str[i+1];
+					i++;
+				}
+				else if(c == "%"){
+					inComment = true;
+				}
+				else{content+=c;}
+				continue;
+			}
+			else if(c == "{"){
+				par++;
+				content+=c;
+			}
+			else if(c == ","){
+				content = content.trim();
+				if(content[0] == "{" && content[content.length-1] == "}" && !/\}\s*\{/.test(content)){
+					content = content.slice(1,-1).trim();
+				}
+				name = name.trim();
+				if(/^cell\s*\{([^\}]+)\}\s*\{([^\}]+)\}$/.test(name)){
+					var exec = /^cell\s*\{([^\}]+)\}\s*\{([^\}]+)\}$/.exec(name);
+					if(exec){
+						o.cell.push(["cell",exec[1],exec[2],content]);
+					}
+				}
+				else if(/^column\s*\{([^\}]+)\}$/.test(name)){
+					var exec = /^column\s*\{([^\}]+)\}$/.exec(name);
+					if(exec){
+						o.cell.push(["column",exec[1],content]);
+					}
+				}
+				else if(/^row\s*\{([^\}]+)\}$/.test(name)){
+					var exec = /^row\s*\{([^\}]+)\}$/.exec(name);
+					if(exec){
+						o.cell.push(["row",exec[1],content]);
+					}
+				}
+				else if(name == "columns"){
+					o.cell.push(["column","-",content]);
+				}
+				else if(name == "rows"){
+					o.cell.push(["row","-",content]);
+				}
+				else if(name == "cells"){
+					o.cell.push(["cells",content]);
+				}
+				else{
+					if(!o[name]){o[name] = []}
+					o[name].push(content);
+				}
+				name = content = "";
+				inComment = false;
+				inName = true;
+				par = 0;
+			}
+			else if(c == "\\"){
+				content+=c+str[i+1];
+				i++;
+			}
+			else if(c == "%"){
+				inComment = true;
+			}
+			else{
+				content+=c;
+			}
+		}
+	}
+	console.dir(o);
+	return o;
+},
  command=function(code){
 	var o ={
 		options : [],
@@ -243,12 +439,13 @@ importTable = function(code){
 
 xcolor.erase();
 xcolor.extract(code);
-var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
+var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
 var tabular = tabularReg.exec(code);
 	tabularReg.lastIndex = 0;
 	if(!tabular){
 		return false;
 	}
+	tblrOptions = null;
 	var type = "", obj = {},  code2 = code.substring(tabular.index),beforeCode = code.substring(0, tabular.index);
 	if(tabular[1]){
 		// We use ctable, so we now to handle this as a special case, because it's a command instead of an environment
@@ -348,7 +545,7 @@ var tabular = tabularReg.exec(code);
 		var initEnv = envirn(code2);
 		code = initEnv.content;
 		if(type == "table" || type == "table*" || type == "sidewaystable" || type == "wraptable"){
-			if(/\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
+			if(/\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|(?:long|tall|)tblr|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
 				var caption = code.indexOf("\\caption");
 				if(caption >=0){
 					caption = command(code.substring(caption));
@@ -362,7 +559,7 @@ var tabular = tabularReg.exec(code);
 					if(!obj.caption){ obj.caption = {} }
 					obj.caption.label = label.args[0];
 				}
-				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
+				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tblr|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
 				if(!tabular){
 					return false; // Should not happen
 				}
@@ -422,6 +619,26 @@ var tabular = tabularReg.exec(code);
 		}
 		else if(type == "tabularht*" || type == "tabularhtx"){
 			head = header(initEnv.command.args[3]);
+		}
+		else if(type == "tblr" || type == "longtblr" || type == "talltblr"){
+			// Here we can have an header or not. Let's see
+			if(initEnv.command.args[1].indexOf("=")>-1 ||
+			   initEnv.command.args[1].indexOf(",")>-1 ||
+			   !initEnv.command.args[1].trim() ||
+			   initEnv.command.args[1] == "hlines" ||
+			   initEnv.command.args[1] == "vlines"){
+				// No header
+				tblrOptions = tblrkeyval(initEnv.command.args[1]);
+				if(tblrOptions.colspec){
+					head = header(tblrOptions.colspec[tblrOptions.colspec.length-1]);
+				}
+				else{
+					head = header("");
+				}
+			}
+			else{
+				head = header(initEnv.command.args[1]);
+			}
 		}
 		else if(type == "tabu" || type == "tabu*" || type == "longtabu" || type == "longtabu*"){
 			// Because "tabu" supports "tabu to <dim>" and "tabu spread <dim>", we need to handle these special and rarely used cases
@@ -714,7 +931,9 @@ var tabular = tabularReg.exec(code);
 	nextRowVCell = false,
 	vcellIndex = [],
 	newTable = [],
-	realBorders = []
+	realBorders = [];
+	var toDeleteArr = []
+	var toAddRowSpanArr = []
 	for(var i=0;i<table.length;i++){
 		var row = table[i];
 		nextRowVCell = false;
@@ -722,7 +941,24 @@ var tabular = tabularReg.exec(code);
 			newTable.push([]);
 			realBorders.push(borders[i]);
 		}
-		for(var j=0;j<row.length;j++){
+		realCellX = -1;
+		cellLoop: for(var j=0;j<row.length;j++){
+			if(toDeleteArr[0]){
+				for(var k=0;k<toDeleteArr[0].length;k++){
+					if(toDeleteArr[0][k] == j){
+						if(toAddRowSpanArr[0] && toAddRowSpanArr[0][j]){
+							realCellX++;
+							newTable[newTable.length-1][realCellX] = {
+								colSpan:toAddRowSpanArr[0][j][1],
+								added:true,
+								dataset:{}
+							}
+						}
+						continue cellLoop;
+					}
+				}
+			}
+			realCellX++;
 			if(thisRowVCell){
 				var code = row[j];
 				if(code.indexOf("\\printcelltop")>=0){
@@ -752,14 +988,47 @@ var tabular = tabularReg.exec(code);
 						}
 					}
 				}
-				setCellO(newTable, j, newTable.length-1, row[j], head[j], backgroundCell, columncolors[j])
-				if(newTable[newTable.length-1][j].vcell){
+				setCellO(newTable, realCellX, newTable.length-1, row[j], head[j], backgroundCell, columncolors[j], j, tblrOptions)
+				if(newTable[newTable.length-1][realCellX].toDeleteCol){
+					var arr = [];
+					var rowSpanArr = [];
+					for(var z=0;z<newTable[newTable.length-1][realCellX].toDeleteCol+1;z++){
+						arr.push(j+z);
+						if(!z){
+							rowSpanArr[j] = [realCellX,newTable[newTable.length-1][realCellX].colSpan];
+						}
+					}
+					for(var z=0;z<(newTable[newTable.length-1][realCellX].rowSpan||1);z++){
+						if(toDeleteArr[z]){
+							toDeleteArr[z] = toDeleteArr[z].concat(arr);
+						}
+						else{
+							toDeleteArr[z] = arr.slice();
+						}
+						if(z){
+							if(toAddRowSpanArr[z]){
+								for(var zz=0;zz<rowSpanArr.length;zz++){
+									if(rowSpanArr[zz]){
+										toAddRowSpanArr[z][zz] = rowSpanArr[zz].slice();
+									}
+								}
+							}
+							else{
+								toAddRowSpanArr[z] = rowSpanArr.slice();
+							}
+						}
+					}
+					delete newTable[newTable.length-1][realCellX].toDeleteCol;
+				}
+				if(newTable[newTable.length-1][realCellX].vcell){
 					nextRowVCell = true;
-					delete newTable[newTable.length-1][j].vcell;
+					delete newTable[newTable.length-1][realCellX].vcell;
 				}
 			}
 		}
 		thisRowVCell = nextRowVCell;
+		toDeleteArr.shift();
+		toAddRowSpanArr.shift();
 	}
 	table = newTable;
 	// REMOVE EMPTY CELL AT THE END
@@ -904,6 +1173,7 @@ var tabular = tabularReg.exec(code);
 		}
 		colLength = Math.max(colLength, rowCount);
 	}
+	var tableRowSpan=[];
 	for(var i=0;i<table.length;i++){
 		var realrow = [], row = table[i], rowCount = 0;
 		for(var j=0;j<row.length;j++){
@@ -911,8 +1181,13 @@ var tabular = tabularReg.exec(code);
 			if(!row[j].remove){
 				realrow.push(row[j]);
 			}
+			if(row[j].rowSpan>1){
+				for(var k=1;k<row[j].rowSpan;k++){
+					tableRowSpan[i+k]=(tableRowSpan[i+k]||0)+Number(row[j].colSpan||1);
+				}
+			}
 		}
-		for(var j=rowCount;j<colLength;j++){
+		for(var j=rowCount+(tableRowSpan[i]||0);j<colLength;j++){
 			realrow.push({
 				html:"",
 				css:"",
@@ -924,11 +1199,115 @@ var tabular = tabularReg.exec(code);
 	obj.cells = realtable;
 	return obj;
 },
-setCellO = function(table, x, y, code, head, backgroundRow, columnColor){
-	var o = {html:"", dataset:{}},
-	html = getHTML(code,o);
-	o.html = html;
+getProp = function(tblrs,prop){
+	var actualValue = null;
+	for(var i=0;i<tblrs.length;i++){
+		tblr = tblrs[i].replace(/^\s*\{\s*(?:c|r)\s*=\s*[0-9]+\s*(?:,\s*(?:c|r)\s*=\s*[0-9]+\s*|)\}\s*/,"")
+		       .trim().replace(/^\{+/,"").replace(/\}+$/,"")+",";
+
+		var inName = true;
+		var name = "",
+		content = "",
+		par = 0;
+		for(var j=0,c;j<tblr.length;j++){
+			c = tblr[j]
+			if(inName){
+				if(c == ","){
+					name = name.trim();
+					if(/^[lcr]$/.test(name) && prop == "halign"){
+						actualValue = name;
+					}
+					else if(/^[tmbhf]$/.test(name) && prop == "valign"){
+						actualValue = name;
+					}
+					else if(/^\D[a-zA-Z0-9]+$/gi.test(name) && prop == "bg" && !/^[lcrtmbhf]$/gi.test(name)){
+						actualValue = name;
+					}
+					name = "";
+				}
+				else if(c == "="){
+					inName = false;
+				}
+				else{
+					name += c;
+				}
+			}
+			else if(c == "{"){
+				content += c;
+				par++;
+			}
+			else if(c == "}"){
+				content+=c;
+				par--;
+			}
+			else if(c == "\\"){
+				content += c + tblr[j+1];j++;
+			}
+			else if(c == "," && par <= 0){
+				par = 0;
+				name = name.trim();
+				if(name == prop){actualValue = content;}
+				name = "";
+				inName = true;
+				content = "";
+			}
+			else{
+				content += c;
+			}
+		}	
+	}
+	return actualValue;
+	
+},
+setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx){
+	var o = {html:"", dataset:{}};
 	var css = "";
+	var cellTblr = [];
+	var setrow = /\\SetRow[^a-zA-Z]/.exec(code);
+	if(setrow){
+		setrow = command(code.substring(setrow.index));
+		if(!tblrOptions){
+			tblrOptions = {cell:[]}
+		}
+		tblrOptions.cell.push(["row",(y+1).toString(), setrow.args[0]]);
+	}
+	var setrows = /\\SetRows[^a-zA-Z]/.exec(code);
+	if(setrows){
+		setrows = command(code.substring(setrows.index));
+		if(!tblrOptions){
+			tblrOptions = {cell:[]}
+		}
+		tblrOptions.cell.push(["row","-", setrows.args[0]]);
+	}
+	var setcol = /\\SetColumn[^a-zA-Z]/.exec(code);
+	if(setcol){
+		setcol = command(code.substring(setcol.index));
+		if(!tblrOptions){
+			tblrOptions = {cell:[]}
+		}
+		tblrOptions.cell.push(["column",(x+1).toString(), setcol.args[0]]);
+	}
+	var setcols = /\\SetColumns[^a-zA-Z]/.exec(code);
+	if(setcols){
+		setcols = command(code.substring(setcols.index));
+		if(!tblrOptions){
+			tblrOptions = {cell:[]}
+		}
+		tblrOptions.cell.push(["column","-", setcols.args[0]]);
+	}
+	if(tblrOptions){
+		cellTblr = getCellsTblrOptions(realx,y,tblrOptions,true);
+		var setcell = /\\SetCell[^a-zA-Z]/.exec(code);
+	}
+	var setcell = /\\SetCell[^a-zA-Z]/.exec(code);
+	if(setcell){
+		setcell = command(code.substring(setcell.index));
+		var aboutpush = "";
+		if(setcell.options[0]){aboutpush+="{"+setcell.options[0]+"}"};
+		aboutpush+="{"+setcell.args[0]+"}";
+		cellTblr.push(aboutpush);
+	}
+	if(cellTblr.length==0){cellTblr = null;}
 	var span = /\\multicolumn(?:{[ ]*([0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		span = command(code.substring(span.index));
@@ -941,22 +1320,48 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor){
 		head = head.components[0]
 		o.colSpan = parseInt(span.args[0], 10);
 	}
+	//tblrOptions
+	if(cellTblr){
+		sp = null;
+		for(var i=0;i<cellTblr.length;i++){
+			var exec = /(?:^|\{|,)\s*c\s*=\s*([0-9]+)/.exec(cellTblr[i]);
+			if(exec){sp=exec[1]}
+		}
+		if(sp){
+			o.colSpan = parseInt(sp, 10);
+			o.toDeleteCol = o.colSpan -1;
+		}
+	}
 	span = /\\multirow(?:cell|thead|)(?:[ ]*\[[^\]]*\]|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		o.rowSpan = parseInt(span[1]||span[2], 10);
 	}
-
+	//tblrOptions
+	if(cellTblr){
+		sp = null;
+		for(var i=0;i<cellTblr.length;i++){
+			var exec = /(?:^|\{|,)\s*r\s*=\s*([0-9]+)/.exec(cellTblr[i]);
+			if(exec){sp=exec[1]}
+		}
+		if(sp){
+			o.rowSpan = parseInt(sp, 10);
+		}
+	}
 	if(/\\(?:vcell|savecellbox)\s*(?:\{|\\)/.test(code)){
 		o.vcell = true;
 	}
 
 	// Get cell background info from \cellcolor
 	var cellcolor = /\\cellcolor[^a-zA-Z]/.exec(code);
+	var tblrcolor = null;
+	if(!cellcolor && cellTblr){
+		tblrcolor = getProp(cellTblr, "bg");
+	}
 	if(cellcolor){
 		cellcolor = command(code.substring(cellcolor.index));
 		cellcolor = xcolor(cellcolor.args[0], cellcolor.options[0]);
 	}
-
+	if(tblrcolor){cellcolor = xcolor(tblrcolor);}
 	// Now treat background
 	if(cellcolor){
 		css += "background-color:rgb("+cellcolor.join(",")+");";
@@ -968,6 +1373,17 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor){
 		css += "background-color:rgb("+columnColor.join(",")+");";
 	}
 	
+	// Generate HTML
+	// TODO : Support > and <
+	if(cellTblr){
+		var before = getProp(cellTblr, "preto") || "";
+		var after = getProp(cellTblr, "appto") || "";
+		code = before + code + after;
+	}
+	var html = getHTML(code,o,realx,y);
+	o.html = html;
+
+
 	// Treat header;
 	head = head || "l";
 	if(head.substring(0,2) == "||"){
@@ -1010,13 +1426,32 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor){
 			continue;
 		}
 	}
+	if(cellTblr){
+		var halign = getProp(cellTblr, "halign");
+		var valign = getProp(cellTblr, "valign");
+		if(halign){
+			o.dataset.align = halign.toLowerCase();
+		}
+		if(valign){
+			valign = valign.toLowerCase();
+			if(valign == "t" || valign == "h"){
+				o.dataset.verticalAlign = "t";
+			}
+			if(valign == "m"){
+				o.dataset.verticalAlign = "m";
+			}
+			if(valign == "b" || valign == "f"){
+				o.dataset.verticalAlign = "b";
+			}
+		}
+	}
 	if(code.indexOf("\\rotcell") != -1 || code.indexOf("\\begin{sideways}") != -1){
 		o.dataset.rotated = "data-rotated";
 	}
 	o.css = css;
 	table[y][x] = o;
 },
-getHTML = function(code,o){
+getHTML = function(code,o,x,y){
 	o = o || {}
 	var html="", commentmode = false, mathmode = false, mathcontent = "", div = document.createElement("div");
 	for(var i=0, char, sub;i<code.length;i++){
@@ -1071,7 +1506,7 @@ getHTML = function(code,o){
 				i += env.env.full.length -1;
 			}
 			else{
-				var com = treatCom(sub);
+				var com = treatCom(sub,x,y);
 				html += com.html;
 				i += com.command.full.length -1;
 			}
@@ -1197,6 +1632,10 @@ getHeaderComponent = function(head, i){
 	    // These are special column types which requires more than one argument
 	    // We need this to parse the shorten construction (i.e. *2c instead of *{2}{c}) 
 	    specialColumns = {
+		">" : 1,
+		"<" : 1,
+		"@" : 1,
+		"!" : 1,
 		"*" : 2,
 		"D" : 3, // From 'dcolumn' package
 		"F" : 3, // From 'fcolumn' package
@@ -1205,9 +1644,9 @@ getHeaderComponent = function(head, i){
 	    },
 	    ogI = i;
 
-	var nargs = specialColumns[c] || 0
-	//if(c == "D"){debugger;}
-	i++, commentmode = false, nArg = 0, inOpt = false, actu = "";
+	var nargs = specialColumns[c] || 0;
+	i++
+	var commentmode = false, nArg = 0, inOpt = false, actu = "";
 	for(var d;i<head.length;i++){
 		d = head.charAt(i)
 		if(commentmode){
@@ -1440,7 +1879,9 @@ graph_table = {
 	"aa" : 229,
 	"AA" : 196
 },
-treatCom = function(code){
+treatCom = function(code,x,y){
+	x = (x+1).toString();
+	y = (y+1).toString();
 	var o = {},
 	bannedCommands = {
 		"arrayrulecolor" : 1,
@@ -1456,6 +1897,12 @@ treatCom = function(code){
 		"phantom" : 1,
 		"rowcolor" : 1,
 		"rule" : 1,
+		"setlength":1,
+		"SetCell":1,
+		"SetColumn":1,
+		"SetColumns":1,
+		"SetRow":1,
+		"SetRows":1,
 		"vspace" : 1
 	},
 	html = "";

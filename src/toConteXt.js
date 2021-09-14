@@ -722,7 +722,7 @@
 			}
 			// Label
 			if(caption.label){
-				context+="["+label+"]";
+				context+="["+caption.label+"]";
 			}
 			// Caption
 			context += "{"+(caption.caption||"")+"}{\n";

@@ -131,7 +131,7 @@
 		// Caption
 		if(caption){
 			var captionE = document.createElement("title");
-			tabular.appendChild(captionE);
+			tableContainer.appendChild(captionE);
 			captionE.innerHTML = caption.replace(/[\#\$\%\^\&\_\{\}\\\~\<\>]/g, function(char){
 				return "<"+{
 					"#" : "hash",

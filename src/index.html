@@ -183,7 +183,17 @@ Output <span class="caret"></span>
 				</div>
 				<div class="toolbar-group">
 					<div class="group-col">
+<div class="group-row">
 						<button onclick="table.merge()" title="Merge selected cells"><img src="icons/chevron-contract.svg" style="transform:rotate(90deg)">Merge cells</button>
+<button type="button" class="btn-caret btn-caret-merge dropdown-toggle" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></button>
+
+                       						<div id="merge-picker" class="dropdown-menu" style="padding:3px;min-width:min-content;">
+<div class="group-col">
+<button onclick="table.merge('mergeHorizontal')"><img style="visibility:hidden;"> Merge cells horizontally</button>
+<button onclick="table.merge('mergeVertical')"><img style="visibility:hidden;"> Merge cells vertically</button>
+</div>
+</div>
+</div>
 						<button onclick="table.split()" title="Split selected merged cells"><img src="icons/chevron-expand.svg" style="transform:rotate(90deg)">Split cells</button>
 						<button onclick="$('#findreplace-dialog').modal('show')" title="Find and replace text in cells"><img src="icons/find-replace.svg">Find & replace</button>
 					</div>
@@ -246,6 +256,7 @@ Output <span class="caret"></span>
                 </div>
                 <hr>
 
+   		<div id="tooltip-helper">Hey</div>
                 <center>
 <div class="btn-group" role="group" style="margin-bottom:25px">
 	<button onclick="table.generate()" class="btn btn-primary" data-toggle="tooltip" title="Generate code">Generate</button>
@@ -824,7 +835,6 @@ Output <span class="caret"></span>
             </div>
         </div>
     </div>
-
     <div class="modal fade" id="format-settings" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

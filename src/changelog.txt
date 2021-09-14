@@ -6,11 +6,54 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 2.2.1
+==========
+
+| Note on this release:
+|     Bug fixes
+
+Core
+
+[#] Pasting values stored as plain text didn't work (#9)
+[#] The editor conflicted with the LanguageTool browser extension (#44)
+
+Version 2.2
+==========
+
+| Note on this release:
+|     Merge horizontally & vertically, tabularray basic support,
+|     ninecolors support
+
+CORE
+
+[+] Merge horizontally and merge vertically
+[#] Normalizing tables before generation could produce fatal errors in some very rare cases
+
+LATEX EXPORT
+
+[+] Asterisks are now taken care of when LaTeX commands escaping is disabled
+[#] Fatal crash with `longtabu` because of an update of `longtable`
+[#] Commands like \>, \& or \< produces errors when LaTeX commands escaping was disabled
+
+LATEX IMPORT
+
+[+] Basic support (rowspan, colspan, horizontal alignement and background colors) for `tblr` and `longtblr` environments from `tabularray` package
+[+] Support for named colors from `ninecolors` package
+[#] Issues with @, !, > and < column without brackets
+
+CONTEXT EXPORT
+
+[#] Fatal issue with labels
+
+PRETEXT EXPORT
+
+[#] TITLE element was mislocated (#48)
+
 Version 2.1 (2021/03/26)
 ==========
 
 | Note on this release:
-|     Accessibility and layout
+|     Multilevel unordered lists, new text formatting and option to disable escaping of LaTeX commands
 
 CORE
 
