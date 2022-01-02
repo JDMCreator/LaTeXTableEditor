@@ -6,18 +6,46 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
-Version 2.2.1
+Version 2.3 (2021/12/20)
+==========
+
+| Note on this release:
+|     Decimal alignment, better selection, basic support for NiceTabular
+|     and better support for tabularray
+
+CORE
+
+[+] Decimal alignment now properly shows up
+[+] Option to use commas instead of dot when importing Excel files (#54)
+[+] Option to surround numbers with $...$ when importing Excel files
+[+] Support for multiple selections with CTRL+Drag (#52)
+[+] Support for pasting tables and data from spreadsheets
+[/] SHIFT+Click now does a rectangular selection (#53)
+[#] Issue with selection when the selected cell is removed
+
+LATEX IMPORT
+
+[+] Basic support for `NiceTabular`, `NiceTabular*` and `NiceTabularX` environments
+[+] Basic support for colspan and rowspan from `\Block` from NiceTabular
+[+] Support for X,Y,Z column/row/cell descriptor in tabularray
+[+] Support for font color in tabularray
+[+] Really basic support for horizontal border in rowspec in tabularray
+[+] Support for Q column in tabularray
+[#] Double backslash (`\\`) created a new row even in a bracket group
+[#] Fix an issue where columns could be misinterpreted if an ampersand followed a command
+
+Version 2.2.1 (2021/09/14)
 ==========
 
 | Note on this release:
 |     Bug fixes
 
-Core
+CORE
 
 [#] Pasting values stored as plain text didn't work (#9)
 [#] The editor conflicted with the LanguageTool browser extension (#44)
 
-Version 2.2
+Version 2.2 (2021/09/01)
 ==========
 
 | Note on this release:

@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" id="meta-viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="A powerful and robust LaTeX, ConTeXt, Plain TeX, PreTeXt, EPlain, Markdown, Textile, CSV and HTML Table Editor and Generator. Import data from LaTeX, Excel, LibreOffice and more.">
-    <script data-ad-client="ca-pub-5146982563696073" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5146982563696073"
+     crossorigin="anonymous"></script>
     <title>LaTeX Tables Editor</title>
     <link href="css.css" rel="stylesheet">
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -18,6 +19,8 @@
     <script type="text/javascript" src="table.js">
     </script>
     <script type="text/javascript" src="color.js">
+    </script>
+    <script type="text/javascript" src="tableDecimal.js">
     </script>
     <script type="text/javascript" src="js.js"></script>
     <script type="text/javascript">Table.new = true;</script>
@@ -41,12 +44,15 @@
                         <div class="mobile-col-xs" onclick="table.prepareEmail()"><span class="glyphicon glyphicon-envelope" aria-hidden="true"></span></div>
                     </div>
                 </div>
-<center>
-<!-- Header----->
+
+<center style="padding:20px;padding-bottom:45px;">
+<!-- Header -->
 <ins class="adsbygoogle"
-     style="display:inline-block;width:728px;height:90px"
+     style="display:block"
      data-ad-client="ca-pub-5146982563696073"
-     data-ad-slot="9054299450"></ins>
+     data-ad-slot="9054299450"
+     data-ad-format="horizontal"
+     data-full-width-responsive="true"></ins>
 <script>
      (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
@@ -289,17 +295,6 @@ Output <span class="caret"></span>
 	<button title="Settings" class="btn btn-default" data-target="#format-settings" data-toggle-second="tooltip" data-toggle="modal"><span class="glyphicon glyphicon-cog"></span></button>
 </div>
 
-<!-- Before-Generate
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-5146982563696073"
-     data-ad-slot="1874006957"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>--->
-
                 </center>
                 <br>
                 <div class="row">
@@ -401,11 +396,6 @@ Output <span class="caret"></span>
                                 </div>
                             </div>
 
-                            <!-- Right-Panel 
-                            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5146982563696073" data-ad-slot="9752496976" data-ad-format="auto" data-full-width-responsive="true"></ins>
-                            <script>
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                            </script>-->
 
                         </div>
                     </div>
@@ -765,6 +755,10 @@ Output <span class="caret"></span>
 .prn,
 .eth">
                         </div>
+<div>
+<label><input type="checkbox" id="opt-gen-comma"> Use comma instead of dot as decimal separator</label>
+<label><input type="checkbox" id="opt-gen-surround"> Surround numbers with <code>$...$</code></label>
+</div>
                         <button onclick="table.importExcel()" id="excel-button" style="margin:4px;" class="btn btn-primary">OK</button>
                     </div>
                     <div id="worksheet-loading-status"></div>
@@ -1084,6 +1078,16 @@ and \(...\)" data-toggle="tooltip">
 </div>
 
 		<script type="text/javascript">
+		tableDecimal("#table",{
+			attributeChar:"data-align",
+			attributeCharValue:"d",
+			char:".",
+			observe:true,
+			paddingElement:"div[contenteditable]",
+			observeFilter: function(){
+				return document.getElementById("table").querySelector('td[data-align="d"');
+			}
+		});
 		$(function(){
 			var isIE = /*@cc_on!@*/false || !!document.documentMode;
 			var isEdge = !isIE && !!window.StyleMedia;

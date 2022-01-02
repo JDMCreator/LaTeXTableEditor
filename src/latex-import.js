@@ -82,9 +82,62 @@ commandNumbers = {
 },
 specialSeparators = {
 	cmidrule : ["(", ")"],
-	taburulecolor : ["|", "|"]
+	taburulecolor : ["|", "|"],
+	Block : ["<",">"]
 },
-getCellsTblrOptions = function(x,y,o, all){
+getTblrHBorders = function(o){
+	var borders = [];
+	if(o.rowspec && o.rowspec[0]){
+		var rowspec = o.rowspec[o.rowspec.length-1],
+		args = 0,
+		opts = 0;
+		n = 0,
+		actu = "";
+		for(var i=0;i<rowspec.length;i++){
+			var c = rowspec[i];
+			if(c == "\\"){c++;continue;}
+			if(args > 0){
+				if(c == "}"){args--}
+				if(c == "{"){args++}	
+			}
+			else if(opts>0){
+				if(c == "]"){opts--}
+				if(c == "["){opts++}
+				if(opts<=0){
+					if(!borders[n]){
+						borders[n] = [];
+					}
+					borders[n].push([actu]);actu = "";
+				}
+				else{
+					actu += c;
+				}
+			}
+			else if(c == "|"){
+				if(rowspec[i+1] == "["){
+					i++;opts++;
+				}
+				else{
+					if(!borders[n]){
+						borders[n] = [];
+					}
+					borders[n].push(["solid"]);
+				}
+			}
+			else if(c == "{"){
+				args++;
+			}
+			else if(c == "["){
+				opts++;
+			}
+			else if(/[a-zA-Z]/.test(c)){
+				n++;
+			}
+		}
+	}
+	return borders;
+},
+getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 	x++;y++;
 	var arr = [];
 	var cells = o.cell;
@@ -114,6 +167,16 @@ getCellsTblrOptions = function(x,y,o, all){
 			var hasCol = false;
 			inCol:for(var j=0;j<cols.length;j++){
 				var coli = cols[j];
+				if(coli == "Z"){
+					coli = Zcol;
+				}
+				else if(coli == "Y"){
+					coli = Zcol-1;
+				}
+				else if(coli == "X"){
+					coli = Zcol-2;
+				}
+				coli = coli.toString();
 				if(coli == "odd"){
 					if(x%2 == 1){
 						hasCol=true;break inCol;
@@ -135,6 +198,16 @@ getCellsTblrOptions = function(x,y,o, all){
 			var hasRow = false;
 			inRow:for(var j=0;j<rows.length;j++){
 				var rowi = rows[j];
+				if(rowi == "Z"){
+					rowi = Zrow;
+				}
+				else if(rowi == "Y"){
+					rowi = Zrow - 1;
+				}
+				else if(rowi == "X"){
+					rowi = Zrow - 2;
+				}
+				rowi = rowi.toString();
 				if(rowi == "odd"){
 					if(y%2 == 1){
 						hasRow=true;break inRow;
@@ -344,7 +417,7 @@ tblrkeyval = function(str){
 		o.asterisk = true;
 		nextchar = code.charAt(name.length+1);
 	}
-	if(nextchar == "]" || nextchar == "}" || nextchar == "\\"){
+	if(nextchar == "]" || nextchar == "}" || nextchar == "\\" || nextchar == "&"){
 		o.name = realname;
 		o.full = "\\" + realname +(o.asterisk ? "*" : "");
 		return o;
@@ -385,7 +458,7 @@ tblrkeyval = function(str){
 				return o;
 			}
 		}
-		else if(char == "\\"){
+		else if(char == "\\" && mode != 3){
 			var fullcommand = command(code.substring(i)).full;
 			actu += fullcommand;
 			i+=fullcommand.length-1;
@@ -439,7 +512,7 @@ importTable = function(code){
 
 xcolor.erase();
 xcolor.extract(code);
-var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
+var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|NiceTabular[*X]?|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
 var tabular = tabularReg.exec(code);
 	tabularReg.lastIndex = 0;
 	if(!tabular){
@@ -545,7 +618,7 @@ var tabular = tabularReg.exec(code);
 		var initEnv = envirn(code2);
 		code = initEnv.content;
 		if(type == "table" || type == "table*" || type == "sidewaystable" || type == "wraptable"){
-			if(/\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|(?:long|tall|)tblr|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
+			if(/\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|(?:long|tall|)tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
 				var caption = code.indexOf("\\caption");
 				if(caption >=0){
 					caption = command(code.substring(caption));
@@ -559,7 +632,7 @@ var tabular = tabularReg.exec(code);
 					if(!obj.caption){ obj.caption = {} }
 					obj.caption.label = label.args[0];
 				}
-				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tblr|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
+				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
 				if(!tabular){
 					return false; // Should not happen
 				}
@@ -611,10 +684,10 @@ var tabular = tabularReg.exec(code);
 				}	
 		}
 		var head;
-		if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable"){
+		if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable" || type == "NiceTabular" || type == "NiceTabular*"){
 			head = header(initEnv.command.args[1]);
 		}
-		else if(type == "tabular*" || type == "tabularx" || type == "tabulary" || type == "tabularht" || type == "tabularkv"){
+		else if(type == "tabular*" || type == "tabularx" || type == "tabulary" || type == "tabularht" || type == "tabularkv" || type == "NiceTabularX"){
 			head = header(initEnv.command.args[2]);
 		}
 		else if(type == "tabularht*" || type == "tabularhtx"){
@@ -717,7 +790,7 @@ var tabular = tabularReg.exec(code);
 	};
 	var cellpos = 0, commandmode = false, otherseparator = "",
 	table = [[]], cell = "", row = table[0], ignoreSpace = false, actuBorder="", borders = [],
-	backgroundRow = [], actualXColorRowNumber = 1, xcolorRowNumbers = [], inComment = false;
+	backgroundRow = [], actualXColorRowNumber = 1, xcolorRowNumbers = [], inComment = false, inArgs = 0;
 	for(var i=0, c;i<code.length;i++){
 		c = code.charAt(i);
 		var sub = code.substring(i);
@@ -735,6 +808,12 @@ var tabular = tabularReg.exec(code);
 			inComment = true;
 			continue;
 		}
+		if(c == "{"){
+			inArgs++;
+		}
+		else if(c == "}"){
+			inArgs--;
+		}
 		else if(c == "\\"){
 			if(sub.lastIndexOf("\\begin{",0) === 0){
 				var env = envirn(sub);
@@ -743,9 +822,9 @@ var tabular = tabularReg.exec(code);
 				continue;
 			}
 			var com = command(sub), name = com.name;
-			if(name == "\\" || name == "cr" || name == "tabularnewline" || name == "endfirsthead"
-			|| name == "endhead" || name == "endfoot" || name == "endlastfoot" || name == "crcr"){
-				if(name != "crcr" || (row.length > 0 && (row.length > 1 || /\S/.test(row[0])) || actuBorder != "")){
+			if(inArgs == 0 && (name == "\\" || name == "cr" || name == "tabularnewline" || name == "endfirsthead"
+			|| name == "endhead" || name == "endfoot" || name == "endlastfoot" || name == "crcr")){
+				if(name != "crcr" || (row.length > 0 && (row.length > 1 || /\S/.test(row[0]) || actuBorder != ""))){
 					row.push(cell);
 					var allowadd = true;
 					if(name == "endfirsthead" || name == "endhead" || name == "endfoot" || name == "endlastfoot"){
@@ -933,7 +1012,20 @@ var tabular = tabularReg.exec(code);
 	newTable = [],
 	realBorders = [];
 	var toDeleteArr = []
-	var toAddRowSpanArr = []
+	var toAddRowSpanArr = [];
+
+	// Calculate the dimensions of the table for Z,Y,X values
+	var maxRow = table.length;
+	if(table[table.length-1].length == 1){
+		var lastCell = table[table.length-1][0];
+		if(/^\s*$/.test(lastCell)){
+			maxRow--;
+		}
+	}
+	var maxCol = 0;
+	for(var i=0;i<table.length;i++){
+		maxCol = Math.max(maxCol, table[i].length);
+	}
 	for(var i=0;i<table.length;i++){
 		var row = table[i];
 		nextRowVCell = false;
@@ -988,7 +1080,7 @@ var tabular = tabularReg.exec(code);
 						}
 					}
 				}
-				setCellO(newTable, realCellX, newTable.length-1, row[j], head[j], backgroundCell, columncolors[j], j, tblrOptions)
+				setCellO(newTable, realCellX, newTable.length-1, row[j], head[j], backgroundCell, columncolors[j], j, tblrOptions, maxRow, maxCol)
 				if(newTable[newTable.length-1][realCellX].toDeleteCol){
 					var arr = [];
 					var rowSpanArr = [];
@@ -1096,6 +1188,42 @@ var tabular = tabularReg.exec(code);
 		}
 	}
 	borders = realBorders;
+	// HORIZONTAL BORDERS FROM TBLR
+	if(tblrOptions){
+		var hborders = getTblrHBorders(tblrOptions);
+		for(var i=0;i<hborders.length;i++){
+			var row = table[(i===0) ? 0 : i-1], first = i===0,
+			borderArr = hborders[i];
+			for(var j=0;j<borderArr.length;j++){
+				var border = borderArr[j];
+				var spec = border[border.length-1].replace(/\s/g,"").replace(/(?:dash|wd|fg)=/g,"").split(/,/g),
+				type = "solid",
+				rulecolor = [0,0,0];
+				for(var k=0;k<spec.length;k++){
+					if(spec[k] == "dashed" || spec[k] == "dotted" || spec[k] == "solid"){type = spec[k]}
+					else if(spec[k].indexOf("=")<0 && !/[\d\.\-]/.test(spec[k][0])){
+						rulecolor = xcolor(spec[k]);
+					}
+				}
+				if(rulecolor){rulecolor = toHex(rulecolor)}
+				var name = {solid:"normal",dashed:"hdashline",dotted:"dottedline"}[type]
+				if(border.length == 1){
+					for(var k=0;k<row.length;k++){
+						var o = row[k];
+						o = o.refCell || o;
+						if(first){
+							o.dataset.borderTop = name;
+							o.css+="border-top:1px "+type+" "+rulecolor+";";
+						}
+						else{
+							o.dataset.borderBottom = name;
+							o.css+="border-bottom:1px "+type+" "+rulecolor+";";
+						}
+					}
+				}
+			}
+		}
+	}
 	// HORIZONTAL BORDERS
 	obj.autoBooktabs = false;
 	if(borders){
@@ -1130,7 +1258,7 @@ var tabular = tabularReg.exec(code);
 				if(subborder[0]  == "cline" || subborder[0] == "cdouble" || subborder[0] == "cmidrule" || subborder[0] == "cdottedline" || subborder[0] == "cdashline" || subborder[0] == "toprule"){
 					var end = subborder[1].split(/-+/),
 					start = parseInt(end[0],10)-1;
-					end = (parseInt(end[1],10)||row.length)-1,
+					end = (parseInt(end[1],10)||parseInt(end[0],10))-1,
 					pos = 0,
 					realname = {
 						cline : "normal",
@@ -1259,7 +1387,7 @@ getProp = function(tblrs,prop){
 	return actualValue;
 	
 },
-setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx){
+setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx, tblrOpts, Zrow, Zcol){
 	var o = {html:"", dataset:{}};
 	var css = "";
 	var cellTblr = [];
@@ -1296,7 +1424,7 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx){
 		tblrOptions.cell.push(["column","-", setcols.args[0]]);
 	}
 	if(tblrOptions){
-		cellTblr = getCellsTblrOptions(realx,y,tblrOptions,true);
+		cellTblr = getCellsTblrOptions(realx,y,tblrOptions,true,Zrow,Zcol);
 		var setcell = /\\SetCell[^a-zA-Z]/.exec(code);
 	}
 	var setcell = /\\SetCell[^a-zA-Z]/.exec(code);
@@ -1335,6 +1463,15 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx){
 	span = /\\multirow(?:cell|thead|)(?:[ ]*\[[^\]]*\]|)(?:{[ ]*(-?[0-9]*)[ ]*}|([0-9]))/.exec(code);
 	if(span){
 		o.rowSpan = parseInt(span[1]||span[2], 10);
+	}
+	//Block from NiceTabular
+	var block = /\\Block(?:[ ]*\[[^\]]*\]|)(?:\{(?:|(\d+)\-(\d+))\})/.exec(code);
+	if(block){
+		o.rowSpan = Math.max(1,parseInt(block[1]||"1", 10))
+		o.colSpan = Math.max(1,parseInt(block[2]||"1", 10))
+		if(o.colSpan > 1){
+			o.toDeleteCol = o.colSpan -1;
+		}
 	}
 	//tblrOptions
 	if(cellTblr){
@@ -1381,6 +1518,15 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx){
 		code = before + code + after;
 	}
 	var html = getHTML(code,o,realx,y);
+	if(cellTblr){
+		tblrcolor = getProp(cellTblr, "fg");
+		if(tblrcolor){
+			tblrcolor = xcolor(tblrcolor);
+			if(tblrcolor && (tblrcolor[0]+tblrcolor[1]+tblrcolor[2]>0)){
+				html='<font color="'+toHex(tblrcolor)+'">'+html+'</font>';
+			}
+		}
+	}
 	o.html = html;
 
 
@@ -1629,7 +1775,7 @@ getHeaderComponent = function(head, i){
 	    next = head.charAt(i+1),
 	    o = {char : c, opts : [], args : [], full: c},
 
-	    // These are special column types which requires more than one argument
+	    // These are special column types which requires arguments
 	    // We need this to parse the shorten construction (i.e. *2c instead of *{2}{c}) 
 	    specialColumns = {
 		">" : 1,
@@ -1709,7 +1855,7 @@ getHeaderComponent = function(head, i){
 	return o;
 },
 header = function(head){
-	var arr=[], actu = "", foundfirst = false, commentmode = false, colors = [], nextAlign = "";
+	var arr=[], actu = "", foundfirst = false, commentmode = false, colors = [], nextAlign = "", colN = 0;
 	for(var i=0,c;i<head.length;i++){
 		c = head.charAt(i),
 		info = getHeaderComponent(head, i);
@@ -1752,6 +1898,22 @@ header = function(head){
 					c = "l";
 				}
 			}
+			else if(c == "q" && info.opts.length == 1){
+				c = "l";
+				var keyval = info.opts[0].split(/,/g);
+				for(var j=0;j<keyval.length;j++){
+					var val = keyval[j].replace(/\s/g,"").replace(/(?:bg|halign|valign)=/g,"");
+					if(val == "c"){
+						c = "c";
+					}
+					else if(val == "r"){
+						c = "r";
+					}
+					else if(val.indexOf("=") < 0 && val.length > 1){
+						colors[colN] = xcolor(val);
+					}
+				}
+			}
 			else if(c == "x"){
 				if(info.opts.length == 1){
 					c = (/^[0-9-]/.test(info.opts[0]) ? /([cr])[\s\S]*$/i : /^[\s\S]*([cr])/i).exec(info.opts[0]);
@@ -1772,6 +1934,7 @@ header = function(head){
 				foundfirst = true;
 				actu += c;
 			}
+			colN++;
 		}
 		else if(c == ";"){
 			if(info.args.length > 0){
@@ -1795,12 +1958,12 @@ header = function(head){
 			var content = info.args[0];
 
 			// Here, we are looking for \columncolor info
-			var columncolor = /\\columncolor[\[\{]/.exec(content);
+			var columncolor = /\\columncolor\s*[\[\{]/.exec(content);
 			if(columncolor){
 				columncolor = content.substring(columncolor.index);
 				columncolor = command(columncolor)
 				var color = xcolor(columncolor.args[0], columncolor.options[0]);
-				colors[arr.length] = color;
+				colors[colN] = color;
 			}
 
 			// Now we are looking for alignment info
@@ -1915,6 +2078,9 @@ treatCom = function(code,x,y){
 	}
 	else if(name == "textbf"){
 		html+="<b>" + getHTML(com.args[0]) + "</b>";
+	}
+	else if(name == "Block"){
+		html += getHTML(com.args[1]);
 	}
 	else if(name == "tablefootnote" || name == "footnote"){
 		var div = document.createElement("div"),

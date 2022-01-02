@@ -115,7 +115,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "2.2.1";
+			this.version = "2.3";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -313,6 +313,7 @@ function $id(id) {
 			}
 			this._importExcel = function(a){
 				document.getElementById('worksheet-loading-status').innerHTML = "";
+				var surround = document.getElementById("opt-gen-surround").checked;
 				a = JSON.parse(a);
 				var results = a.results,
 				frag = document.createDocumentFragment(),
@@ -321,6 +322,22 @@ function $id(id) {
 					if(results[n]){
 						var div = document.createElement("div");
 						div.innerHTML = results[n].html;
+						if(surround){
+							var tb = div.getElementsByTagName("table")[0];
+							if(tb){
+								for(var i=0;i<tb.rows.length;i++){
+									var cells = tb.rows[i].cells;
+									for(var j=0;j<cells.length;j++){
+										var cell = cells[j];
+										if(cell.getAttribute("t") == "n" &&
+										/^[\d\+\-e\.,\s]*\d[\d\+\-e\.,\s]*$/.test(cell.innerText)){
+											cell.innerHTML = "<span class=\"latex-equation\">"+
+												cell.innerHTML + "</span>";
+										}
+									}
+								}
+							}
+						}
 						table.extract(div);
 					}
 					$("#worksheet-options").hide()
@@ -355,6 +372,7 @@ function $id(id) {
 				var elem_status = this._id('worksheet-loading-status');
 				if(file){	
 					this._id("excel-button").disabled = true;
+					var _this = this;
 					var excelWorker = function excelWorker(data, cb, th) {
 						try{
 							var worker = new Worker("js/xlsxworker.js");
@@ -379,16 +397,20 @@ function $id(id) {
 								worker.terminate();
 							}
 							else if(t == "xlsx"){
+								console.dir(e.data.d);
 								cb(e.data.d);
 								worker.terminate();
 							}
 						};
 						worker.onerror = function(e){
+							console.error(e);
 							elem_status.innerHTML = "An error occured";
 							document.getElementById("excel-button").disabled = false;
-							console.error(e);
 						}
-						worker.postMessage({d:data,b:'binary'});
+						worker.postMessage({d:data,
+							b:'binary', 
+							c:document.getElementById("opt-gen-comma").checked
+						});
 					};
 					var reader = new FileReader(), _this = this;
 					reader.onload = function(e){
@@ -408,6 +430,7 @@ function $id(id) {
 						}
 					}
 					reader.onerror = function(e){
+						console.error(e);
 						elem_status.innerHTML = "An error occured";
 						document.getElementById("excel-button").disabled = false;
 					}
@@ -914,6 +937,7 @@ this.getHTML = (function(){
 			else{
 				div = cell.querySelectorAll("div[contenteditable]")[n]
 			}
+			if(!div){div = cell;}
 		}
 		else{
 			div = cell;
@@ -980,36 +1004,31 @@ this.getHTML = (function(){
 			}
 			this.lastSelectedCell = false;
 			this.selectCell = function(element, CTRL, SHIFT) {
-				if ((!CTRL && !SHIFT) || !this.lastSelectedCell) {
+				if ((!CTRL && !SHIFT) || !this.lastSelectedCell || !this.lastSelectedCell.offsetWidth) {
 					this.removeAllSelection();
 					this.showInfo(element);
 					this.lastSelectedCell = this.selectedCell = element;
 					element.setAttribute("data-selected", "data-selected");
 				}
 				else if (SHIFT) { //TODO
-					var rows = this.element.rows, cells, startSelection = false;
-					for(var i=0;i<rows.length;i++){
-						cells = rows[i].cells;
-						for(var j=0, cell;j<cells.length;j++){
-							cell = cells[j];
-							if(startSelection){
-								if(cell === element || cell === this.lastSelectedCell){
-									this.lastSelectedCell = element;
-									// Hard break
-									j = cells.length;
-									i = rows.length;
-								}
-								cell.setAttribute("data-selected", "data-selected");
-							}
-							else if(cell === element || cell === this.lastSelectedCell){
-								startSelection = true;
-								element.setAttribute("data-selected", "data-selected");
-							}
+					var rows = this.Table.matrix();
+					var posThis = this.Table.position(element, rows);
+					var posLast = this.Table.position(this.lastSelectedCell, rows);
+					for(var i=Math.min(posThis.y,posLast.y);i<=Math.max(posThis.y,posLast.y);i++){
+						var cells = rows[i];
+						for(var j=Math.min(posThis.x,posLast.x);j<=Math.max(posThis.x,posLast.x);j++){
+							var cell = cells[j];
+							var el = (cell.refCell||cell).cell
+							el.setAttribute("data-selected", "data-selected");
+							this.lastSelectedCell = el;
 						}
 					}
 				} else {
 					if (CTRL && element.hasAttribute("data-selected")) {
 						element.removeAttribute("data-selected");
+						if(this.lastSelectedCell === element){
+							this.lastSelectedCell = null;
+						}
 					} else {
 						element.setAttribute("data-selected", "data-selected");
 						this.lastSelectedCell = element
@@ -2086,6 +2105,23 @@ this.getHTML = (function(){
 						}
 					}	
 				});
+				document.addEventListener("selectionchange", function(e) {
+					var selections = window.getSelection();
+					if(selections.rangeCount>1){
+						for(var i=0;i<selections.rangeCount;i++){
+							var range = selections.getRangeAt(i);
+							var ancestor = range.commonAncestorContainer;
+							if(ancestor.tagName == "TR"){
+								if(ancestor.parentElement.id == "table" || 
+								   ancestor.parentElement.parentElement.id == "table"){
+									var el = ancestor.childNodes[range.startOffset];
+									el.setAttribute("data-selected", "data-selected");
+									this.lastSelectedCell = el;
+								}
+							}
+						}
+					}
+				},false);
 				table.addEventListener("paste", function(e) {
 					if(improvePaste){
 						improvePaste = false;
@@ -2098,6 +2134,7 @@ this.getHTML = (function(){
 							break;
 						}
 					}while(target = target.parentElement);
+					if(!target){e.preventDefault();return null;}
 					if(e.clipboardData){
 						var d = document.createElement("div");
 						var plain = e.clipboardData.getData("text/plain");
@@ -2107,6 +2144,66 @@ this.getHTML = (function(){
 						var dataHtml = e.clipboardData.getData("text/html");
 						if(dataHtml){
 							d.innerHTML = dataHtml;
+							// A little bit of clean up
+							// Should move to another function
+							var pastedbody = d.querySelector("body");
+							if(pastedbody){
+								var d2 = document.createElement("div");
+								while(pasted.firstChild){
+									d2.appendChild(pastedbody.firstChild);
+								}
+								d = d2;
+							}
+							var toremove = null;
+							while(toremove = d.querySelector("meta, script, style")){
+								toremove.parentNode.removeChild(toremove);
+							}
+							var pastedtable = d.querySelector("table");
+							if(pastedtable){
+								var frag = document.createDocumentFragment();
+								frag.appendChild(pastedtable);
+								var newtext = d.innerText.trim();
+								if(!newtext){
+									var tableo = new Table(pastedtable);
+									var acell = target.parentElement.parentElement;
+									var pos = _this.Table.position(acell);
+									var amatrix = _this.Table.matrix();
+									var afcol = amatrix[0];
+									var alrow = amatrix[amatrix.length-1];
+									var mtable = tableo.matrix();
+									var changed = false;
+									for(var i=0;i<pos.x+mtable[0].length-afcol.length;i++){
+										var afcell = afcol[afcol.length-1]
+										_this.insertColAfter((afcell.refCell||afcell).cell);
+										changed = true;
+									}
+									for(var i=0;i<pos.y+mtable.length-amatrix.length;i++){
+										var alcell = alrow[0]
+										_this.insertRowUnder((alcell.refCell||alcell).cell);
+										changed = true;
+									}
+									if(changed){
+										amatrix = _this.Table.matrix();
+									}
+									for(var i=0;i<mtable.length;i++){
+										var mrow = mtable[i];
+										for(var j=0;j<mrow.length;j++){
+											var mcell = mrow[j];
+											if(!mcell.refCell){
+												var fcell = amatrix[pos.y+i][pos.x+j];
+												fcell = (fcell.refCell||fcell).cell;
+												var fdiv = fcell.querySelector("div[contenteditable]");
+												fdiv.innerHTML = _this.getHTML(mcell.cell);
+											}
+										}
+									}
+									e.preventDefault();
+									return false;
+								}
+								else{
+									d.innerHTML = dataHtml;
+								}
+							}
 						}
 						else{
 							d.innerText = plain;
@@ -4705,7 +4802,7 @@ this.getHTML = (function(){
 						return "";
 					}
 					return "background-color: "+color+";";
-				}
+				}/*
 				function getHTML(html) {
 					html = html.replace(/<\s*\/?\s*([^>]+)>/gi, function(a, b) {
 						if (!/^((em)|i)($|[^a-z])/i.test(b)) {
@@ -4716,7 +4813,7 @@ this.getHTML = (function(){
 					var div = document.createElement("div");
 					div.innerHTML = html;
 					return div.innerHTML;
-				}
+				}*/
 				return function(div) {
 					var table = div.querySelector("table");
 					if (!table) {
@@ -4745,9 +4842,9 @@ this.getHTML = (function(){
 							if ((cell.getAttribute("style") || cell.style.cssText)
 								.indexOf("mso-diagonal") > -1) {
 								o2.dataset.diagonal = "data-diagonal";
-								o2.html = [getHTML(cell.innerHTML), ""]
+								o2.html = [this.getHTML(cell), ""]
 							} else {
-								o2.html = getHTML(cell.innerHTML);
+								o2.html = this.getHTML(cell);
 							}
 							// align
 							var align = cell.getAttribute("align");
