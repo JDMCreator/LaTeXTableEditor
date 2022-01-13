@@ -12,7 +12,12 @@ function $id(id) {
 
 
 	/* ==== START CAMPAIGN INFO ==== */
-
+	window.sendGAEvent = function(category, action, label){
+			var hash = (location.hash||"").toLowerCase();
+			if(window.isProduction && window.ga && hash != "#anonymous" && hash != "#/anonymous"){
+				ga('send', 'event', category, action, label);
+			}
+		}
 	var campaign = {
 		start: new Date(2021,10,2),
 		end: new Date(2021,11,20),
@@ -27,12 +32,6 @@ function $id(id) {
 				colHeader = (/[a-z].*/i.exec(colHeader) || ["l"])[0];
 			}
 			return cellHeader == colHeader
-		},
-		sendGAEvent = function(category, action, label){
-			var hash = (location.hash||"").toLowerCase();
-			if(window.isProduction && window.ga && hash != "#anonymous" && hash != "#/anonymous"){
-				ga('send', 'event', category, action, label);
-			}
 		},
 		packagesDatabase = {
 			"adjustbox":["xkeyval","adjcalc","trimclip","graphicx","collectbox"],
@@ -115,7 +114,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "2.3";
+			this.version = "2.3.1.2";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -4006,7 +4005,7 @@ this.getHTML = (function(){
 					$("#campaignModal").modal("show");
 					campaignUsed = true;
 				}
-				var c = $id("c");
+				var c = $id("generate-button");
 				scrollTo(0, (c.getBoundingClientRect().top - document.body.getBoundingClientRect().top) - $id("nav-latex").offsetHeight - 15);
 			}
 			this.campaignClicked = function(){

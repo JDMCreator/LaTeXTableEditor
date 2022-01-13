@@ -88,18 +88,28 @@ font-family:monospace;
 <li>{longtabu*} to <i>&lt;dim&gt;</i>
 <li>{longtabu*} spread <i>&lt;dim&gt;</i>
 <li>xtabular</li>
+<li>xtabular*</li>
 <li>mpxtabular</li>
+<li>mpxtabular*</li>
 <li>longtable</li>
 <li>tabularht
 <li>tabularht*
 <li>tabularhtx
 <li>tabularkv
+<li>tabularew
+<li>supertabular
+<li>supertabular*
+<li>mpsupertabular
+<li>mpsupertabular*
+<li>tblr
+<li>longtblr
+<li>talltblr
+<li>NiceTabular
+<li>NiceTabular*
+<li>NiceTabularX
 </ul>
 <p>The following environments will be supported soon (in order of priority)
 <ul>
-<li>supertabular
-<li>xtabular*
-<li>mpxtabular*
 <li>halign
 <li>valign <i>(not sure about this one)</i>
 </ul>
@@ -181,6 +191,13 @@ document.write("t")
 <ul>
 <li>longtable</li>
 </ul>
+<p><strong>From <em>supertable</em> package :</strong></p>
+<ul>
+<li>supertable</li>
+<li>supertable*</li>
+<li>mpsupertable</li>
+<li>mpsupertable*</li>
+</ul>
 <p><strong>From <em>tabu</em> package :</strong></p>
 <ul>
 <li>tabu</li>
@@ -196,16 +213,28 @@ document.write("t")
 <li>{longtabu*} to <em>&lt;dim&gt;</em></li>
 <li>{longtabu*} spread <em>&lt;dim&gt;</em></li>
 </ul>
-<p><strong>From <em>xtabs</em> package :</strong></p>
+<p><strong>From <em>xtab</em> package :</strong></p>
 <ul>
 <li>xtabular</li>
+<li>xtabular*</li>
 <li>mpxtabular</li>
+<li>mpxtabular*</li>
 </ul>
 <p><strong>From <em>tabularray</em> package :</strong></p>
 <ul>
 <li>tblr</li>
 <li>longtblr</li>
 <li>talltblr</li>
+</ul>
+<p><strong>From <em>nicematrix</em> package :</strong></p>
+<ul>
+<li>NiceTabular</li>
+<li>NiceTabular*</li>
+<li>NiceTabularX</li>
+</ul>
+<p><strong>From <em>tabularew</em> package :</strong></p>
+<ul>
+<li>tabularew</li>
 </ul>
 <h3><a id="Supported_commands_40"></a>Supported commands (<span id="count"></span> commands)</h3>
 
@@ -218,6 +247,7 @@ document.write("t")
 
 <ul class="supp">
 <li> ~
+<li> ↵↵
 <li> ``
 <li> ''
 <li> !`
@@ -750,6 +780,12 @@ document.write("t")
 		</td>
 		<td>
 		</td>
+	</tr>
+	<tr>
+		<td>
+			↵↵
+		</td>
+		<td> Newline</td><td></td>
 	</tr>
 	<tr>
 		<td>

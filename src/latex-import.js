@@ -422,7 +422,8 @@ tblrkeyval = function(str){
 		o.full = "\\" + realname +(o.asterisk ? "*" : "");
 		return o;
 	}
-	if(nextchar!="[" && nextchar!="{" && !/^\s$/.test(nextchar) && !commandNumbers[realname]){
+	if(nextchar!="[" && nextchar!="{" && !/^\s$/.test(nextchar) && !commandNumbers[realname] &&
+	  (!specialSeparators[realname] || nextchar != specialSeparators[realname][0])){
 		o.name = realname;
 		o.args.push(nextchar);
 		o.full="\\"+realname+""+(o.asterisk ? "*" : "")+nextchar;
@@ -512,7 +513,7 @@ importTable = function(code){
 
 xcolor.erase();
 xcolor.extract(code);
-var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|NiceTabular[*X]?|wraptable|table\*?|xtabular|tabularht\*?|tabularhtx|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)})/g;
+var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|NiceTabular[\*X]?|wraptable|table\*?|xtabular\*?|tabularht\*?|tabularhtx|tabularkv|longtable|(?:mp|)supertabular\*?|tabularew|mpxtabular\*?|tabular[xy]?\*?)})/g;
 var tabular = tabularReg.exec(code);
 	tabularReg.lastIndex = 0;
 	if(!tabular){
@@ -618,7 +619,7 @@ var tabular = tabularReg.exec(code);
 		var initEnv = envirn(code2);
 		code = initEnv.content;
 		if(type == "table" || type == "table*" || type == "sidewaystable" || type == "wraptable"){
-			if(/\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|(?:long|tall|)tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular|tabular[xy]?\*?|)}/.test(code)){
+			if(/\\begin\s*{((?:long|)tabu\*?|xtabular\*?|tabularht\*?|(?:mp|)supertabular\*?|tabularew|tabularhtx|(?:long|tall|)tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular\*?|tabular[xy]?\*?|)}/.test(code)){
 				var caption = code.indexOf("\\caption");
 				if(caption >=0){
 					caption = command(code.substring(caption));
@@ -632,7 +633,7 @@ var tabular = tabularReg.exec(code);
 					if(!obj.caption){ obj.caption = {} }
 					obj.caption.label = label.args[0];
 				}
-				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular|tabularht\*?|tabularhtx|tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular|tabular[xy]?\*?)}/g.exec(code2);
+				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular\*?|(?:mp|)supertabular\*?|tabularht\*?|tabularhtx|tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular\*?|tabular[xy]?\*?)}/g.exec(code2);
 				if(!tabular){
 					return false; // Should not happen
 				}
@@ -684,10 +685,10 @@ var tabular = tabularReg.exec(code);
 				}	
 		}
 		var head;
-		if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable" || type == "NiceTabular" || type == "NiceTabular*"){
+		if(type == "tabular" || type == "xtabular" || type == "mpxtabular" || type == "longtable" || type == "NiceTabular" || type == "supertabular" || type == "mpsupertabular" || type == "tabularew"){
 			head = header(initEnv.command.args[1]);
 		}
-		else if(type == "tabular*" || type == "tabularx" || type == "tabulary" || type == "tabularht" || type == "tabularkv" || type == "NiceTabularX"){
+		else if(type == "tabular*" || type == "tabularx" || type == "tabulary" || type == "tabularht" || type == "tabularkv" || type == "NiceTabularX" || type == "NiceTabular*" || type == "supertabular*" || type == "mpsupertabular*" || type == "xtabular*" || type == "mpxtabular*"){
 			head = header(initEnv.command.args[2]);
 		}
 		else if(type == "tabularht*" || type == "tabularhtx"){
@@ -755,6 +756,10 @@ var tabular = tabularReg.exec(code);
 			}
 		}
 	}
+
+	// We send information about the type of environment that was imported
+	// to Google Analytics	
+	sendGAEvent("Code", "import-type", type);
 
 	// We finish to treat header
 	// First, we get the colors of columns
@@ -934,7 +939,7 @@ var tabular = tabularReg.exec(code);
 					if(!actuBorder.push){
 						actuBorder = [];
 					}
-					actuBorder.push([name, com.args[0]]);
+					actuBorder.push([name, com.args[0], com.sp && com.sp[0]]);
 				}
 				i+=com.full.length-1;
 			}
@@ -1267,19 +1272,39 @@ var tabular = tabularReg.exec(code);
 						cdashline : "hdashline",
 						cdouble: "double",
 						toprule: "toprule"
-					}[subborder[0]];
+					}[subborder[0]],
+					subcss = borderCSS[realname],
+					cmidruleSP = (subborder[0] == "cmidrule" && subborder[2] && /[lr]/.test(subborder[2]));
+					if(cmidruleSP){
+						subcss = "0px solid rgb(0,0,0)";
+					}
 					for(k=0;k<row.length;k++){
 						var o = row[k];
 						o = o.refCell || o;
 						if(pos >= start){
 							if(pos <= end){
+								var subrealname = realname;
+								if(cmidruleSP){
+									if(pos == start && pos == end){
+										subrealname = "trimboth";
+									}
+									else if(pos == start){
+										subrealname = "trimleft";
+									}
+									else if(pos == end){
+										subrealname = "trimright";
+									}
+									else{
+										subrealname = "trimfull";
+									}
+								}
 								if(first){
-									o.dataset.borderTop = realname;
-									o.css+="border-top:"+borderCSS[realname]+";";
+									o.dataset.borderTop = subrealname;
+									o.css+="border-top:"+subcss+";";
 								}
 								else{
-									o.dataset.borderBottom = realname;
-									o.css+="border-bottom:"+borderCSS[realname]+";";
+									o.dataset.borderBottom = subrealname;
+									o.css+="border-bottom:"+subcss+";";
 								}
 							}
 							else{
@@ -1599,11 +1624,14 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx, t
 },
 getHTML = function(code,o,x,y){
 	o = o || {}
-	var html="", commentmode = false, mathmode = false, mathcontent = "", div = document.createElement("div");
+	var html="", commentmode = false, ignoreNewlines = false,mathmode = false, mathcontent = "", div = document.createElement("div");
 	for(var i=0, char, sub;i<code.length;i++){
 		char = code.charAt(i);
 		sub = code.substring(i);
 		if(commentmode && char != "\n"){
+			continue;
+		}
+		if(ignoreNewlines && char == "\n"){
 			continue;
 		}
 		commentmode = false;
@@ -1664,6 +1692,14 @@ getHTML = function(code,o,x,y){
 			mathmode = true;
 			mathcontent = "";
 			html += '<span class="latex-equation">';
+		}
+		else if(char == "~"){
+			html += "&nbsp;"
+		}
+		else if(char == "\n" && sub.charAt(1) == "\n"){
+			i++;
+			ignoreNewlines = true;
+			html += "<br>";
 		}
 		else if(char == '"'){
 			// Here we support german and cyrillic

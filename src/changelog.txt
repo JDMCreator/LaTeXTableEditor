@@ -6,6 +6,46 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 2.3.1.2 (2022/01/13)
+==========
+
+| Note on this release:
+|     Urgent fix
+
+LATEX IMPORT
+
+[#] Some LaTeX tables could not be imported (#55 and #57)
+
+Version 2.3.1.1 (2022/01/03)
+==========
+
+| Note on this release:
+|     Urgent fix
+
+LATEX IMPORT
+
+[#] LaTeX tables could not be imported
+
+Version 2.3.1 (2022/01/02)
+==========
+
+| Note on this release:
+|     Various improvement to importing LaTeX tables
+
+LATEX CORE
+
+[#] Trimmed borders are now larger when using the border editor
+
+LATEX IMPORT
+
+[+] Support for trimmed borders with \cmidrule(lr)
+[+] Support for supertabular, supertabular*, mpsupertabular and mpsupertabular* environments
+[+] Support for tabularew environment
+[+] Support for xtabular* and mpxtabular* environments
+[+] Support for newlines inside cells with two newlines characters
+[#] NiceTabular* environments didn't load
+[#] `~` was not converted to an unbreakable whitespace
+
 Version 2.3 (2021/12/20)
 ==========
 

@@ -360,6 +360,10 @@
 			width: 100%;
 		}
 		/* Size of borders */
+		body[data-border-editor] #table td[data-border-top^="trim"]::after,
+		body[data-border-editor] #table td[data-border-bottom^="trim"]::after{
+			border-width:2px !important;
+		}
 		body[data-border-editor] #table td[data-border-top]{
 			border-width:2px !important;
 		}
