@@ -4313,7 +4313,7 @@ this.getHTML = (function(){
 						if(!rotateTable){
 							firstPart += "{\n";
 						}
-						rotateTable += booktabColor
+						firstPart += booktabColor
 					}
 					if(!areSameColors(startingColor, "black")){
 						firstPart += "\\arrayrulecolor" + getColor(startingColor) + "\n";
