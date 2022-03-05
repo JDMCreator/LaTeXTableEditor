@@ -6,6 +6,16 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 2.3.1.3 (2022/03/05)
+==========
+
+| Note on this release:
+|     Bug fix
+
+LATEX EXPORT
+
+[#] Fatal issue when generating tables involving longtable, booktabs and background colors (#59)
+
 Version 2.3.1.2 (2022/01/13)
 ==========
 
