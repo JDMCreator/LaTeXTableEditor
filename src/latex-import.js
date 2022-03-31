@@ -85,7 +85,11 @@ specialSeparators = {
 	taburulecolor : ["|", "|"],
 	Block : ["<",">"]
 },
-getTblrHBorders = function(o){
+getTblrHBorders = function(o, x, y, Zrow, Zcol){
+	x++;
+	y++;
+	Zrow+=1;
+	var returnBorder = "";
 	var borders = [];
 	if(o.rowspec && o.rowspec[0]){
 		var rowspec = o.rowspec[o.rowspec.length-1],
@@ -107,7 +111,8 @@ getTblrHBorders = function(o){
 					if(!borders[n]){
 						borders[n] = [];
 					}
-					borders[n].push([actu]);actu = "";
+					if(n == y){returnBorder = actu}
+					actu = "";
 				}
 				else{
 					actu += c;
@@ -121,7 +126,7 @@ getTblrHBorders = function(o){
 					if(!borders[n]){
 						borders[n] = [];
 					}
-					borders[n].push(["solid"]);
+					if(n == y){returnBorder = "solid"}
 				}
 			}
 			else if(c == "{"){
@@ -135,7 +140,121 @@ getTblrHBorders = function(o){
 			}
 		}
 	}
-	return borders;
+	for(var i=0;i<o.hline.length;i++){
+		var hline = o.hline[i];
+		if(matchIndexTblr(hline[0],y,Zrow)){
+
+			if(matchIndexTblr(hline[2],x,Zcol)){
+				if(+hline[1] && +hline[1] != "1"){
+					if(+hline[1] == "2"){
+						if(!/\b(?:dashed|dotted)\b/.test(returnBorder) || !/\b(?:dashed|dotted)\b/.test(hline[3])){
+							returnBorder = hline[3] + ",double";
+						}
+					}
+				}
+				else{
+					returnBorder = hline[3];
+				}
+			}
+		}
+	}
+	return returnBorder;
+},
+getTblrVBorders = function(o, x, y, Zrow, Zcol){
+	x++;
+	y++;
+	Zrow+=1;
+	var returnBorder = "";
+	for(var i=0;i<o.vline.length;i++){
+		var vline = o.vline[i];
+		if(matchIndexTblr(vline[0],x,Zcol)){
+
+			if(matchIndexTblr(vline[2],y,Zrow)){
+				if(+vline[1] && +vline[1] != "1"){
+					if(+vline[1] == "2"){
+						if(!/\b(?:dashed|dotted)\b/.test(returnBorder) || !/\b(?:dashed|dotted)\b/.test(vline[3])){
+							returnBorder = vline[3] + ",double";
+						}
+					}
+				}
+				else{
+					returnBorder = vline[3];
+				}
+			}
+		}
+	}
+	return returnBorder;
+}
+matchIndexTblr = function(text,x,Z){
+	var cols = text.split(/,/);
+	for(var j=0;j<cols.length;j++){
+		var coli = cols[j];
+		if(coli == "Z"){
+			coli = Z;
+		}
+		else if(coli == "Y"){
+			coli = Z-1;
+		}
+		else if(coli == "X"){
+			coli = Z-2;
+		}
+		coli = coli.toString();
+		// Odd or even are treated together
+		if(coli.substr(0,3) == "odd" || coli.substr(0,4) == "even"){
+			if((coli.substr(0,3) == "odd" && x%2 == 1) ||
+			  (coli.substr(0,4) == "even" && x%2 == 0)){
+				// There is a match
+				if(coli.indexOf("[") != -1){
+					// There's an optional argument;
+					var start = /\[\s*([^\]\-]*)/.exec(coli)[1];
+					if(!start){start = 0};
+					var end = Zcol;
+					if(coli.indexOf("-") != -1){
+						end = /\[[^\-]*\-\s*([^\]]*)/.exec(coli)[1];
+						if(!end){end = Zcol};
+					}
+					
+					start = start.toString().trim();
+					end = end.toString().trim();
+
+					if(start == "Z"){start = Z}
+					if(end == "Z"){end = Z}
+					if(start == "Y"){start = Z-1}
+					if(end == "Y"){end = Z-1}
+					if(start == "X"){start = Z-2}
+					if(end == "X"){end = Z-2}
+
+					start = +start;
+					end = +end;
+
+					if(x>= start && x<= end){return true}					
+				}
+				else{
+					return true;
+				}
+			}
+		}
+		else if(coli == x || coli == "-"){return true;}
+		else if(coli.indexOf("-")>-1){
+			var start = coli.substring(0,coli.indexOf("-")) || -1;
+			var end = (coli.substring(coli.indexOf("-")+1) || Z);
+
+			start = start.toString().trim();
+			end = end.toString().trim();
+
+			if(start == "Z"){start = Z}
+			if(end == "Z"){end = Z}
+			if(start == "Y"){start = Z-1}
+			if(end == "Y"){end = Z-1}
+			if(start == "X"){start = Z-2}
+			if(end == "X"){end = Z-2}
+
+			start = +start;
+			end = +end;
+			if(x>= start && x<= end){return true;}
+		}
+	}
+	return false;
 },
 getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 	x++;y++;
@@ -177,18 +296,57 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 					coli = Zcol-2;
 				}
 				coli = coli.toString();
-				if(coli == "odd"){
-					if(x%2 == 1){
-						hasCol=true;break inCol;
+				// Odd or even are treated together
+				if(coli.substr(0,3) == "odd" || coli.substr(0,4) == "even"){
+					if((coli.substr(0,3) == "odd" && x%2 == 1) ||
+					  (coli.substr(0,4) == "even" && x%2 == 0)){
+						// There is a match
+						if(coli.indexOf("[") != -1){
+							// There's an optional argument;
+							var start = /\[\s*([^\]\-]*)/.exec(coli)[1];
+							if(!start){start = 0};
+							var end = Zcol;
+							if(coli.indexOf("-") != -1){
+								end = /\[[^\-]*\-\s*([^\]]*)/.exec(coli)[1];
+								if(!end){end = Zcol};
+							}
+							start = start.toString().trim();
+							end = end.toString().trim();
+
+							if(start == "Z"){start = Zcol}
+							if(end == "Z"){end = Zcol}
+							if(start == "Y"){start = Zcol-1}
+							if(end == "Y"){end = Zcol-1}
+							if(start == "X"){start = Zcol-2}
+							if(end == "X"){end = Zcol-2}
+
+							start = +start;
+							end = +end;
+							if(x>= start && x<= end){hasCol=true; break inCol;}
+						
+						}
+						else{
+							hasCol=true;break inCol;
+						}
 					}
-				}
-				else if(coli == "even"){
-					if(x%2 == 0){hasCol=true;break inCol;}
 				}
 				else if(coli == x || coli == "-"){hasCol=true;break inCol;}
 				else if(coli.indexOf("-")>-1){
-					var start = +coli.substring(0,coli.indexOf("-"));
-					var end = +coli.substring(coli.indexOf("-")+1);
+					var start = coli.substring(0,coli.indexOf("-")) || -1;
+					var end = (coli.substring(coli.indexOf("-")+1) || Zcol);
+
+					start = start.toString().trim();
+					end = end.toString().trim();
+
+					if(start == "Z"){start = Zcol}
+					if(end == "Z"){end = Zcol}
+					if(start == "Y"){start = Zcol-1}
+					if(end == "Y"){end = Zcol-1}
+					if(start == "X"){start = Zcol-2}
+					if(end == "X"){end = Zcol-2}
+
+					start = +start;
+					end = +end;
 					if(x>= start && x<= end){hasCol = true;break inCol;}
 				}
 			}
@@ -208,18 +366,57 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 					rowi = Zrow - 2;
 				}
 				rowi = rowi.toString();
-				if(rowi == "odd"){
-					if(y%2 == 1){
-						hasRow=true;break inRow;
+				if(rowi.substr(0,3) == "odd" || rowi.substr(0,4) == "even"){
+					if((rowi.substr(0,3) == "odd" && y%2 == 1) ||
+					  (rowi.substr(0,4) == "even" && y%2 == 0)){
+						// There is a match
+						if(rowi.indexOf("[") != -1){
+							// There's an optional argument;
+							var start = /\[\s*([^\]\-]*)/.exec(rowi)[1];
+							if(!start){start = 0};
+							var end = Zrow;
+							if(rowi.indexOf("-") != -1){
+								end = /\[[^\-]*\-\s*([^\]]*)/.exec(rowi)[1];
+								if(!end){end = Zrow};
+							}
+							start = start.toString().trim();
+							end = end.toString().trim();
+
+							if(start == "Z"){start = Zrow}
+							if(end == "Z"){end = Zrow}
+							if(start == "Y"){start = Zrow-1}
+							if(end == "Y"){end = Zrow-1}
+							if(start == "X"){start = Zrow-2}
+							if(end == "X"){end = Zrow-2}
+
+							start = +start;
+							end = +end;
+
+							if(y>= start && y<= end){hasRow=true; break inRow;}
+						
+						}
+						else{
+							hasRow=true; break inRow;
+						}
 					}
-				}
-				else if(rowi == "even"){
-					if(y%2 == 0){hasRow=true;break inRow;}
 				}
 				else if(rowi == y || rowi == "-"){hasRow=true;break inRow;}
 				else if(rowi.indexOf("-")>-1){
-					var start = +rowi.substring(0,rowi.indexOf("-")) || -1;
-					var end = +(rowi.substring(rowi.indexOf("-")+1) || "99999999");
+					var start = rowi.substring(0,rowi.indexOf("-")) || -1;
+					var end = (rowi.substring(rowi.indexOf("-")+1) || Zrow);
+
+					start = start.toString().trim();
+					end = end.toString().trim();
+
+					if(start == "Z"){start = Zrow}
+					if(end == "Z"){end = Zrow}
+					if(start == "Y"){start = Zrow-1}
+					if(end == "Y"){end = Zrow-1}
+					if(start == "X"){start = Zrow-2}
+					if(end == "X"){end = Zrow-2}
+
+					start = +start;
+					end = +end;
 					if(y>= start && y<= end){hasRow = true;break inRow;}
 				}
 			}
@@ -238,7 +435,7 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 tblrOptions = null,
 tblrkeyval = function(str){
 	str = str + ",";
-	var o = {cell:[]};
+	var o = {cell:[],hline:[],vline:[]};
 	var name = "";
 	var content = "",
 	inName = true,
@@ -250,6 +447,7 @@ tblrkeyval = function(str){
 			if(c == "\n"){inComment = false}
 			continue;
 		}
+		if(c == "%"){inComment = true; continue;}
 		if(inName){
 			if(/\s/.test(c)){continue;}
 			if(c == "=" && name && par <= 0){
@@ -264,9 +462,25 @@ tblrkeyval = function(str){
 				name += c;
 			}
 			else if(c=="," && name && par <= 0){
-				if(!o[name]){o[name]=[]}
-				o[name].push("");
-				name = "";
+				if(name == "hlines"){o.hline.push(["-","1","-","solid"]);}
+				else if(name == "vlines"){o.vline.push(["-","1","-","solid"]);}
+				else if(/^hline\s*\{([^\}]+)\}$/.test(name)){
+					var exec = /^hline\s*\{([^\}]+)\}$/.exec(name);
+					if(exec){
+						o.hline.push([exec[1], "1", "-", "solid"]);
+					}
+				}
+				else if(/^vline\s*\{([^\}]+)\}$/.test(name)){
+					var exec = /^vline\s*\{([^\}]+)\}$/.exec(name);
+					if(exec){
+						o.vline.push([exec[1], "1", "-", "solid"]);
+					}
+				}
+				else{
+					if(!o[name]){o[name]=[]}
+					o[name].push("");
+					name = "";
+				}
 			}
 			else{
 				name+=c;
@@ -329,6 +543,48 @@ tblrkeyval = function(str){
 				else if(name == "cells"){
 					o.cell.push(["cells",content]);
 				}
+				else if(/^hline\s*\{([^\}]+)\}$/.test(name)){
+					var exec = /^hline\s*\{([^\}]+)\}$/.exec(name);
+					if(exec){
+						var arr = []
+						if(content[0]!= "{"){content = "{"+content+"}"}
+						content.replace(/\{([^\}]*)\}/g, function(full, val){
+							arr.push(val);
+							return "";
+						});
+						o.hline.push([exec[1], arr[arr.length-3] || "1",arr[arr.length-2] || "-",arr[arr.length-1] || "solid"]);
+					}
+				}
+				else if(/^vline\s*\{([^\}]+)\}$/.test(name)){
+					var exec = /^vline\s*\{([^\}]+)\}$/.exec(name);
+					if(exec){
+						var arr = []
+						if(content[0]!= "{"){content = "{"+content+"}"}
+						content.replace(/\{([^\}]*)\}/g, function(full, val){
+							arr.push(val);
+							return "";
+						});
+						o.vline.push([exec[1], arr[arr.length-3] || "1",arr[arr.length-2] || "-",arr[arr.length-1] || "solid"]);
+					}
+				}
+				else if(name == "hlines"){
+					var arr = []
+					if(content[0]!= "{"){content = "{"+content+"}"}
+					content.replace(/\{([^\}]*)\}/g, function(full, val){
+						arr.push(val);
+						return "";
+					});
+					o.hline.push(["-", arr[arr.length-3] || "1",arr[arr.length-2] || "-",arr[arr.length-1] || "solid"]);
+				}
+				else if(name == "vlines"){
+					var arr = []
+					if(content[0]!= "{"){content = "{"+content+"}"}
+					content.replace(/\{([^\}]*)\}/g, function(full, val){
+						arr.push(val);
+						return "";
+					});
+					o.vline.push(["-", arr[arr.length-3] || "1",arr[arr.length-2] || "-",arr[arr.length-1] || "solid"]);
+				}
 				else{
 					if(!o[name]){o[name] = []}
 					o[name].push(content);
@@ -343,7 +599,7 @@ tblrkeyval = function(str){
 				i++;
 			}
 			else if(c == "%"){
-				inComment = true;
+				inComment = true;continue;
 			}
 			else{
 				content+=c;
@@ -882,6 +1138,18 @@ var tabular = tabularReg.exec(code);
 				}
 				i+=com.full.length-1;
 			}
+			else if(name == "SetHline"){
+				if(!tblrOptions){tblrOptions = {cell:[],hline:[],vline:[]}}
+				tblrOptions.hline.push([table.length.toString(),com.options[0]||"1",
+					com.args[com.args.length-2] || "-", com.args[com.args.length-1] || "solid"]);
+				i+=com.full.length-1;
+			}
+			else if(name == "SetHlines"){
+				if(!tblrOptions){tblrOptions = {cell:[],hline:[],vline:[]}}
+				tblrOptions.hline.push(["-",com.options[0]||"1",
+					com.args[com.args.length-2] || "-", com.args[com.args.length-1] || "solid"]);
+				i+=com.full.length-1;
+			}
 			else if(name == "toprule" || name == "bottomrule" || name == "midrule"){
 				actuBorder = name;
 				i+=com.full.length-1;
@@ -939,7 +1207,7 @@ var tabular = tabularReg.exec(code);
 					if(!actuBorder.push){
 						actuBorder = [];
 					}
-					actuBorder.push([name, com.args[0], com.sp && com.sp[0]]);
+					actuBorder.push([name, com.args[0], com.sp && com.sp[0], com.options[0]]);
 				}
 				i+=com.full.length-1;
 			}
@@ -1195,36 +1463,60 @@ var tabular = tabularReg.exec(code);
 	borders = realBorders;
 	// HORIZONTAL BORDERS FROM TBLR
 	if(tblrOptions){
-		var hborders = getTblrHBorders(tblrOptions);
-		for(var i=0;i<hborders.length;i++){
-			var row = table[(i===0) ? 0 : i-1], first = i===0,
-			borderArr = hborders[i];
-			for(var j=0;j<borderArr.length;j++){
-				var border = borderArr[j];
-				var spec = border[border.length-1].replace(/\s/g,"").replace(/(?:dash|wd|fg)=/g,"").split(/,/g),
+		var inTrimmed = false;
+		for(var i=0;i<maxRow+1;i++){
+			var row = table[(i===0) ? 0 : i-1], first = i===0;
+			inRow: for(var j=0;j<row.length;j++){
+				var o = row[j];
+				if(o.refCell){continue inRow;}
+				border = getTblrHBorders(tblrOptions, j, i, maxRow, maxCol);
+				if(!border.trim()){continue inRow;}
+				var spec = border.replace(/\s/g,"").replace(/(?:dash|wd|fg)=/g,"").split(/,/g),
 				type = "solid",
-				rulecolor = [0,0,0];
+				rulecolor = [0,0,0],
+				leftpos = null,
+				rightpos = null;
 				for(var k=0;k<spec.length;k++){
-					if(spec[k] == "dashed" || spec[k] == "dotted" || spec[k] == "solid"){type = spec[k]}
+					if(spec[k] == "dashed" || spec[k] == "dotted" || spec[k] == "solid" || spec[k] == "double"){type = spec[k]}
 					else if(spec[k].indexOf("=")<0 && !/[\d\.\-]/.test(spec[k][0])){
 						rulecolor = xcolor(spec[k]);
 					}
-				}
-				if(rulecolor){rulecolor = toHex(rulecolor)}
-				var name = {solid:"normal",dashed:"hdashline",dotted:"dottedline"}[type]
-				if(border.length == 1){
-					for(var k=0;k<row.length;k++){
-						var o = row[k];
-						o = o.refCell || o;
-						if(first){
-							o.dataset.borderTop = name;
-							o.css+="border-top:1px "+type+" "+rulecolor+";";
-						}
-						else{
-							o.dataset.borderBottom = name;
-							o.css+="border-bottom:1px "+type+" "+rulecolor+";";
+					else if(/^leftpos/.test(spec[k])){
+						leftpos = (/[\d\.\-]+/.exec(spec[k])||[])[0];
+						if(!(leftpos && +leftpos && +leftpos<0)){leftpos = null;}
+						if(leftpos && !rightpos){inTrimmed = true;}
+					}
+					else if(/^rightpos/.test(spec[k])){
+						rightpos = (/[\d\.\-]+/.exec(spec[k])||[])[0];
+						if(!(rightpos && +rightpos && +rightpos<0)){rightpos = null;}
+						if(rightpos){
+							inTrimmed = false;
 						}
 					}
+				}
+				if(rulecolor){rulecolor = toHex(rulecolor)}
+				var name = {solid:"normal",dashed:"hdashline",double:"double",dotted:"dottedline"}[type];
+				if(rightpos || leftpos || inTrimmed){
+					if(rightpos && leftpos){name = "trimboth"}
+					else if(leftpos){name = "trimleft"}
+					else if(rightpos){name = "trimright"}
+					else{name = "trimfull"}
+					if(first){
+						o.dataset.borderTop = name;
+						o.css+="border-top:"+rulecolor+";";
+					}
+					else{
+						o.dataset.borderBottom = name;
+						o.css+="border-bottom:"+rulecolor+";";
+					}
+				}
+				else if(first){
+					o.dataset.borderTop = name;
+					o.css+="border-top:" +(name == "double" ? 2 : 1)+ "px "+type+" "+rulecolor+";";
+				}
+				else{
+					o.dataset.borderBottom = name;
+					o.css+="border-bottom:" +(name == "double" ? 2 : 1)+ "px "+type+" "+rulecolor+";";
 				}
 			}
 		}
@@ -1274,7 +1566,18 @@ var tabular = tabularReg.exec(code);
 						toprule: "toprule"
 					}[subborder[0]],
 					subcss = borderCSS[realname],
-					cmidruleSP = (subborder[0] == "cmidrule" && subborder[2] && /[lr]/.test(subborder[2]));
+					cmidruleSP = false;
+					if(subborder[0] == "cmidrule"){
+						if(subborder[2] && /[lr]/.test(subborder[2])){
+							cmidruleSP = true;
+						}
+						else if(subborder[3]){
+							// It can be inside brackets if tabularray is used
+							if(/(?:\bl\b)||(?:\br\b)||(?:\blr\b)||(?:\brl\b)/.test(subborder[3])){
+								cmidruleSP = true;
+							}
+						}
+					}
 					if(cmidruleSP){
 						subcss = "0px solid rgb(0,0,0)";
 					}
@@ -1542,7 +1845,7 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx, t
 		var after = getProp(cellTblr, "appto") || "";
 		code = before + code + after;
 	}
-	var html = getHTML(code,o,realx,y);
+	var html = getHTML(code.trim(),o,realx,y);
 	if(cellTblr){
 		tblrcolor = getProp(cellTblr, "fg");
 		if(tblrcolor){
@@ -1557,7 +1860,29 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx, t
 
 	// Treat header;
 	head = head || "l";
-	if(head.substring(0,2) == "||"){
+	var tblrVBorder = null;
+	if(tblrOptions && realx === 0){
+		tblrVBorder = getTblrVBorders(tblrOptions,realx,y,Zrow,Zcol);
+	}
+	if(tblrVBorder && tblrVBorder.trim && tblrVBorder.trim()){
+		var border = tblrVBorder.trim();
+		var spec = border.replace(/\s/g,"").replace(/(?:dash|wd|fg)=/g,"").split(/,/g),
+		type = "solid",
+		rulecolor = [0,0,0];
+
+		for(var k=0;k<spec.length;k++){
+			if(spec[k] == "dashed" || spec[k] == "dotted" || spec[k] == "solid" || spec[k] == "double"){type = spec[k]}
+			else if(spec[k].indexOf("=")<0 && !/[\d\.\-]/.test(spec[k][0])){
+				rulecolor = xcolor(spec[k]);
+			}
+		}
+		if(rulecolor){rulecolor = toHex(rulecolor)}
+		var name = {solid:"normal",dashed:"hdashline",double:"double",dotted:"dottedline"}[type];
+		o.dataset.borderLeft = name;
+		css += "border-left: " + (name == "double" ? 2 : 1) + "px "+type+" "+rulecolor+";";
+
+	}
+	else if(head.substring(0,2) == "||"){
 		o.dataset.borderLeft = "double";
 		css += "border-left: 2px double black;"
 	}
@@ -1573,7 +1898,31 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx, t
 		o.dataset.borderLeft = "dottedline";
 		css += "border-left: 1px dotted black;"
 	}
-	if(/\|\|$/.test(head)){
+
+	var hasRightSet = false;
+	var tblrVBorder = null;
+	if(tblrOptions){
+		tblrVBorder = getTblrVBorders(tblrOptions,realx+1,y,Zrow,Zcol);
+	}
+	if(tblrVBorder && tblrVBorder.trim && tblrVBorder.trim()){
+		var border = tblrVBorder.trim();
+		var spec = border.replace(/\s/g,"").replace(/(?:dash|wd|fg)=/g,"").split(/,/g),
+		type = "solid",
+		rulecolor = [0,0,0];
+
+		for(var k=0;k<spec.length;k++){
+			if(spec[k] == "dashed" || spec[k] == "dotted" || spec[k] == "solid" || spec[k] == "double"){type = spec[k]}
+			else if(spec[k].indexOf("=")<0 && !/[\d\.\-]/.test(spec[k][0])){
+				rulecolor = xcolor(spec[k]);
+			}
+		}
+		if(rulecolor){rulecolor = toHex(rulecolor)}
+		var name = {solid:"normal",dashed:"hdashline",double:"double",dotted:"dottedline"}[type];
+		o.dataset.borderRight = name;
+		css += "border-right: " + (name == "double" ? 2 : 1) + "px "+type+" "+rulecolor+";";
+
+	}
+	else if(/\|\|$/.test(head)){
 		o.dataset.borderRight = "double";
 		css += "border-right: 2px double black;";
 	}
@@ -2190,6 +2539,7 @@ treatCom = function(code,x,y){
 		html += "&iexcl;";
 	}
 	else if(name == "textbar"){html += "|"}
+	else if(name == "degree" || name == "textdegree"){html+="&#176;"}
 	else if(name == "textordfeminine"){html+="<sup>a</sup>"}
 	else if(name == "ier"){html+="<sup>er</sup>"}
 	else if(name == "iere"){html+="<sup>re</sup>"}

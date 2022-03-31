@@ -114,7 +114,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "2.3.1.3";
+			this.version = "2.3.2";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -1968,7 +1968,8 @@ this.getHTML = (function(){
 						txt.value = document.getElementById(oldid).querySelector("textarea").value;
 					}
 				}
-				div.appendChild(nb);div.appendChild(txt);
+				div.appendChild(nb);
+				div.appendChild(txt);
 				for(;;){
 					var rand = "footnote" + Math.floor(Math.random()*100000);
 					if(!document.getElementById(rand)){break;}
@@ -2141,6 +2142,7 @@ this.getHTML = (function(){
 						var trimLeft = /^\S/.test(plain),
 						trimRight = /\S$/.test(plain);
 						var dataHtml = e.clipboardData.getData("text/html");
+						if(e.shiftKey){dataHtml = null;}
 						if(dataHtml){
 							d.innerHTML = dataHtml;
 							// A little bit of clean up
