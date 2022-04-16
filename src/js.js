@@ -6102,6 +6102,11 @@ this.getHTML = (function(){
 					mouseup(e.pageX, e.pageY);		
 				});
 			}
+			this.copyToClipboard = function(){
+				var element = this._id("c");
+				element.select();
+  				navigator.clipboard.writeText(element.value);
+			}
 		})()
 	window.table = table;
 })();

@@ -158,6 +158,13 @@
 			border-radius: 5px;
 			padding: 2px;
 		}
+		.content-group{
+			align-items: center;
+			display: flex;
+			justify-content: space-between;
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
 		.icon-underline{
 			height:14px;
 			width:14px;
