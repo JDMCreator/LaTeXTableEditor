@@ -664,12 +664,13 @@ tblrkeyval = function(str){
 		o.full = "\\\\"+(o.asterisk ? "*" : "");
 		return o;
 	}
-	else if(realname == "$" || realname == "%" || realname == "_" || realname == "&" || realname == "#"){
+	else if(realname == "$" || realname == "%" || realname == "_" || realname == "&" 
+		|| realname == "#" || realname == "{" || realname == "}"){
 		o.name = realname;
 		o.full = "\\"+realname;
 		return o;
 	}
-	else if(nextchar == "*"){
+	if(nextchar == "*"){
 		o.asterisk = true;
 		nextchar = code.charAt(name.length+1);
 	}
@@ -1941,7 +1942,7 @@ setCellO = function(table, x, y, code, head, backgroundRow, columnColor,realx, t
 	o.dataset.align = "l";
 	for(var i=0,c;i<head.length;i++){
 		c = head.charAt(i);
-		if(c == "l" || c == "c" || c == "r"){
+		if(c == "l" || c == "c" || c == "r" || c == "d"){
 			o.dataset.align = c;
 			continue;
 		}
@@ -2283,6 +2284,9 @@ header = function(head){
 					c = "l";
 				}
 			}
+			else if(c == "S" || c == "s" || c == "d"){
+				c == "d";
+			}
 			else if(c == "q" && info.opts.length == 1){
 				c = "l";
 				var keyval = info.opts[0].split(/,/g);
@@ -2308,7 +2312,7 @@ header = function(head){
 					c = "l";
 				}
 			}
-			else if(c != "c" && c != "r"){
+			else if(c != "c" && c != "r" && c != "d"){
 				c = "l";
 			}
 			if(foundfirst){

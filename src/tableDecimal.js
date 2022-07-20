@@ -208,7 +208,6 @@
  					}
  				}
  			}
- 			console.log("Applied in " + (performance.now() - perf) + "ms.");
  		}
  		this.load = function() {
  			this.apply();
@@ -238,7 +237,6 @@
  						}
  					});
 					if(shouldApply || !_this.opt.observeFilter || _this.opt.observeFilter.call(_this, mutationList)){
- 						console.log("observed!");
  						_this.apply();
 					}
  				});
