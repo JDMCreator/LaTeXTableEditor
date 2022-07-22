@@ -341,7 +341,10 @@
 					<div class="col-md-9">
 						<textarea id="c" class="form-control">
                         </textarea>
-						<a href="javascript:;" onclick="table.toMWE();">Convert to Minimal Working Example (MWE)</a>
+						<div class="content-group">
+							<a href="javascript:;" onclick="table.toMWE();">Convert to Minimal Working Example (MWE)</a>
+							<button id="btn-copy"class="btn btn-primary" data-toggle="tooltip" title="Copy to clipboard" onclick="table.copyToClipboard()">Copy</button>
+						</div>
 					</div>
 					<div class="col-md-3">
 						<div style="width:100%;max-height:20%;min-height:300px;overflow-y:auto;" id="log" class="form-control">
