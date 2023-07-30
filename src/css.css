@@ -7,6 +7,16 @@
 				white-space: nowrap !important;
 			}
 		}
+		#overlay{
+			display:none;
+			position:fixed;
+			left:0;
+			right:0;
+			top:0;
+			bottom:0;
+			z-index:999999;
+			cursor:grabbing;
+		}
 		#table-div-container{
 			width:100%;
 			overflow-x:auto;
@@ -281,11 +291,6 @@
 			text-align: right !important;
 		}
 
-		body:not([data-view-editor]) #table td[data-rotated]:not([data-selected]) div.outer {
-			display:table-cell;
-			height:100%;
-		}
-
 		#popup_new {
 			z-index: 9999;
 			background: white;
@@ -399,20 +404,20 @@
 		/* List */
 
 			/* Level 2 */
-			:not(ul, li) > ul > li > ul > li::marker,
-			:not(ul, li) > ul > ul > li::marker{
+			#table :not(ul, li) > ul > li > ul > li::marker,
+			#table :not(ul, li) > ul > ul > li::marker{
 				content:"\2014";
 			}
-			:not(ul, li) > ul > ul li, :not(ul, li) > ul > li > ul li{padding-left:0.6ex;}
+			#table :not(ul, li) > ul > ul li, :not(ul, li) > ul > li > ul li{padding-left:0.6ex;}
 			
 
 			/* Level 3 */
-			:not(ul, li) > ul > ul > ul > li::marker
+			#table :not(ul, li) > ul > ul > ul > li::marker
 			{
 				content:"\2217";
 			}
 			/* Level 4 */
-			:not(ul, li) > ul > ul > ul > ul > li::marker
+			#table :not(ul, li) > ul > ul > ul > ul > li::marker
 			{
 				content:"\00B7";
 			}
@@ -544,10 +549,16 @@
 			padding-bottom: 0.4ex;
 		}
 
-
-		#table td[data-rotated]:not([data-selected]) div[contenteditable],
-		body[data-view-editor] #table td[data-rotated] div[contenteditable] {
-			transform: rotate(-90deg);
+		@supports (writing-mode: sideways-lr) {
+			#table td[data-rotated] div[contenteditable]{
+				writing-mode: sideways-lr;
+			}
+		}
+		@supports not (writing-mode: sideways-lr) {
+			#table td[data-rotated] div[contenteditable]{
+				writing-mode: vertical-lr;
+				transform: rotate(180deg);
+			}
 		}
 		
 
@@ -610,6 +621,32 @@
 			width:30px;
 			height:30px;
 			border:2px solid black;
+		}
+		.colorpicker-save-color{
+			display:flex;
+			flex-direction:column;
+		}
+		.colorpicker-save-color > span{
+			font-weight:bold;
+			font-size:130%;
+			text-align:center;
+		}
+		.colorpicker-saved-color{
+			position:relative;
+		}
+		.colorpicker-saved-color > div{
+			position:absolute;
+			top:-5px;
+			right:-5px;
+			background:#d00000;
+			width:10px;
+			color:#fff;
+			height:10px;
+			border-radius:50%;
+			font-size:90%;
+			text-align:center;
+			line-height:10px;
+			font-weight:bold;
 		}
 		.color-scheme > div:hover{
 			border-color:gray;
@@ -1008,10 +1045,14 @@ border:none;
 text-align:center;
 background:whitesmoke;
 vertical-align:middle;
+cursor:grab;
 }
 #table tr:first-child td::before{
 content:counter(table-col, upper-alpha);
 counter-increment:table-col;
+}
+#table tr:first-child td.moveTargetX{
+	border-right:2px solid red;
 }
 body[data-view-editor] tr:first-child{
 	display:none;
@@ -1025,6 +1066,12 @@ body:not([data-view-editor]) #table tr:not(:empty)::before{
 	display:table-cell;
 	border-bottom:2px solid transparent !important;
 	vertical-align:middle;
+}
+body:not([data-view-editor]) #table tr.moveTargetY:not(:empty)::before{
+	border-bottom:2px solid red !important;
+}
+body:not([data-view-editor]) #table tr.moveTargetX:not(:empty):first-child::before{
+	border-right:2px solid red;
 }
 body:not([data-view-editor]) #table tr:not(:empty):first-child::before{
 	color:transparent;
@@ -1055,4 +1102,25 @@ html #table[data-booktabs] tr:first-child td{
 }
 #table div[contenteditable]:focus{
 	outline:1px dotted #222;
+}
+
+ins.adsbygoogle a {
+    display: none !important;
+}
+ins.adsbygoogle[data-ad-status="unfilled"] a {
+    display: block;
+}
+
+#page-content h2{
+	font-size:2rem;
+	padding-bottom:2.5rem;
+	padding-top:2.5rem;
+}
+#page-content ul{
+	list-style-type:square;
+}
+#page-content .thumbnail-description{
+	font-size:3rem;
+	text-align:center;
+	padding:4rem 0;
 }

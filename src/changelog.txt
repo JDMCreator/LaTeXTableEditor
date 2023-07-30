@@ -6,6 +6,60 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 3.1 (2023/07/30)
+==========
+
+| Note on this release:
+|     Improvements to colorpicker and bug fixes (#69)
+
+CORE
+
+[+] Added link to copy generated code to clipboard (#82)
+[+] Colorpicker can now save colors
+[#] Colorpicker now use the good color for background of cells, for table scheme
+
+LATEX EXPORT
+
+[#] Code was not generated when there was a column where all cells were merged over several columns (#83)
+[#] Text with different formatting could be merged together in certain situations when using tabularray (#80)
+
+LATEX IMPORT
+
+[+] Support for U,V,W column/row/cell descriptor in tabularray
+[+] Option to preserve unknown LaTeX commands
+[#] Using both "hlines" and "vlines" in tabularray was not supported (#84)
+
+
+Version 3.0.1 (2023/02/19)
+==========
+
+| Note on this release:
+|     Improved scrolling
+
+CORE
+
+[#] Improved scrolling
+
+Version 3.0 (2023/02/13)
+==========
+
+| Note on this release:
+|     Generate tabularray tables, better UI, move columns and rows
+
+CORE
+
+[+] Possible to move columns and rows by grabing the header
+[+] Better rotated texts and easier to edit
+[+] Most important settings are now next to "Generate" button
+[+] Transpose table menu option (#71)
+[#] Fixed issue with dropdown menus
+[#] Tables with diagonal lines or two diagonal lines were not saved
+
+LATEX EXPORT
+
+[+] Generate Tabularray tables with `tblr` and `longtblr` environments
+[+] "Auto" setting generate tabularray/tabular tables depending on the complexity of the table
+[+] Improved support for numbers with `Siunitx`
 
 Version 2.3.3 (2022/07/18)
 ==========
@@ -808,7 +862,8 @@ CORE
 
 [+] Moved Core to Table.js 0.2 STABLE
 [+] The toolbar now scrolls down with the user
-[+] ColorPicker
+[+] 
+
 [+] Convert the code to a MWE
 [/] Changed the way background cell were handled
 [#] Fixed an issue where cells could go over the right panel

@@ -304,7 +304,7 @@ Table = function(table){
 			}
 			table.rows[nb+(this.shadowFirstRow?1:0)].parentElement.removeChild(table.rows[nb+(this.shadowFirstRow?1:0)]);
 		}
-		this.insertCol = function(nb, callback){
+		this.insertCol = function(nb, callback, callbackCol){
 			if(!nb && nb!==0 && nb!=="0"){
 				nb=-1;
 			}
@@ -336,6 +336,9 @@ Table = function(table){
 				if(actualCell && (actualCell.refCell||actualCell.cell.colSpan != 1)){
 					(actualCell.refCell||actualCell).cell.colSpan+=1
 					i+=(actualCell.refCell||actualCell).cell.rowSpan-1;
+					if(callbackCol){
+						callbackCol.call(this,(actualCell.refCell||actualCell).cell);
+					}
 				}
 				else{
 					actualCell = matrix[i][nb2]
@@ -360,7 +363,7 @@ Table = function(table){
 				firstRow.appendChild(document.createElement("TD"));
 			}
 		}
-		this.insertRow = function(nb, callback){
+		this.insertRow = function(nb, callback, callbackRow){
 			if(!nb && nb!==0 && nb!=="0"){
 				nb=-1;
 			}
@@ -389,6 +392,9 @@ Table = function(table){
 					if(copycell && (copycell.refCell || copycell.cell.rowSpan != 1)){
 						(copycell.refCell||copycell).cell.rowSpan+=1;
 						i+=(copycell.refCell||copycell).cell.colSpan-1;
+						if(callbackRow){
+							callbackRow.call(this, cell);
+						}
 					}
 					else{
 						copycell = copycell.cell||copycell.refCell

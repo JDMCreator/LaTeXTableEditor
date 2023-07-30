@@ -295,6 +295,15 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 				else if(coli == "X"){
 					coli = Zcol-2;
 				}
+				else if(coli == "W"){
+					coli = Zcol-3;
+				}
+				else if(coli == "V"){
+					coli = Zcol-4;
+				}
+				else if(coli == "U"){
+					coli = Zcol-5;
+				}
 				coli = coli.toString();
 				// Odd or even are treated together
 				if(coli.substr(0,3) == "odd" || coli.substr(0,4) == "even"){
@@ -319,6 +328,12 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 							if(end == "Y"){end = Zcol-1}
 							if(start == "X"){start = Zcol-2}
 							if(end == "X"){end = Zcol-2}
+							if(start == "W"){start = Zcol-3}
+							if(end == "W"){end = Zcol-3}
+							if(start == "V"){start = Zcol-4}
+							if(end == "V"){end = Zcol-4}
+							if(start == "U"){start = Zcol-5}
+							if(end == "U"){end = Zcol-5}
 
 							start = +start;
 							end = +end;
@@ -344,6 +359,12 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 					if(end == "Y"){end = Zcol-1}
 					if(start == "X"){start = Zcol-2}
 					if(end == "X"){end = Zcol-2}
+					if(start == "W"){start = Zcol-3}
+					if(end == "W"){end = Zcol-3}
+					if(start == "V"){start = Zcol-4}
+					if(end == "V"){end = Zcol-4}
+					if(start == "U"){start = Zcol-5}
+					if(end == "U"){end = Zcol-5}
 
 					start = +start;
 					end = +end;
@@ -364,6 +385,15 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 				}
 				else if(rowi == "X"){
 					rowi = Zrow - 2;
+				}
+				else if(rowi == "W"){
+					rowi = Zrow - 3;
+				}
+				else if(rowi == "V"){
+					rowi = Zrow - 4;
+				}
+				else if(rowi == "U"){
+					rowi = Zrow - 5;
 				}
 				rowi = rowi.toString();
 				if(rowi.substr(0,3) == "odd" || rowi.substr(0,4) == "even"){
@@ -388,6 +418,12 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 							if(end == "Y"){end = Zrow-1}
 							if(start == "X"){start = Zrow-2}
 							if(end == "X"){end = Zrow-2}
+							if(start == "W"){start = Zrow-3}
+							if(end == "W"){end = Zrow-3}
+							if(start == "V"){start = Zrow-4}
+							if(end == "V"){end = Zrow-4}
+							if(start == "U"){start = Zrow-5}
+							if(end == "U"){end = Zrow-5}
 
 							start = +start;
 							end = +end;
@@ -414,6 +450,12 @@ getCellsTblrOptions = function(x,y,o, all, Zrow, Zcol){
 					if(end == "Y"){end = Zrow-1}
 					if(start == "X"){start = Zrow-2}
 					if(end == "X"){end = Zrow-2}
+					if(start == "W"){start = Zrow-3}
+					if(end == "W"){end = Zrow-3}
+					if(start == "V"){start = Zrow-4}
+					if(end == "V"){end = Zrow-4}
+					if(start == "U"){start = Zrow-5}
+					if(end == "U"){end = Zrow-5}
 
 					start = +start;
 					end = +end;
@@ -479,8 +521,8 @@ tblrkeyval = function(str){
 				else{
 					if(!o[name]){o[name]=[]}
 					o[name].push("");
-					name = "";
 				}
+				name = "";
 			}
 			else{
 				name+=c;
@@ -2561,6 +2603,9 @@ treatCom = function(code,x,y){
 	else if(name == "pounds" || name == "textsterling"){html += "&pound;"}
 	else if(name == "og"){html+="&laquo;"}
 	else if(name == "fg"){html+="&raquo;"}
+	else if(document.getElementById("opt-imp-unknown").checked){
+		html += com.full;
+	}
 	else if(com.args.length == 1 && !bannedCommands[name]){
 		html += getHTML(com.args[0]);
 	}

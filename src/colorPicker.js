@@ -93,6 +93,25 @@ rgbToHsl = function(r, g, b){
 			this.actualSettings = null;
 			jQuery("#colorpicker").modal('hide');
 		}
+		this.saveColor = function(color){
+			if(!color){
+				color = toHex(this.actualRGBA());
+			}
+			var saved = localStorage.getItem("savedcolors") || "";
+			if(saved){saved += ","};
+			saved += color;
+			localStorage.setItem("savedcolors", saved);
+		}
+		this.removeColor = function(color){
+			var saved = localStorage.getItem("savedcolors") || "";
+			saved = saved.replace(/\,?(\#[a-z0-9]+)/gi, function(full, str){
+				if(str.toLowerCase() == color.toLowerCase()){
+					return "";
+				}
+				return full;
+			});
+			localStorage.setItem("savedcolors", saved);
+		}
 		this.get = function(color, callback){
 			color = color || "#000000";
 			this.actualSettings = [color, callback];
@@ -108,7 +127,7 @@ rgbToHsl = function(r, g, b){
 			frag = document.createDocumentFragment();
 			for(var i=0;i<schemes.length;i++){
 				var div = document.createElement("div"),
-				scheme = "rgb("+schemes[i].join(",")+")";
+				scheme = "rgb("+schemes[i][0]+","+schemes[i][1]+","+schemes[i][2]+")";
 				div.setAttribute("data-color", scheme);
 				div.title = scheme;
 				div.style.backgroundColor = scheme;
@@ -138,7 +157,50 @@ rgbToHsl = function(r, g, b){
 				}
 			}
 			element.appendChild(frag);
+			this.refreshSavedColors();
 			jQuery("#colorpicker").modal('show');
+		}
+		this.refreshSavedColors = function(){
+			var element = $("colorpicker-saved-scheme");
+			while(element.firstChild){
+				element.removeChild(element.firstChild);
+			}
+			var schemes = (localStorage.getItem("savedcolors") || "").split(","),
+			frag = document.createDocumentFragment();
+			for(var i=0;i<schemes.length;i++){
+				var scheme = schemes[i];
+				if(!scheme){continue;}
+				var div = document.createElement("div");
+				div.setAttribute("data-color", scheme);
+				div.className = "colorpicker-saved-color";
+				if(scheme.indexOf("#")>-1){
+					div.title = ntc.name(scheme)[1] + " ("+scheme+")";
+				}
+				div.style.backgroundColor = scheme;
+				div.addEventListener("click", function(){
+					ColorPicker.color(this.getAttribute("data-color"));
+				}, false);
+				var subdiv = document.createElement("div");
+				subdiv.innerHTML = "×"
+				subdiv.title = "Remove from saved color";
+				subdiv.addEventListener("click", function(color){
+					this.removeColor(color);
+					this.refreshSavedColors();
+					event.stopPropagation();
+				}.bind(this, scheme));
+				div.appendChild(subdiv);
+				frag.appendChild(div);
+			}
+			var div = document.createElement("div");
+			div.className = "colorpicker-save-color";
+			div.innerHTML = "<span>+</span>";
+			div.title = "Save color";
+			div.addEventListener("click", function(){
+				ColorPicker.saveColor(this.getAttribute("data-color"));
+				ColorPicker.refreshSavedColors();
+			}, false);
+			frag.appendChild(div);
+			element.appendChild(frag);
 		}
 		this.actualRGBA = function(){
 			return toRGBA($("colorpicker-container").style.color)
@@ -150,12 +212,13 @@ rgbToHsl = function(r, g, b){
 			if(alternate){
 				colors.push(alternate[1], alternate[2])
 			}
-			for(var i=0;i<table.rows.length;i++){
+			for(var i=1;i<table.rows.length;i++){
 				var cells = table.rows[i].cells;
 				for(var j=0;j<cells.length;j++){
-					var cell = cells[j], style = cell.style;
-					if(style.backgroundColor){
-						colors.push(style.backgroundColor);
+					var cell = cells[j], style = cell.style, computed = window.getComputedStyle(cell,null),
+					bg = computed.getPropertyValue("background-color");
+					if(bg){
+						colors.push(bg);
 					}
 					if(style.borderLeftColor){
 						colors.push(style.borderLeftColor);

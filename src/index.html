@@ -29,6 +29,7 @@
 </head>
 
 <body>
+	<div id="overlay"></div>
 	<div id="font-backdrop"></div>
 	<div class="border-line" id="line"></div>
 	<div class="container-fluid">
@@ -55,6 +56,7 @@
 								<span data-toggle="tooltip" title="Undo (CTRL+Z)" class="top-menu-btn" onclick="table.statesManager.undo()"><img src="icons/arrow-counterclockwise.svg"></span>
 								<!--<span data-toggle="tooltip" title="Redo" class="top-menu-btn" onclick="table.statesManager.undo()"><img src="icons/arrow-clockwise.svg"></span>-->
 								<span data-toggle="tooltip" title="Generate" class="top-menu-btn" onclick="table.generate();"><img src="icons/play-fill.svg"></span>
+						<div class="dropdown" style="display:inline-block">
 								<a class="dropdown-toggle" type="button" id="dropdownMenu1" role="button" data-target="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 									File <span class="caret"></span>
 								</a>
@@ -76,21 +78,23 @@
 									</li>
 									<li class="dropdown-submenu">
 										<a tabindex="-1" href="#">Export File</a>
-										<ul class="dropdown-menu">
+										<ul class="dropdown-menu" style="list-style-type:none;">
 											<li><a href="#" onclick="table.prepareDownload()">LaTeX</a></li>
 										</ul>
 									</li>
 								</ul>
-								<span>
+								</div>
+								<div class="dropdown" style="display:inline-block">
 									<a class="dropdown-toggle" type="button" id="dropdownMenu3" role="button" data-target="dropdownMenu4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 										Table <span class="caret"></span>
 									</a>
 									<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu3" id="dropdownMenu4">
 
-										<li><a href="#" onclick="table.deleteContent()">Delete content</a></li>
+<li><a href="#" onclick="table.deleteContent();return false;">Delete content</a></li>
+										<li><a href="#" onclick="table.transpose();return false;">Transpose</a></li>
 									</ul>
-								</span>
-								<span>
+								</div>
+								<div class="dropdown" style="display:inline-block">
 									<a class="dropdown-toggle" type="button" id="dropdownMenu5" role="button" data-target="dropdownMenu6" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 										Output <span class="caret"></span>
 									</a>
@@ -101,10 +105,20 @@
 										<li class="divider"></li>
 										<li><a href="#" data-target="#format-settings" data-toggle="modal">Settings</a></li>
 									</ul>
-								</span>
+								</div>
 							</div>
 						</div>
-						<div style="float:right;" class="top-dropdown-menu-element"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | <a href="v1/index.html">Switch to old interface</a> | <a href="#" data-target="#help-modal" data-toggle="modal">Help</a>
+						<div style="float:right;" class="top-dropdown-menu-element"><a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Comments/Requests/Issues</a> | 
+								<div class="dropdown" style="display:inline-block">
+									<a class="dropdown-toggle" type="button" id="dropdownMenu3" role="button" data-target="dropdownMenu7" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+										v3.0 <span class="caret"></span>
+									</a>
+									<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu3" id="dropdownMenu7">
+
+										<li><a href="v2/index.html">v2.3.3</a></li>
+										<li><a href="v1/index.html">v1.9.1</a></li>
+									</ul>
+								</div> | <a href="#" data-target="#help-modal" data-toggle="modal">Help</a>
 						</div>
 					</div>
 					<div class="toolbar-group-container" tabindex="0" role="toolbar">
@@ -264,7 +278,6 @@
 					</div>
 					<hr style="margin:0;margin-bottom:2px;">
 				</nav>
-
 				<div class="caption-container">
 					<div class="input-group" style="max-width:400px">
 						<div class="input-group-addon">
@@ -281,6 +294,7 @@
 					</table>
 				</div>
 				<div>
+
 					<div class="alert alert-info" role="alert" style="display:none;" id="border-editor-info">
 						<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 						<span class="glyphicon glyphicon-info-sign"></span> You are now using the border editor. You can drag your cursor to draw multiple borders at once or click on any border to activate or deactivate it. You can change the border style in the toolbar.
@@ -289,6 +303,7 @@
 				<hr>
 
 				<div id="tooltip-helper">Hey</div>
+<div style="margin:0 20%;background:whitesmoke;padding:1em;border-radius:1em;">
 				<center>
 					<div class="btn-group" role="group" style="margin-bottom:25px">
 						<button onclick="table.generate()" class="btn btn-primary" data-toggle="tooltip" title="Generate code" id="generate-button">Generate</button>
@@ -320,8 +335,22 @@
 						</div>
 						<button title="Settings" class="btn btn-default" data-target="#format-settings" data-toggle-second="tooltip" data-toggle="modal"><span class="glyphicon glyphicon-cog"></span></button>
 					</div>
-
 				</center>
+<div id="latex-opt-shortcuts"><div style="text-decoration:underline">Options (<a href="#" data-target="#format-settings" data-toggle="modal">+more</a>)</div>
+<div><input type="checkbox" id="copt-break"> Allow table to break across pages</div>
+<div><input type="checkbox" id="copt-shrink"> Shrink columns automatically</div>
+<div><input type="checkbox" id="copt-ltx-com"> Ignore LaTeX commands in text</div>
+<div>
+						<div class="btn-group dropdown">
+							<button title="Output environment" type="button" id="env-button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Auto <span class="caret"></span></button>
+							<ul class="dropdown-menu" id="env-button-drop" style="max-height:200px;overflow-y:auto;">
+								<li data-value="auto"><a href="#">Auto</a></li>
+								<li data-value="tabular"><a href="#">Tabular</a></li>
+								<li data-value="tabularray"><a href="#">Tabularray</a></li>
+								<li data-value="tabu"><a href="#">Tabu</a></li>
+							</ul>
+						</div> LaTeX environment</div>
+</div></div>
 <div style="margin:20px;">
 <div><span style="color:#555">Advertisement</span></div>
 <!-- Before-Generate -->
@@ -341,6 +370,7 @@
 					<div class="col-md-9">
 						<textarea id="c" class="form-control">
                         </textarea>
+						<a href="javascript:;" onclick="navigator.clipboard.writeText(document.getElementById('c').value)">Copy to Clipboard</a> | 
 						<a href="javascript:;" onclick="table.toMWE();">Convert to Minimal Working Example (MWE)</a>
 					</div>
 					<div class="col-md-3">
@@ -350,6 +380,73 @@
 						</div>
 					</div>
 				</div>
+	<!--- Content ---->
+
+		<hr>
+		<div id="page-content">
+		<h2>What is LaTeX?</h2>
+		<p> LaTeX is a free typesetting system that allows their users to use a markup language to produce high-quality and consistent documents. Released in 1984, it has since become a standard in academia. Even though LaTeX is relatively easy to use, sometimes building complex typographical structures such as tables can become challenging. This free online generator allows you to build complex tables with a WYSIWYG interface.
+
+
+		<h2>What is this editor?</h2>
+
+<p>This editor is a free tool to let you build high-quality tables easily. This editor try to handle as many typographical or compatibility issues as possible to generate the cleaniest code possible. It also provides you a user interface that is easy to use, intuitive and really powerful. It is the most complexe table editor on the Internet. You can even load your LaTeX tables or import data from spreadsheets.
+
+<p>This editor is free, but also open source and entirely client-based. This means that the content of your table is never send to a server. It stays with you, on your computer. We are hosted by GitHub and really respectful of your privacy.
+
+<p>With this editor, you can merge cells (use <code>CTRL+Click</code> or <code>SHIFT+Click</code> to select multiple cells), draw borders, set the border style or color and set the background color of each cell.</p>
+
+
+		<h2>My table is too wide. How can I fix it?</h2>
+
+<p>LaTeX doesn't have an integrated algorithm to automatically adjust the width of each column. Therefore, a table can become too wide and cause a <code>10000 badness</code> warning. This editor has two options to fix the issue:
+<ul>
+<li><strong>Scale:</strong> Your table will be resized so it will fit the width of the page. Everything will therefore be smaller but the overall presentation will look the same.
+<li><strong>Shrink:</strong> Each column will be narrower so your table will fit the width of the page. In most case, this should be the best option. However, sometimes, your text might not fit in a column.
+</ul></p>
+<p>You can activate those options in the <a href="#" data-target="#format-settings" data-toggle="modal">Settings</a>. Another option is to <a href="#" data-target="#format-settings" data-toggle="modal">display your table in landscape mode</a>.
+
+		<h2>My table is too long. How can I fix it?</h2>
+
+<p>By default, when a table is too long, it will be cropped by the page. However, it is really easy to fix this. In the <a href="#" data-target="#format-settings" data-toggle="modal">Settings</a>, make sure that is the option "Split table in multiple pages" is checked.
+
+		<h2>How can I learn more about LaTeX tables?</h2>
+
+<p>This website provide several ressources to easily learn to write LaTeX tables <u>without</u> using a generator! Check out our articles:</p>
+
+<div class="row">
+  <div class="col-sm-6 col-md-4">
+    <div class="thumbnail">
+      <div class="thumbnail-description bg-warning">Tabular</div>
+      <div class="caption">
+        <h2>LaTeX Tables 101: Tabular</h2>
+        <p>Learn to write tables with the <code>tabular</code> environment.</p>
+        <p><a href="ressources/tabular.html" class="btn btn-primary" role="button">Read</a></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-4">
+    <div class="thumbnail">
+      <div class="thumbnail-description bg-info">Tabularray</div>
+      <div class="caption">
+        <h2>LaTeX Tables 101: Tabularray</h2>
+        <p>Learn to write modern tables with the <code>tblr</code> environment.</p>
+        <p><a href="ressources/tabularray.html" class="btn btn-primary" role="button">Read</a></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-4">
+    <div class="thumbnail">
+      <div class="thumbnail-description bg-danger" style="background:red;">Plain TeX</div>
+      <div class="caption">
+        <h2>LaTeX Tables: Historical</h2>
+        <p>LaTeX comes from TeX. Learn how to write a table in Plain TeX.</p>
+        <p><a href="ressources/tabularray.html" class="btn btn-primary disabled" role="button">Coming Soon</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+		</div>
 				<hr>
 				<center><a rel="help" href="help.html" target="_blank">Help</a> | <a href="privacy.html" target="_blank">Privacy</a> | <a href="changelog.txt" target="_blank">Changelog</a> | 
 				<a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">Github</a> | Our other project : <a href="https://www.timemaths.com" target="_blank">TimeMaths : An Online Time Calculator</a></center>
@@ -524,6 +621,7 @@
 						<textarea class="form-control textarea-wrap" id="import_value" style="min-height:200px;" placeholder="Content of your file to import"></textarea>
 					</div>
 					<div id="latex-import-error" style="display:none;color:red;">Your LaTeX table could not be loaded. Help us and <a href="https://github.com/JDMCreator/LaTeXTableEditor/issues" target="_blank">send us the code of your table</a> so we can see what happened.</div>
+<div style="padding-bottom:5px;"><label><input type="checkbox" id="opt-imp-unknown"> Preserve unknown LaTeX commands</label></div>
 					<div class="text-center">
 						<button type="button" class="btn btn-primary" onclick="table.importData();">Import the content of a file</button>
 					</div>
@@ -635,6 +733,10 @@
 
 					<h5>Default Colors</h5>
 					<div id="colorpicker-default-scheme" class="color-scheme">
+
+					</div>
+					<h5>Saved Colors</h5>
+					<div id="colorpicker-saved-scheme" class="color-scheme">
 
 					</div>
 					<div style="text-align:center;">
@@ -1256,6 +1358,8 @@ and \(...\)" data-toggle="tooltip">
 	<script type="text/javascript" src="toWML.js">
 	</script>
 	<script type="text/javascript" src="latex-import.js">
+	</script>
+	<script type="text/javascript" src="toTabularray.js">
 	</script>
 	<script type="text/javascript" src="ntc.js">
 	</script>

@@ -10,6 +10,16 @@ function $id(id) {
 	           r2.bottom < r1.top);
 	   }
 
+	var removeTag = function(node, selector){
+		var nodes = Array.from(node.querySelectorAll(selector));
+		for(var i=0;i<nodes.length;i++){
+			var frag = document.createDocumentFragment();
+			while(nodes[i].firstChild){
+				frag.appendChild(nodes[i].firstChild);
+			}
+			nodes[i].parentNode.replaceChild(frag,nodes[i]);
+		}
+	}
 
 	/* ==== START CAMPAIGN INFO ==== */
 	window.sendGAEvent = function(category, action, label){
@@ -114,7 +124,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "2.3.3";
+			this.version = "3.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -236,6 +246,7 @@ function $id(id) {
 					btn.innerHTML = li.innerText+' <span class="caret"></span>';
 				}
 				$id("format-in").value = format;
+				document.getElementById("latex-opt-shortcuts").style.display = (format == "latex" ? "block" : "none");
 			}
 			this.removeAllSelection = function() {
 				this.selectedCell = null;
@@ -990,6 +1001,101 @@ this.getHTML = (function(){
 		return html;
 	}
 })();
+			this.getHTMLPerLine = function(cell, n, extractColor){
+				var html = this.getHTML(cell, n);
+				var color = extractColor ? false : null;
+				var lines = [];
+				var li = 0,
+				newItem = false,
+				addLi = 0;
+				var actualLine = document.createDocumentFragment();
+				var fromDiv = document.createElement("div"),
+				actualElement = actualLine;
+				fromDiv.innerHTML = html;
+				if(extractColor){
+					var treeWalker = document.createTreeWalker(fromDiv, NodeFilter.SHOW_TEXT);
+ 					treeWalker.nextNode();
+ 					var currentNode = treeWalker.currentNode;
+ 					treeWalkerLoop: while (currentNode) {
+						if(/\S/.test(currentNode.nodeValue)){
+							var parent = currentNode;
+							lookForParent:while(parent = parent.parentElement){
+								if(parent.tagName == "FONT"){
+									if(color && color != parent.color){
+										break treeWalkerLoop;
+									}
+									color = parent.color
+									currentNode = treeWalker.nextNode()
+									continue treeWalkerLoop;
+								}
+							}
+							break treeWalkerLoop;	
+						}
+						currentNode = treeWalker.nextNode()
+					}
+					if(!currentNode && color){
+						// Remove font tags
+						removeTag(fromDiv, "FONT");
+						color = toRGBA(color);
+					}
+				}
+				function pushLine(tag){
+					if(actualLine.childNodes.length>0){
+						var div = document.createElement("div");
+						var o = {
+							fragment: actualLine.cloneNode(true),
+							item: newItem,
+							level:li,
+							index:lines.length
+						}
+						newItem = false;
+						div.appendChild(actualLine);
+						o.html = div.innerHTML;
+						lines.push(o);
+					}
+					else{
+						//actualElement = actualLine;
+					}
+				}
+				function treatTag(node, stopRemove, actualElement){
+					if(!stopRemove && node.tagName != "LI" && node.tagName != "BR" && node.tagName != "UL"){
+						actualElement.appendChild(node);
+					}
+					if(node.tagName){
+						if(node.tagName == "UL"){addLi++}
+						if(node.tagName == "LI" || node.tagName == "BR"){
+							pushLine(node.tagName);
+							actualLine = actualElement = document.createDocumentFragment();
+							if(addLi>0){li+=addLi;addLi = 0}
+						}
+						if(node.tagName == "LI"){
+							newItem = true;
+						}
+						else if(node.childNodes.length>0 && !stopRemove){
+							actualElement = node;
+						}
+						var children = Array.from(node.childNodes);
+						for(var i=0;i<children.length;i++){
+							if(actualLine.childNodes.length == 0){
+								// We changed line, therefore we change element
+								actualElement = actualLine;
+							}
+							treatTag(children[i], false, actualElement);
+						}
+						if(node.tagName == "UL"){
+							pushLine();
+							actualLine = actualElement = document.createDocumentFragment();
+							if(!addLi){
+								li--;
+							}
+							addLi = 0;
+						}
+					}
+				}
+				treatTag(fromDiv, true, actualElement);
+				pushLine();
+				return {lines:lines, color:color};
+			}
 			this.setHTML = function(cell, HTML) {
 				cell.querySelector("div[contenteditable]")
 					.innerHTML = HTML;
@@ -1400,9 +1506,16 @@ this.getHTML = (function(){
 						}
 					}
 				}
+				if (o.options && o.options.latexEnv){
+					document.getElementById("env-button").innerHTML =
+								o.options.latexEnv+' <span class="caret"></span>';
+				}
 				if (o.oddEvenColors){
 					this.oddEvenColors.apply(this, o.oddEvenColors);
 				}
+				document.getElementById("copt-break").checked = document.getElementById("opt-latex-split").checked
+				document.getElementById("copt-shrink").checked = document.getElementById("opt-fit-table").value.indexOf("sh")>-1;
+				document.getElementById("copt-ltx-com").checked = document.getElementById("opt-latex-command").checked;
 				if (o.caption) {
 					if (o.caption.numbered) {
 						$id("caption-nb")
@@ -1475,6 +1588,7 @@ this.getHTML = (function(){
 					option = options[i];
 					o.options[option.id.substring(option.id.indexOf("-")+1)] = (option.type == "radio" || option.type == "checkbox") ? option.checked : option.value;
 				}
+				o.options.latexEnv = document.getElementById("env-button").innerText.trim();
 				for (var i = 1; i < table.rows.length; i++) {
 					var cells = table.rows[i].cells;
 					o.cells.push([]);
@@ -1490,13 +1604,15 @@ this.getHTML = (function(){
 								}
 							}
 						}
-						if (cell.dataset.twoDiagonals){
-							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1), this.getHTML(cell, 2)].forEach(function(html){
+						if (cell.hasAttribute("data-two-diagonals")){
+							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1), this.getHTML(cell, 2)];
+							cellO.html.forEach(function(html){
 								return html.replace(/<\s*wbr[^>]*>/i, "<br>");
 							});
 						}
 						else if (cell.dataset.diagonal) {
-							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1)].forEach(function(html){
+							cellO.html = [this.getHTML(cell), this.getHTML(cell, 1)];
+							cellO.html.forEach(function(html){
 								return html.replace(/<\s*wbr[^>]*>/i, "<br>");
 							});
 						} else {
@@ -2027,6 +2143,151 @@ this.getHTML = (function(){
 				}
 				return false;
 			}
+			this.transpose = function(){
+				this.statesManager.registerState();
+				var matrix = this.Table.matrix();
+				var frag = document.createDocumentFragment();
+				var l = matrix.length;
+				for(var i=0;i<matrix[0].length;i++){
+					var tr = document.createElement("tr");
+					frag.appendChild(tr);
+					for(var j=0;j<matrix.length;j++){
+						var cell = matrix[j][i];
+						if(cell.cell){
+							var colspan = cell.cell.colSpan;
+							tr.appendChild(cell.cell);
+							cell.cell.colSpan = cell.cell.rowSpan;
+							cell.cell.rowSpan = colspan;
+						}
+					}
+				}
+				var cells = this.element.rows[0].cells;
+				for(var i=0;i<Math.max(cells.length,l);i++){
+					if(i>=l){
+						this.element.rows[0].removeChild(cells[cells.length-1]);
+					}
+					else if(!cells[i]){
+						this.element.rows[0].appendChild(document.createElement("td"));
+					}
+				}
+				while(this.element.rows[1]){
+					this.element.rows[1].parentElement.removeChild(this.element.rows[1]);
+				}
+				this.element.rows[0].parentElement.appendChild(frag);
+			}
+			this.moveRow = function(beforeIndex, afterIndex){
+				if(beforeIndex == afterIndex){return;}
+				this.statesManager.registerState();
+				var cells = [];
+				// First we split all needed cells
+				var modified = false;
+				var matrix = this.Table.matrix();
+				for(var j=0;j<2;j++){
+					var index = j == 0 ? beforeIndex : afterIndex;
+					for(var i=0;i<matrix[0].length;i++){
+						if(!matrix[index]){continue;}
+						var cell = (matrix[index][i].refCell||matrix[index][i]);
+						if(cell.cell.rowSpan>1){
+							if(Math.min(beforeIndex, afterIndex)<cell.y
+							   || Math.max(beforeIndex, afterIndex)>cell.y+cell.cell.rowSpan){
+								modified = true;
+								this.Table.split(cell.cell, function(cell) {
+									this.applyToCell(cell)
+								}.bind(this));
+							}
+						}
+					}
+					if(modified){
+						modified = false;
+						matrix = this.Table.matrix();
+					}
+				}
+				table.Table.insertRow(afterIndex, function(cell){
+					cells.push(cell);
+				}.bind(this), function(cell){cell.rowSpan -= 1});
+				var colSpan = 0;
+				for(var i=0;i<cells.length;i++){
+					var cell = cells[i];
+					if(cell.colSpan > 1){
+						var index = i+1;
+						this.Table.split(cell, function(cell) {
+							cells.splice(index,0,cell);
+							index++;
+						}.bind(this));
+					}
+					if(colSpan>0){
+						cell.parentElement.removeChild(cell);
+						colSpan--;
+						continue;
+					}
+					var x = table.Table.position(cell).x;
+					var before = matrix[beforeIndex][x];
+					before = (before.refCell||before).cell;
+					colSpan = before.colSpan-1;
+					var td = document.createElement("td");
+					td.colSpan = before.colSpan;
+					before.parentElement.insertBefore(td, before);
+					cell.parentElement.replaceChild(before,cell);
+				}
+				table.Table.removeRow(beforeIndex>afterIndex?beforeIndex+1:beforeIndex);
+			}
+			this.moveCol = function(beforeIndex, afterIndex){
+				if(beforeIndex == afterIndex){return;}
+				this.statesManager.registerState();
+				// First we split all needed cells
+				var modified = false;
+				var matrix = this.Table.matrix();
+				var cellsCol = [];
+				outside:for(var j=0;j<2;j++){
+					var index = j == 0 ? beforeIndex : afterIndex;
+					for(var i=0;i<matrix.length;i++){
+						if(!matrix[i][index]){continue outside;}
+						var cell = (matrix[i][index].refCell||matrix[i][index]);
+						if(cell.cell.colSpan>1){
+							if(Math.min(beforeIndex, afterIndex)<cell.x
+							   || Math.max(beforeIndex, afterIndex)>cell.x+cell.cell.colSpan){
+								modified = true;
+								this.Table.split(cell.cell, function(cell) {
+									this.applyToCell(cell)
+								}.bind(this));
+							}
+						}
+					}
+					if(modified){
+						modified = false;
+						matrix = this.Table.matrix();
+					}
+				}
+				var cells = [];
+				table.Table.insertCol(afterIndex, function(cell){
+					cells.push(cell);
+				}.bind(this), function(cell){cell.colSpan -= 1});
+				var rowSpan = 0;
+				for(var i=0;i<cells.length;i++){
+					var cell = cells[i];
+					if(cell.rowSpan > 1){
+						var index = i+1;
+						this.Table.split(cell, function(cell) {
+							cells.splice(index,0,cell);
+							index++;
+						}.bind(this));
+					}
+					if(rowSpan>0){
+						cell.parentElement.removeChild(cell);
+						rowSpan--;
+						continue;
+					}
+					var y = cell.parentElement.rowIndex-1;
+					var before = matrix[y][beforeIndex]
+					before = (before.refCell||before).cell;
+					rowSpan = before.rowSpan-1;
+					var td = document.createElement("td");
+					td.rowSpan = before.rowSpan;
+					cell.parentElement.insertBefore(td, before);
+					cell.parentElement.replaceChild(before,cell);
+				}
+				table.Table.removeCol(beforeIndex>afterIndex?beforeIndex+1:beforeIndex);
+			}
 			this.loadAllFootnotes = function(){
 				document.getElementById("footnotes-txt").innerHTML = "";
 				var footnotes = this.element.querySelectorAll(".tb-footnote"),
@@ -2067,7 +2328,59 @@ this.getHTML = (function(){
 					document.getElementById("panel-footnotes").style.display = "none";
 					document.getElementById("group-footnotes").style.display = "none";
 				}
-				table.addEventListener("click", function(e){
+				table.addEventListener("mousedown", function(e){
+					if(!document.body.hasAttribute("data-border-editor")){
+						var target = e.target || e.srcElement;
+						if((target.tagName == "TD" && target.parentElement.rowIndex === 0) || target.tagName == "TR"){
+							document.getElementById("overlay").style.display = "block";
+							var removeOverlay = function(){
+								document.getElementById("overlay").style.display = "none";
+								window.removeEventListener("mouseup", removeOverlay);
+								window.removeEventListener("mousemove", findTarget);
+								if(target.tagName == "TR"){
+									var actualTarget = document.querySelector(".moveTargetY");
+									if(actualTarget){
+										actualTarget.classList.remove("moveTargetY");
+										_this.moveRow(target.rowIndex-1,actualTarget.rowIndex);
+									}
+								}
+								else{
+									var actualTarget = document.querySelector(".moveTargetX");
+									if(actualTarget){
+										actualTarget.classList.remove("moveTargetX");
+										var index = "cellIndex" in actualTarget?actualTarget.cellIndex+1:0;
+										_this.moveCol(target.cellIndex, index);
+									}
+								}
+							}
+							var findTarget = function(e2){
+								if(target.tagName == "TR"){
+									var element = document.elementsFromPoint(e.clientX, e2.clientY)[1];
+									var actualTarget = document.querySelector(".moveTargetY");
+									if(actualTarget && element != actualTarget){
+										actualTarget.classList.remove("moveTargetY");
+									}
+									if(element != target){
+										element.classList.add("moveTargetY");
+									}
+								}
+								else{
+									var element = document.elementsFromPoint(e2.clientX, e.clientY)[1];
+									var actualTarget = document.querySelector(".moveTargetX");
+									if(actualTarget && element != actualTarget){
+										actualTarget.classList.remove("moveTargetX");
+									}
+									if(element != target){
+										element.classList.add("moveTargetX");
+									}
+								}
+							}
+							window.addEventListener("mouseup", removeOverlay);
+							window.addEventListener("mousemove", findTarget);
+						}
+					}
+				});
+				table.addEventListener("mousedown", function(e){
 					if(!document.body.hasAttribute("data-border-editor")){
 						var target = e.target || e.srcElement;
 						target = target.nodeType == 3 ? target.parentElement : target;
@@ -2244,9 +2557,6 @@ this.getHTML = (function(){
 					if (_this.selectedCell === (target.parentElement || {})
 						.parentElement) {
 						_this.updateLaTeXInfoCell();
-					}
-					if(td.hasAttribute("data-rotated")){
-						_this.refreshRotatedCellSize(td)
 					}
 				}, false);
 				table.addEventListener("click", function(e) {
@@ -2450,6 +2760,15 @@ this.getHTML = (function(){
 						}
 						e.preventDefault();
 					}, false);
+					document.getElementById("env-button-drop").addEventListener("click", function(e){
+						var li = e.target || e.originalTarget || e.srcElement;
+						if(li.tagName == "A"){li = li.parentElement;}
+						if(li.tagName == "LI"){
+							document.getElementById("env-button").innerHTML =
+								li.innerText+' <span class="caret"></span>';
+						}
+						e.preventDefault();
+					}, false);
 					$(document).on("hidden.bs.collapse", "#right_footnote", function(e){
 						alert("Closed");
 					},false);
@@ -2511,7 +2830,8 @@ this.getHTML = (function(){
 					fontPicker.style.display = "none";
 				}
 			}
-			this.refreshRotatedCellSize = function(td){
+			this.refreshRotatedCellSize = function(td, stopRefresh){
+				return;
 				// - Get the width and set it as the height
 				// - To get the width, we are gonna set a range around its content
 				//   and get its size
@@ -2524,8 +2844,28 @@ this.getHTML = (function(){
 					td.style.height = (Math.abs(size.width * Math.cos(-45*Math.PI/180)) + Math.abs(size.height * Math.sin(-45*Math.PI/180)) + 6) + "px";
 				}
 				else{
-					td.style.height=(size.width+6)+"px";
-					td.style.width=(size.height+6)+"px";
+console.log(size.height);
+					if(td.hasAttribute("data-selected")){
+						td.style.minHeight=(size.width+6)+"px";
+						td.style.minWidth=(size.height+6)+"px";
+						var outer = td.querySelector(".outer");
+						outer.style.minWidth=(size.width+6)+"px";
+						outer.style.minHeight=(size.height+6)+"px";
+						if(!stopRefresh){
+							td.removeAttribute("data-selected");
+							requestAnimationFrame(function(){
+								this.refreshRotatedCellSize(td, true);
+								td.setAttribute("data-selected","selected");
+							}.bind(this));
+						}
+					}
+					else if(0){
+						td.style.minHeight=(size.height+6)+"px";
+						td.style.minWidth=(size.width+6)+"px";
+						var outer = td.querySelector(".outer");
+						outer.style.minHeight=(size.height+6)+"px";
+						outer.style.minWidth=(size.width+6)+"px";
+					}
 				}
 			}
 			this.fastGenerateFromHTML = function(html, ignoreMultiline, align){
@@ -2739,6 +3079,72 @@ this.getHTML = (function(){
 					})
 				}
 				return [content,after, index-1]
+			}
+			this.generateFromHTMLPerLine = function(lines, params){
+				params = params || {}
+				// List of params
+				// - align : the alignment of any tabular environment
+				// - ignoreMultiline : Surround by a tabular environment if multiline
+				// - numberColumn : Is it a "S" column ? aka the default is number
+				// - number : Is the cell alignment a number? If so, we detect numbers and apply tablenum for multilines
+				// - tablenum : If the cell is a number, we always apply tablenum
+				// - siunitx : Options for tablenum
+				// - nonNumberFormat : Template for non-number, where `@` is the HTML (e.g. `{@}` to surround by braces)
+				
+				var str = "";
+				for(var i=0;i<lines.length;i++){
+					if(i>0){str+="\\\\"}
+					var lineCode = "",
+					isANumber = false;
+					if(params.numberColumn || params.number){
+						var div = document.createElement("div");
+						div.innerHTML = lines[i].html;
+						var nb = this.isANumber(div.textContent || div.innerText, true);
+						if(nb){
+console.log(params.siunitx+"|"+lines.length+"|"+div.innerHTML);
+
+							if(params.tablenum || ((params.siunitx || params.siunitx === "") && lines.length>1)){
+								lineCode+="\\tablenum";
+								if(params.siunitx){
+									lineCode+="["+params.siunitx+"]";
+								}
+								lineCode+="{"+(div.textContent || div.innerText)+"}";
+							}
+							isANumber = true;
+						}
+					}
+					if(!lineCode){
+						lineCode = this.generateFromHTML(lines[i].html, params.ignoreMultiline, params.align);
+					}
+					if(!lineCode.trim() && lines.length>1){
+						str += "~"
+					}
+					else{
+						if(lines[i].level>0){
+							if(lines[i].level > 1){
+								str+="\\hspace";
+								if(params.ignoreMultiline){str+="*"}
+								str+="{"+(lines[i].level-1)/2+"\\leftmargin}"
+							}
+							if(!lines[i].item){
+								str+="\\phantom{";
+							}
+							str += "\\labelitem"+["i","ii","iii","iv"][lines[i].level-1];
+							if(!lines[i].item){
+								str+="}";
+							}
+							str += "\\hspace{\\dimexpr\\labelsep+0.5\\tabcolsep}";
+						}
+						str += lineCode;
+					}
+				}
+				if(!params.ignoreMultiline && lines.length>1){
+					str = "\\begin{tabular}{@{}"+(params.align||"l")+"@{}}"+str+"\\end{tabular}";
+				}
+				if((params.nonNumberFormat || params.nonNumberFormat === "") && (!isANumber || lines.length>1)){
+					str = params.nonNumberFormat.replace(/@/g,str);
+				}
+				return str;
 			}
 			this.generateFromHTML = function(html, ignoreMultiline, align, oldEq) {
 				align = align || "l";
@@ -3052,8 +3458,10 @@ this.getHTML = (function(){
 						var text2 = "\\tablenum"
 						var sioptions = [];
 						if(o.decimalChars){
-							sioptions.push("table-format="+o.decimalChars[0]+"."
-									  +o.decimalChars[1]);
+							if(!o.globalDecimals){
+								this.globalDecimals(o);
+							}
+							sioptions.push("table-format="+this.formatDecimalCharacters(o.globalDecimals));
 						}
 						if(shrinkRatio || o.shrinkRatio){
 							sioptions.push("table-column-width="+(shrinkRatio||o.shrinkRatio)+"\\linewidth");
@@ -3208,25 +3616,140 @@ this.getHTML = (function(){
 					return state;
 				}
 			}
-			this.calculateDecimalCharacters = function(cell, separator){
-				separator = separator || ".";
-				var text = cell.innerText || cell.textContent;
-				text = text.split(/\n+/g);
-				var first = 0,
-				second = 0;
-				for(var i=0, subtext;i<text.length;i++){
-					subtext = text[i].trim();
-					if(subtext){
-						if(subtext.indexOf(separator)>=0){
-							first = Math.max(first,subtext.lastIndexOf(separator));
-							second = Math.max(second,subtext.length-1-subtext.lastIndexOf(separator));
-						}
-						else{
-							first = Math.max(first,subtext.length);
-						}
+			this.formatDecimalCharacters = function(calc){
+				var text = "";
+				if(calc[0] > 0){
+					text += ">";
+				}
+				if(calc[1] > 0){
+					text += "+"
+				}
+				text += calc[2];
+				if(calc[3] > 0){
+					text += "." + calc[4];
+				}
+				if(calc[5] > 0){
+					text += "e";
+					if(calc[6] > 0){
+						text += "+";
+					}
+					text += calc[7]
+				}
+				if(calc[8] == "\\pm"){
+					text +="\\pm"
+				}
+				else if(calc[8] == "("){
+					text+="("
+				}
+				if(calc[8] != 0){
+					if(calc[9] > 0){
+						text += "+";
+					}
+					text+=calc[10]
+					if(calc[11] > 0){
+						text += "." + calc[12]
 					}
 				}
-				return [first, second]
+				return text;
+			}
+			this.calculateDecimalCharacters = function(cell, separator, falseIfError){
+				separator = separator || ".";
+				var text = cell.innerText || cell.textContent || cell;
+				text = text.split(/\n+/g)[0];
+				var numberPart = 0,
+				comparators = [
+					"<","=",">","\\approx","\\ge","\\geq","\\gg","\\le","\\leq","\\ll", "\\sim"
+				];
+					// List of parts:
+					//   0 = Comparator (<=>\approx\ge\geq\gg\le\leq\ll \sim)
+					//   1 = Signs (+-\pm\mp)
+					//   2 = First digits (0-9)
+					//   3 = Decimal marker (.,)
+					//   4 = Second digits (0-9)
+					//   5 = Exponent marker (dDeE)
+					//   6 = Sign for exponent (+-\pm\mp)
+					//   7 = Number (0-9)
+					//   8 = Start uncertainty --> \pm(
+					//   9 = Sign for uncertainty (+-\pm\mp)
+					//   10 = Uncertainty first digits (0-9)
+					//   11 = Decimal marker (.,)
+					//   12 = Uncertainty second digits (0-9)
+
+				// First, we will determine which decimal marker it is:
+				var dm = text.replace(/^\D+\\pm/,"").replace(/(?:\\pm|\().+$/,"");
+				var o = [0,0,0,0,0,0,0,0,0,0,0,0,0]
+				if(dm.split(/\./g).length>2){separator = ","}
+				else if(dm.indexOf(",") > dm.indexOf(".")){ separator = "," }
+				else { separator = "." }
+				for(var i=0;i<text.length;i++){
+					var c = text[i].trim();
+					if(c == "\\"){
+						c = /\\([a-z]+|.)/g.exec(text.substring(i))[0]
+						i += c.length-1;
+					}
+					if(!c || c == "{" || c == "}"){continue;}
+					if(numberPart == 0 && comparators.indexOf(c) >=0){
+						o[0] = 1;
+						numberPart = 1;
+					}
+					else if(["+","-","\\pm","\\mp"].indexOf(c) >= 0 &&
+						(numberPart <= 1 || numberPart == 6 || numberPart == 9)){
+						if(numberPart <= 1){
+							o[1] = 1;
+							numberPart = 2;
+						}
+						else if(numberPart == 6){
+							o[6] = 1;
+							numberPart = 7;
+						}
+						else if(numberPart == 9){
+							o[9] = 1;
+							numberPart = 10
+						}
+					}
+					else if(/^\d+$/.test(c)){
+						if(numberPart < 3){
+							o[2]++;
+						}
+						else if(numberPart < 5){
+							o[4]++
+						}
+						else if(numberPart < 8){
+							o[7]++;
+							numberPart = 7;
+						}
+						else if(numberPart < 11){
+							o[10]++;
+							numberPart = 10;
+						}
+						else{
+							o[12]++
+						}
+					}
+					else if(c == separator && numberPart < 3){
+						o[3] = 1;
+						numberPart = 4;
+					}
+					else if((c == "." || c == ",") && numberPart == 10){
+						o[11] = 1;
+						numberPart = 12;
+					}
+					else if(/^[de]$/gi.test(c)){
+						o[5] = 1;
+						numberPart = 6;
+					}
+					else if(c == "(" || (c == "\\pm" && numberPart > 1)){
+						o[8] = c;
+						numberPart = 9;
+					}
+					else if(falseIfError && (c != " " && c !="~" && c != "\\,")){
+						return false;
+					}
+				}
+				return o;
+			}
+			this.isANumber = function(cell){
+				return this.calculateDecimalCharacters(cell, false, true);
 			}
 			this.createCellO = function(o, row){
 				var before = null,
@@ -3250,7 +3773,8 @@ this.getHTML = (function(){
 				o.align = cell.getAttribute("data-align") || "l";
 				o.valign = cell.getAttribute("data-vertical-align") || "m";
 				if(o.align == "d"){
-					o.decimalChars = this.calculateDecimalCharacters(cell);
+					o.decimalChars = this.calculateDecimalCharacters(cell,".", true);
+					if(!o.decimalChars){o.align = "l"}
 				}
 				// calculate if you need vcell
 				if(!this.blacklistPackages["vcell"]){
@@ -3363,6 +3887,9 @@ this.getHTML = (function(){
 							_this.packages["colortbl"] = true;
 							content="{\\cellcolor"+getColor(o.background)+"}"+content;
 						}
+						if(o.align == "d" && content.indexOf("\\\\")>-1){
+							content = "{" + content + "}";
+						}
 						var ratio = o.switch ? -1 : 1;
 						if(_this.shrink){
 							content = _this.multirow(ratio*cell.rowSpan, "\\hspace{0pt}"+content, o.shrinkRatio+"\\linewidth");
@@ -3378,6 +3905,9 @@ this.getHTML = (function(){
 						if(o.background){
 							_this.packages["colortbl"] = true;
 							content="{\\cellcolor"+getColor(o.background)+"}"+content;
+						}
+						if(o.align == "d" && content.indexOf("\\\\")>-1){
+							content = "{" + content + "}";
 						}
 					}
 					if(cell.colSpan != 1 || forceMulti || !o.isInPreambule){
@@ -3673,8 +4203,9 @@ this.getHTML = (function(){
 				if(format == "latex" && src.indexOf("\\documentclass")<0){
 					var utf8 = !/^[\x00-\x7F]*$/.test(src);
 					src = src.replace(/^%\s*\\usepack/mg, "\\usepack");
+					src = src.replace(/^%\s*\\UseTblrLibrary/mg, "\\UseTblrLibrary");
 					src = "\\documentclass{article}\n" + (utf8 ? "\\usepackage[utf8]{inputenc}\n" : "") + src;
-					var lastpackage = src.lastIndexOf("\\usepackage"),
+					var lastpackage = Math.max(src.lastIndexOf("\\usepackage"),src.lastIndexOf("\\UseTblrLibrary")),
 					endofheader = src.indexOf("}", lastpackage);
 					src = src.substring(0, endofheader+1) + "\n\n\\begin{document}\n"+src.substring(endofheader+1)+"\n\\end{document}";
 					src = src.replace(/\n{3,}/g, "\n\n");
@@ -3690,6 +4221,33 @@ this.getHTML = (function(){
 					src += '\n</p>\n</card>\n</wml>';
 				}
 				element.value = src;
+			}
+			this.globalDecimals = function(o, matrix){
+				matrix = matrix || o.matrix();
+				var gd = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+				var cells = [];
+				for(var i=0;i<matrix.length;i++){
+					var traveledCell = matrix[i][(o.refCell||o).x];
+					traveledCell = traveledCell.refCell||traveledCell;
+					if(traveledCell.x == (o.refCell||o).x && traveledCell.cell.colSpan == (o.refCell||o).cell.colSpan){
+						cells.push(traveledCell);
+						if(traveledCell.align == "d"){
+							var dec = traveledCell.decimalChars;
+							for(var j=0;j<dec.length;j++){
+								if(j != 8){
+									gd[j] = Math.max(gd[j], dec[j]);
+								}
+								else{
+									gd[j] = dec[j]
+								}
+							}
+						}
+					}
+				}
+				o.globalDecimals = gd;
+				for(var i=0;i<cells.length;i++){
+					cells[i].columnDecimals = gd;
+				}	
 			}
 			this.comparableHeader = function(before, middle, after) {
 				if (before) {
@@ -3794,21 +4352,7 @@ this.getHTML = (function(){
 					var before = "";
 					if(align2 == "d"){
 						if(!o.globalDecimals){
-							// Let's travel the matrix !
-							var matrix = o.matrix(),
-							first = 0,
-							second = 0;
-							for(var i=0;i<matrix.length;i++){
-								var traveledCell = matrix[i][(o.refCell||o).x];
-								traveledCell = traveledCell.refCell||traveledCell;
-								if(traveledCell.x == (o.refCell||o).x && traveledCell.cell.colSpan == middle.colSpan){
-									if(traveledCell.align == "d"){
-										first = Math.max(first, traveledCell.decimalChars[0]);
-										second = Math.max(second, traveledCell.decimalChars[1]);
-									}
-								}
-							}
-							o.globalDecimals = [first, second];							
+							_this.globalDecimals(o);						
 						}
 						if(o.span){
 							if(shrinkRatio){
@@ -3821,8 +4365,7 @@ this.getHTML = (function(){
 						else{
 							align2 = "S";
 							if(o.globalDecimals){
-								align2 += "[table-format="+o.globalDecimals[0]+"."
-									  +o.globalDecimals[1];
+								align2 += "[table-format="+_this.formatDecimalCharacters(o.globalDecimals)
 								if(shrinkRatio){
 									align2+=",table-column-width="+shrinkRatio+"\\linewidth";
 								}
@@ -3985,8 +4528,51 @@ this.getHTML = (function(){
 				rightBorder = o[rightBorder || ""] || "";
 				return leftBorder + align + rightBorder;
 			}
+			this.autoLaTeXFormat = function(){
+				var format = "tabular";
+				if($id("opt-latex-tabu").checked){
+					return "tabu";
+				}
+				if(table.element.querySelector("td[rowspan]")){
+					format = "tabularray";
+				}
+				else if($id("opt-fit-table").value == "sh"){
+					format = "tabularray";
+				}
+				else if(ColorPicker.getTableColorScheme().length > 2){
+					format = "tabularray";
+				}
+				var borders = this.listBorderTypes();
+				if(borders.all.length>1){
+					format = "tabularray";
+					if(borders.none && table.element.querySelector("td[style*='background-color']")){
+						return "tabular";
+					}
+				}
+				if(borders.double && ($id("opt-latex-hhline").checked || $id("opt-latex-hhline-hash").checked)){
+					return "tabular";
+				}
+				if(format == "tabular"){
+					var nbVertical = 0;
+					nbVertical += Number(!!table.element.querySelector("td[data-vertical-align='t']"));
+					nbVertical += Number(!!table.element.querySelector("td[data-vertical-align='b']"));
+					if(nbVertical > 0){
+						format = "tabularray";
+					}
+				}
+				// List of functions not supported yet
+
+				if($id("opt-latex-landscape").checked){
+					return "tabular";
+				}
+				if(table.element.querySelector(".tb-footnote")){
+					return "tabular";
+				}
+				return format;
+			}
 			this.generate = function() {
 				var start = +new Date()
+				table.useTabularray = false;
 				this.buildBlacklist();
 				// Normalize the table
 				this.Table.normalize();
@@ -3994,11 +4580,20 @@ this.getHTML = (function(){
 					.value;
 				this.log = "";
 				if (format == "latex") {
-					$id("c").value = this.generateLaTeX();
+					var env = document.getElementById("env-button").innerText.trim().toLowerCase();
+					if(env == "auto"){
+						env = this.autoLaTeXFormat();
+					}
+					if(env == "tabularray"){
+						$id("c").value = this.generateTabularray();
+					}
+					else{
+						$id("c").value = this.generateLaTeX();
+					}
 				} else {
 					this.interpret(format);
 				}
-				sendGAEvent("Code", "generate2", format)
+				sendGAEvent("Code", "generate3", format)
 				this.message("Generated in " + ((+new Date()) - start) + "ms");
 				$id("log")
 					.innerHTML = "<strong>Log</strong> (" + ((new Date())
@@ -4008,15 +4603,19 @@ this.getHTML = (function(){
 					campaignUsed = true;
 				}
 				var c = $id("generate-button");
-				scrollTo(0, (c.getBoundingClientRect().top - document.body.getBoundingClientRect().top) - $id("nav-latex").offsetHeight - 15);
+				if(c.scrollIntoView){
+					c.scrollIntoView({behavior: "smooth", block: "center"});
+				}
+				else{
+					scrollTo(0, (c.getBoundingClientRect().top - document.body.getBoundingClientRect().top) - $id("nav-latex").offsetHeight - 15);
+				}
 			}
 			this.campaignClicked = function(){
 				campaignUsed = true;
 				localStorage.setItem("campaign", campaign.year)
 			}
-			this.headers = function(matrix){
-				matrix = matrix || this.matrix();
-				var headers = [], colHeaders = [], widthArray = [], _this = this, table = this.element;
+			this.shrinkRatios = function(matrix){
+				var widthArray = [], table = this.element;
 				if(this.shrink){
 					this.element.style.width = "390pt";
 					for(var i=0;i<table.rows.length;i++){
@@ -4042,6 +4641,11 @@ this.getHTML = (function(){
 					table.removeChild(fakeRow);
 					this.element.style.width = "";
 				}
+				return widthArray;
+			}
+			this.headers = function(matrix){
+				matrix = matrix || this.matrix();
+				var headers = [], colHeaders = [], widthArray = this.shrinkRatios(matrix), _this = this, table = this.element;
 
 				var colLength = 0;
 				for(var i=0;i<matrix.length;i++){
@@ -4089,8 +4693,10 @@ this.getHTML = (function(){
 						}
 					}
 					var max = 0, value = "l";
+					var hasHeader = false; // There can be no header if all cells span columns
 					for (var k in headernow) {
 						if (headernow.hasOwnProperty(k)){
+							hasHeader = true;
 							if(headernow[k] > max) {
 								max = headernow[k];
 								value = k;
@@ -4100,12 +4706,14 @@ this.getHTML = (function(){
 							}
 						}
 					}
-					var cellsArray = cellsArrays[value];
-					for(var k=0;k<cellsArray.length;k++){
-						cellsArray[k].isInPreambule = true;
+					if(hasHeader){
+						var cellsArray = cellsArrays[value];
+						for(var k=0;k<cellsArray.length;k++){
+							cellsArray[k].isInPreambule = true;
+						}
+						this.actualColor = colorArr[value]
 					}
 					colHeaders.push(value);
-					this.actualColor = colorArr[value]
 				}
 				return colHeaders;
 			}
@@ -4155,9 +4763,40 @@ this.getHTML = (function(){
 			this.hasVBorderType = function(type){
 				return !!this.element.querySelector("td[data-border-left='"+type+"'],td[data-border-right='"+type+"']")
 			}
+			this.listBorderTypes = function(){
+				var o = {};
+				var arr = []
+				for(var i=1,rows = table.element.rows, l = rows.length;i<l;i++){
+					var row = rows[i];
+					for(var j=0,cells = row.cells, ll = cells.length;j<ll;j++){
+						var cell = cells[j];
+						if(!cell.hasAttribute("data-border-left") &&
+						   !cell.hasAttribute("data-border-bottom") &&
+						   !cell.hasAttribute("data-border-top") &&
+						   !cell.hasAttribute("data-border-right")){
+							if(!o.none){
+								o.none = true;
+								arr.push("none");
+							}
+						}
+						else{
+							for(var k=0;k<4;k++){
+								var border = cell.getAttribute("data-border-"+
+									["left","bottom","top","right"][k]);
+								if(border && !o[border]){
+									o[border] = true;
+									arr.push(border);
+								}
+							}
+						}
+					}
+				}
+				o.all = arr;
+				return o;
+			}
 			this.hasBorderType = function(type){
 				var el = this.element;
-				for(var i = 0, rows = el.rows, l = rows.length;i<rows;i++){
+				for(var i = 1, rows = el.rows, l = rows.length;i<rows;i++){
 					var row = rows[i];
 					for(var j=0, cells = row.cells, ll = cells.length;j<l;j++){
 						var cell = cells[j];
@@ -6097,6 +6736,29 @@ this.getHTML = (function(){
 						e.preventDefault();
 						mouseup(lastMove[0],lastMove[1])
 					}
+				});
+				document.getElementById("copt-break").addEventListener("input", function(e){
+					document.getElementById("opt-latex-split").checked = this.checked;
+				});
+				document.getElementById("opt-latex-split").addEventListener("input", function(e){
+					document.getElementById("copt-break").checked = this.checked;
+				});
+				document.getElementById("copt-shrink").addEventListener("input", function(e){
+					if(this.checked){
+						document.getElementById("opt-fit-table").value = "sh";
+					}
+					else{
+						document.getElementById("opt-fit-table").value = "none";
+					}
+				});
+				document.getElementById("opt-fit-table").addEventListener("input", function(e){
+					document.getElementById("copt-shrink").checked = this.value.indexOf("sh")>-1;
+				});
+				document.getElementById("copt-ltx-com").addEventListener("input", function(e){
+					document.getElementById("opt-latex-command").checked = this.checked;
+				});
+				document.getElementById("opt-latex-command").addEventListener("input", function(e){
+					document.getElementById("copt-ltx-com").checked = this.checked;
 				});
 				window.addEventListener("mouseup", function(e){
 					mouseup(e.pageX, e.pageY);		
