@@ -6,17 +6,33 @@ Legend
 [#] Fixed
 Dates use a YYYY/MM/DD format.
 
+Version 3.1.1 (2024/02/17)
+==========
+
+| Note on this release:
+|     Bug Fixes
+
+LATEX EXPORT
+
+[#] Fixed issue with hashed corners with hhline (#38)
+
+LATEX IMPORT
+
+[#] Fixed issue when importing tables with commented environments (#87)
+[#] Fixed issue when importing tables with newlines in their environment (#77)
+
+
 Version 3.1 (2023/07/30)
 ==========
 
 | Note on this release:
-|     Improvements to colorpicker and bug fixes (#69)
+|     Improvements to colorpicker and bug fixes
 
 CORE
 
 [+] Added link to copy generated code to clipboard (#82)
 [+] Colorpicker can now save colors
-[#] Colorpicker now use the good color for background of cells, for table scheme
+[#] Colorpicker now use the good color for background of cells, for table scheme (#69)
 
 LATEX EXPORT
 

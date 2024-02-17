@@ -648,7 +648,6 @@ tblrkeyval = function(str){
 			}
 		}
 	}
-	console.dir(o);
 	return o;
 },
  command=function(code){
@@ -742,7 +741,7 @@ tblrkeyval = function(str){
 				nbofbrack = 0;
 				actu = "";
 			}
-			else if(char == " " && i < code.length - 1){
+			else if(/^\s$/.test(char) && i < code.length - 1){
 				continue;
 			}
 			else if(specialSeparators[realname] && char == specialSeparators[realname][0]){
@@ -812,14 +811,20 @@ importTable = function(code){
 
 xcolor.erase();
 xcolor.extract(code);
-var tabularReg = /(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|NiceTabular[\*X]?|wraptable|table\*?|xtabular\*?|tabularht\*?|tabularhtx|tabularkv|longtable|(?:mp|)supertabular\*?|tabularew|mpxtabular\*?|tabular[xy]?\*?)})/g;
+var tabularReg = /^[^\%]*?(?:(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|NiceTabular[\*X]?|wraptable|table\*?|xtabular\*?|tabularht\*?|tabularhtx|tabularkv|longtable|(?:mp|)supertabular\*?|tabularew|mpxtabular\*?|tabular[xy]?\*?)}))/gm;
+var tabularRegCommand = /(?:(?:\\(ctable)[\[\{])|(?:\\begin\s*{((?:long|)tabu\*?|sidewaystable|(?:long|tall|)tblr|NiceTabular[\*X]?|wraptable|table\*?|xtabular\*?|tabularht\*?|tabularhtx|tabularkv|longtable|(?:mp|)supertabular\*?|tabularew|mpxtabular\*?|tabular[xy]?\*?)}))/g;
 var tabular = tabularReg.exec(code);
 	tabularReg.lastIndex = 0;
+	tabularRegCommand.lastIndex = 0;
 	if(!tabular){
 		return false;
 	}
+	var tabularCommand = tabularRegCommand.exec(tabular[0]);
+	if(!tabularCommand){
+		return false;
+	}
 	tblrOptions = null;
-	var type = "", obj = {},  code2 = code.substring(tabular.index),beforeCode = code.substring(0, tabular.index);
+	var type = "", obj = {},  code2 = code.substring(tabular.index+tabularCommand.index),beforeCode = code.substring(0, tabular.index);
 	if(tabular[1]){
 		// We use ctable, so we now to handle this as a special case, because it's a command instead of an environment
 		var initCommand = command(code2);
@@ -911,14 +916,13 @@ var tabular = tabularReg.exec(code);
 				"LL" : "\\tabularnewline\\bottomrule"
 			}[name] + c;
 		});
-		console.log(code);
 	}
 	else{
-		type = tabular[2]
+		type = tabular[2];
 		var initEnv = envirn(code2);
 		code = initEnv.content;
 		if(type == "table" || type == "table*" || type == "sidewaystable" || type == "wraptable"){
-			if(/\\begin\s*{((?:long|)tabu\*?|xtabular\*?|tabularht\*?|(?:mp|)supertabular\*?|tabularew|tabularhtx|(?:long|tall|)tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular\*?|tabular[xy]?\*?|)}/.test(code)){
+			if(/^[^%]*?(?:\\begin\s*{((?:long|)tabu\*?|xtabular\*?|tabularht\*?|(?:mp|)supertabular\*?|tabularew|tabularhtx|(?:long|tall|)tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular\*?|tabular[xy]?\*?|)})/m.test(code)){
 				var caption = code.indexOf("\\caption");
 				if(caption >=0){
 					caption = command(code.substring(caption));
@@ -932,13 +936,17 @@ var tabular = tabularReg.exec(code);
 					if(!obj.caption){ obj.caption = {} }
 					obj.caption.label = label.args[0];
 				}
-				tabular = /\\begin\s*{((?:long|)tabu\*?|xtabular\*?|(?:mp|)supertabular\*?|tabularht\*?|tabularhtx|tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular\*?|tabular[xy]?\*?)}/g.exec(code2);
+				tabular = /^[^%]*?(?:\\begin\s*{((?:long|)tabu\*?|xtabular\*?|(?:mp|)supertabular\*?|tabularht\*?|tabularhtx|tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular\*?|tabular[xy]?\*?)})/gm.exec(code2);
 				if(!tabular){
 					return false; // Should not happen
 				}
+				tabularCommand = /(?:\\begin\s*{((?:long|)tabu\*?|xtabular\*?|(?:mp|)supertabular\*?|tabularht\*?|tabularhtx|tblr|NiceTabular[*X]?|tabularkv|longtable|mpxtabular\*?|tabular[xy]?\*?)})/g.exec(tabular[0]);
+				if(!tabularCommand){
+					return false;
+				}
 				type = tabular[1];
-				beforeCode += code2.substring(0, tabular.index);
-				code2 = code2.substring(tabular.index);
+				beforeCode += code2.substring(0, tabular.index+tabularCommand.index);
+				code2 = code2.substring(tabular.index+tabularCommand.index);
 				initEnv = envirn(code2);			
 			}
 			else{

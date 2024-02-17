@@ -124,7 +124,7 @@ function $id(id) {
 			return "[rgb]{"+sep+"}";
 		},
 		table = new(function() {
-			this.version = "3.1";
+			this.version = "3.1.1";
 			this.create = function(cols, rows) {
 				rows = parseInt(rows, 10);
 				cols = parseInt(cols, 10);
@@ -5994,17 +5994,23 @@ console.log(params.siunitx+"|"+lines.length+"|"+div.innerHTML);
 							if(i===0){
 							// Must check for left border
 								var borderLeft = (row[i].refCell||row[i]).leftBorder,
-								    borderLeftColor = (row[i].refCell||row[i]).leftBorderColor,
+								    borderLeftColor = ((row[i].refCell||row[i]).leftBorderColor||"#000"),
 								    borderLeftTop = ((toprow[i]||{}).refCell||toprow[i]||{}).leftBorder,
-								    borderLeftTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).leftBorderColor;
+								    borderLeftTopColor = (((toprow[i]||{}).refCell||toprow[i]||{}).leftBorderColor||"#000");
 								if(hashHhline && (borderLeft == "double" || borderLeftTop == "double")){
+									var borderLeftFColor = borderLeftColor || borderLeftTopColor;
+									if(insertInHhline && !areSameColors(insideColor, borderLeftFColor)){
+										insideColor = borderLeftFColor;
+										border += ">{\\arrayrulecolor"+getColor(borderLeftFColor)+"}";
+									}
 									if(borders[i].type == "double"){
-										var borderLeftFColor = borderLeftColor || borderLeftTopColor;
-										if(insertInHhline && !areSameColors(insideColor, borderLeftFColor)){
-											insideColor = borderLeftFColor;
-											border += ">{\\arrayrulecolor"+getColor(borderLeftFColor)+"}";
-										}
 										border += "#";
+									}
+									else if(!(borderLeft == "double" && borderLeftTop == "double")){
+										border += "#";
+									}
+									else{
+										border += "||";
 									}
 								}
 								else if(enhanceHhline && (borderLeft == "double" || borderLeftTop == "double")){
@@ -6127,23 +6133,29 @@ console.log(params.siunitx+"|"+lines.length+"|"+div.innerHTML);
 								borderRightTopColor = ((toprow[i]||{}).refCell||toprow[i]||{}).rightBorderColor;
 							}
 							if(hashHhline && (borderRight == "double" || borderRightTop == "double")){
-								if(type == "double" || (borders[i+1] && borders[i+1].type == "double")){
-									var borderRightFColor = borderRightColor || borderRightTopColor;
-									if(insertInHhline){
-										var toadd = "";
-										if(!areSameColors(insideColor, borderRightFColor)){
-											insideColor = borderRightFColor;
-											toadd += "\\arrayrulecolor"+getColor(borderRightFColor);
-										}
-										if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
-											doublerulesepcolor = "FFFFFF";
-											toadd += "\\doublerulesepcolor"+getColor([255,255,255,1]);
-										}
-										if(toadd){
-											border += ">{"+toadd+"}";
-										}
+								var borderRightFColor = borderRightColor || borderRightTopColor;
+								if(insertInHhline){
+									var toadd = "";
+									if(!areSameColors(insideColor, borderRightFColor)){
+										insideColor = borderRightFColor;
+										toadd += "\\arrayrulecolor"+getColor(borderRightFColor);
 									}
+									if(!areSameColors(doublerulesepcolor, [255,255,255,1])){
+										doublerulesepcolor = "FFFFFF";
+										toadd += "\\doublerulesepcolor"+getColor([255,255,255,1]);
+									}
+									if(toadd){
+										border += ">{"+toadd+"}";
+									}
+								}
+								if(type == "double" || (borders[i+1] && borders[i+1].type == "double")){
 									border += "#";				
+								}
+								else if(!(borderRight == "double" && borderRightTop == "double")){
+									border += "#"
+								}
+								else{
+									border += "||";
 								}
 							}
 							else if(enhanceHhline && (borderRight == "double" || borderRightTop == "double")){
@@ -6255,7 +6267,7 @@ console.log(params.siunitx+"|"+lines.length+"|"+div.innerHTML);
 							if(metAry){
 								border+= "\\noalign{\\kern-";
 								if(o.types.double){
-									border+="\\dimexpr\\doublerulesep+2\\arrayrulewith";
+									border+="\\dimexpr\\doublerulesep+2\\arrayrulewidth";
 								}
 								else{
 									border+="\\arrayrulewidth";
